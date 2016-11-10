@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Cell Complexes and Graphs</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <!-- Scripts -->
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+      <script src="https://d3js.org/d3-dsv.v1.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="script.js"></script>
+      <link rel="stylesheet" type="text/css" href="styles.css">
+  </head>
+  <body>
+    <h1 id="site-title">Cell Complexes and Graphs</h1>
+    <h2 class="header">&#268;ech Complex</h2>
+    <p class="body">Radius:<input type="range" id='cechInput' min="5" max="50" value="50" step="1" oninput="updateCech(this.value)" /><span id="cechRadius"></span></p>
+    <script>
+      var cechCanvas = d3.select("body").append("svg")
+                      .attr("class", "cech")
+                      .attr("id", "cechCanvas")
+                      .attr("width", width)
+                      .attr("height", height)
+                      .style("display", "block")
+                      .style("margin", "auto")
+                      .style("border", "1px solid black");
+
+      cechCanvas.append("path")
+        .attr("class", "grid")
+        .attr("d", d3.range(cellSize, width, cellSize)
+        .map(function(x) { return "M" + Math.round(x) + ",0V" + height; })
+        .join("")
+        + d3.range(cellSize, height, cellSize)
+            .map(function(y) { return "M0," + Math.round(y) + "H" + width; })
+            .join(""));
+    </script>
+    <h2 class="header">Vietoris-Rips Complex</h2>
+    <p class="body">Radius:<input type="range"  id='ripsInput' min="5" max="50" value="50" step="1" oninput="updateRips(this.value)" /><span id="ripsRadius"></span></p>
+    <script>
+      var ripsCanvas = d3.select("body").append("svg")
+                         .attr("class", "rips")
+                         .attr("id", "ripsCanvas")
+                         .attr("width", width)
+                         .attr("height", height)
+                         .style("display", "block")
+                         .style("margin", "auto")
+                         .style("border", "1px solid black");
+
+      ripsCanvas.append("path")
+        .attr("class", "grid")
+        .attr("d", d3.range(cellSize, width, cellSize)
+        .map(function(x) { return "M" + Math.round(x) + ",0V" + height; })
+        .join("")
+        + d3.range(cellSize, height, cellSize)
+            .map(function(y) { return "M0," + Math.round(y) + "H" + width; })
+            .join(""));
+    </script>
+    <h2 class="header">KNN Graph</h2>
+    <p class="body">k:<input type="range" id='knnInput' min="1" max="11" value="4" step="1" oninput="updateKNN(this.value)" /><span id="k"></span></p>
+    <script>
+      var knnCanvas = d3.select("body").append("svg")
+                         .attr("class", "knn")
+                         .attr("id", "knnCanvas")
+                         .attr("width", width)
+                         .attr("height", height)
+                         .style("display", "block")
+                         .style("margin", "auto")
+                         .style("border", "1px solid black");
+
+      knnCanvas.append("path")
+        .attr("class", "grid")
+        .attr("d", d3.range(cellSize, width, cellSize)
+        .map(function(x) { return "M" + Math.round(x) + ",0V" + height; })
+        .join("")
+        + d3.range(cellSize, height, cellSize)
+            .map(function(y) { return "M0," + Math.round(y) + "H" + width; })
+            .join(""));
+    </script>
+    <h2 class="header">&#946-Skeleton</h2>
+    <p class="body">&#946:<input type="range" id='ergInput' min="0.01" max="2" value="1" step="0.01" oninput="updateERG(this.value)" /><span id="beta"></span></p>
+    <script>
+      var ergCanvas = d3.select("body").append("svg")
+                         .attr("class", "erg")
+                         .attr("id", "ergCanvas")
+                         .attr("width", width)
+                         .attr("height", height)
+                         .style("display", "block")
+                         .style("margin", "auto")
+                         .style("border", "1px solid black");
+
+      ergCanvas.append("path")
+        .attr("class", "grid")
+        .attr("d", d3.range(cellSize, width, cellSize)
+        .map(function(x) { return "M" + Math.round(x) + ",0V" + height; })
+        .join("")
+        + d3.range(cellSize, height, cellSize)
+            .map(function(y) { return "M0," + Math.round(y) + "H" + width; })
+            .join(""));
+    </script>
+    <script>
+      updateCech(document.getElementById("cechInput").value);
+      updateRips(document.getElementById("ripsInput").value);
+      updateKNN(document.getElementById("knnInput").value);
+      updateERG(document.getElementById("ergInput").value);
+    </script>
+  </body>
+</html>
