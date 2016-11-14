@@ -505,11 +505,14 @@ function randomData() {
     n = document.getElementById('numSensors').value;
     numSamples = +n;
 
+    locationData = [];
+
     for (i=0; i<numSamples; i++) {
-        xp[i] = dataScale(getRndInteger(50, 475));
-        yp[i] = dataScale(getRndInteger(50, 250));
+        x = dataScale(getRndInteger(50, 475));
+        y = dataScale(getRndInteger(50, 250));
+        var newPoint = {LocationID: i, xf: x, yf: y};
+        locationData.push(newPoint);
     }
-    console.log(xp.length);
     updateCech(document.getElementById("cechInput").value);
     // updateRips(document.getElementById("ripsInput").value);
 
