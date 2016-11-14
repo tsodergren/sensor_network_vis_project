@@ -374,16 +374,16 @@ function constructRips(cechCanvas) {
     //Faces first
     for (var i = 0; i < numSamples; i++)
     {
-        var x1 = xp[i];
-        var y1 = yp[i];
+        var x1 = locationData[i].xf;
+        var y1 = locationData[i].yf;
         for (var j = i+1; j < numSamples; j++)
         {
-            var x2 = xp[j];
-            var y2 = yp[j];
+            var x2 = locationData[j].xf;
+            var y2 = locationData[j].yf;
             for (var k = j+1; k < numSamples; k++)
             {
-                var x3 = xp[k];
-                var y3 = yp[k];
+                var x3 = locationData[k].xf;
+                var y3 = locationData[k].yf;
                 var testRadius = MaximumEdgeLength(x1,y1,x2,y2,x3,y3);
                 if (testRadius <= cechRadius)
                 {
@@ -423,12 +423,12 @@ function constructRips(cechCanvas) {
     //Edges second
     for (var i = 0; i < numSamples; i++)
     {
-        var x1 = xp[i];
-        var y1 = yp[i];
+        var x1 = locationData[i].xf;
+        var y1 = locationData[i].yf;
         for (var j = i+1; j < numSamples; j++)
         {
-            var x2 = xp[j];
-            var y2 = yp[j];
+            var x2 = locationData[j].xf;
+            var y2 = locationData[j].yf;
             var sqDistance = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
             var sqDiameter = 4*Math.pow(cechRadius,2);
             if(sqDistance < sqDiameter)
@@ -447,31 +447,65 @@ function constructRips(cechCanvas) {
     }
 
     //Points third
-    for (var i = 0; i < numSamples; i++)
-    {
-        var x = xp[i];
-        var y = yp[i];
+    // for (var i = 0; i < numSamples; i++)
+    // {
+    //     var x = xp[i];
+    //     var y = yp[i];
+    //
+    //     cechCircles.append("circle")
+    //         .attr("class", "circle")
+    //         .attr("r", 1e-6)
+    //         .attr("cx", x)
+    //         .attr("cy", y)
+    //         .attr("id","cech_Circle_"+i.toString())
+    //         // .transition()
+    //         .attr("r", cechRadius);
+    //
+    //     cechPoints.append("circle")
+    //         .attr("class", "point")
+    //         .attr("r", 1e-6)
+    //         .attr("cx", x)
+    //         .attr("cy", y)
+    //         .attr("id",'point'+i.toString())
+    //         .on("mouseover", complexMouseOver)
+    //         .on("mouseout", complexMouseOut)
+    //         // .transition()
+    //         .attr("r", 5);
+    // }
 
-        cechCircles.append("circle")
-            .attr("class", "circle")
-            .attr("r", 1e-6)
-            .attr("cx", x)
-            .attr("cy", y)
-            .attr("id","cech_Circle_"+i.toString())
-            // .transition()
-            .attr("r", cechRadius);
+    cechPoints.selectAll('circle').data(locationData)
+        .enter()
+        .append('circle')
+        .attr("class", "point")
+        .attr("r", 1e-6)
+        .attr("cx", function (d) {
+            return d.xf;
+        })
+        .attr("cy", function (d) {
+            return d.yf;
+        })
+        .attr("id", function (d, i) {
+            return 'rips_Point_' + i.toString();
+        })
+        .on("mouseover", complexMouseOver)
+        .on("mouseout", complexMouseOut)
+        .attr("r", 5);
 
-        cechPoints.append("circle")
-            .attr("class", "point")
-            .attr("r", 1e-6)
-            .attr("cx", x)
-            .attr("cy", y)
-            .attr("id",'point'+i.toString())
-            .on("mouseover", complexMouseOver)
-            .on("mouseout", complexMouseOut)
-            // .transition()
-            .attr("r", 5);
-    }
+    cechCircles.selectAll('circle').data(locationData)
+        .enter()
+        .append('circle')
+        .attr("class", "circle")
+        .attr("r", 1e-6)
+        .attr("cx", function (d) {
+            return d.xf;
+        })
+        .attr("cy", function (d) {
+            return d.yf;
+        })
+        .attr("id", function (d, i) {
+            return 'rips_Circle_' + i.toString();
+        })
+        .attr("r", cechRadius);
 }
 
 
@@ -573,22 +607,20 @@ function moveNode() {
 }
 
 function getLocation(selectedNode) {
-    window.alert('Select the new location')
+    window.alert('Select the new location. Press any key to update.')
     cechCanvas.attr('cursor','crosshair')
         .on('click', function () {
             coords = d3.mouse(this);
             updateLocation(coords);
-        })
+        });
 }
 
 function updateLocation(coords) {
     locationData[selectedNode].xf = coords[0];
     locationData[selectedNode].yf = coords[1];
     updateCech(document.getElementById("cechInput").value);
-    console.log('done');
-    resetCanvas();
-}
-
-function resetCanvas() {
-    console.log('here');
+    window.addEventListener('keypress', function (evt) {
+        cechCanvas.attr('cursor',null)
+            .on('click',null);
+    });
 }
