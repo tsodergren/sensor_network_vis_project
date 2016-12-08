@@ -3,13 +3,13 @@
  * Created by Tim on 11/10/2016.
  */
 <!-- Common variables and functions used by all of the example plots -->
-var width = 1280;          //Width of each plot
-var height = 720;         //Height of each plot
+var width = 800;          //Width of each plot
+var height = 600;         //Height of each plot
 var buffer = 50;          //Buffer space to ensure points are adequately
                           // far from the edge of the plot
 var dataScale = d3.scaleLinear()
     .domain([0,300])
-    .range([0,720]);
+    .range([0,600]);
 
 var locationData;
 var xp=[];
@@ -29,6 +29,8 @@ var grid = new Array(gridWidth * gridHeight);
 function cmp(a,b) {
     return a[0] - b[0];
 }
+
+console.log(document.getElementById("cechCanvas"))
 
 function updateCech(newValue) {
     document.getElementById("cechRadius").innerHTML=newValue;
@@ -223,6 +225,7 @@ function constructCech(cechCanvas) {
     var cechFaces = cechCanvas.append("g").attr("class", "face");
     var cechEdges = cechCanvas.append("g").attr("class", "edge");
     var cechPoints = cechCanvas.append("g").attr("class", "point");
+    // console.log(cechCanvas)
 
 
     //Faces first
@@ -542,7 +545,7 @@ function randomData() {
     locationData = [];
 
     for (i=0; i<numSamples; i++) {
-        x = dataScale(getRndInteger(50, 475));
+        x = dataScale(getRndInteger(50, 330));
         y = dataScale(getRndInteger(50, 250));
         var newPoint = {LocationID: i, xf: x, yf: y};
         locationData.push(newPoint);
@@ -623,4 +626,13 @@ function updateLocation(coords) {
         cechCanvas.attr('cursor',null)
             .on('click',null);
     });
+}
+
+function myMap() {
+    var mapCanvas = document.getElementById("map");
+    var mapOptions = {
+        center: new google.maps.LatLng(40.762,-111.839),
+        zoom: 16
+    };
+    var map = new google.maps.Map(mapCanvas, mapOptions);
 }
