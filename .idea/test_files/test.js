@@ -1,29 +1,37 @@
-/**
- * Created by Tim on 11/11/2016.
- */
-var locationData;
+var today = new Date();
+var s1 = today.getSeconds();
+x = returnComb();
+today = new Date();
+var s2 = today.getSeconds();
+d = s2-s1;
+console.log(x)
 
-loadData();
-// test();
+function returnComb() {
 
-console.log(locationData);
+    function comb(n, lst) {
+        if (!n) return [[]];
+        if (!lst.length) return [];
 
-function test() {
-    console.log(locationData);
-}
+        var x = lst[0],
+            xs = lst.slice(1);
 
-function loadData() {
+        return comb(n - 1, xs).map(function (t) {
+            return [x].concat(t);
+        }).concat(comb(n, xs));
+    }
 
-    d3.csv("locations.csv", function (csv) {
 
-        locationData = csv.forEach(function (d) {
-
-            // Convert numeric values to 'numbers'
-            d.xf = +d.xf;
-            d.yf = +d.yf;
+    // [m..n]
+    function range(m, n) {
+        return Array.apply(null, Array(n - m + 1)).map(function (x, i) {
+            return m + i;
         });
-        locationData = csv;
-        test();
-    });
+    }
 
-}
+    return comb(3, range(0, 5))
+
+        .map(function (x) {
+            return x.join(' ');
+        }).join('\n');
+
+};
