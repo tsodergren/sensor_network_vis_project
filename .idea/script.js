@@ -42,7 +42,7 @@ function updateCech(newValue) {
 function updateRips(newValue) {
     document.getElementById("cechRadius").innerHTML=newValue;
     cechRadius=newValue;
-    constructRips(d3.select('body').select('#cechCanvas'));
+    constructRips(d3.select('body').select('#ripsCanvas'));
     console.log('updateRips');
 }
 
@@ -364,7 +364,7 @@ function constructCech(cechCanvas) {
 
 }
 
-function constructRips(cechCanvas) {
+function constructRips(ripsCanvas) {
     cechCanvas.selectAll('.circle').remove();
     cechCanvas.selectAll('.face').remove();
     cechCanvas.selectAll('.edge').remove();
@@ -533,7 +533,7 @@ function loadData() {
         // });
         numSamples = locationData.length;
         updateCech(document.getElementById("cechInput").value);
-        // updateRips(document.getElementById("cechInput").value);
+        updateRips(document.getElementById("cechInput").value);
     });
 }
 

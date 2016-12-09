@@ -27,8 +27,9 @@
   <button type="button" onclick="moveNode()">Move node</button>
 </form>
 
-<h2 class="header"><span id="plotHeader">&#268;ech Complex</span></h2>
 <p class="body">Radius:<input type="range" id='cechInput' min="5" max="120" value="120" step="1" oninput="changeComplex(complexType)" /><span id="cechRadius"></span></p>
+<br>
+<h2 class="header"><span id="plotHeader">&#268;ech Complex</span></h2>
 <span id="plotArea">
   <script>
   var cechCanvas = d3.select("body").append("svg")
@@ -36,7 +37,6 @@
           .attr("id", "cechCanvas")
           .attr("width", width)
           .attr("height", height)
-          .attr("viewBox", "0 0 800 600")
           .style("display", "block")
           .style("margin", "auto")
           .style("border", "1px solid black");
@@ -50,12 +50,36 @@
                           .map(function(y) { return "M0," + Math.round(y) + "H" + width; })
                           .join(""));
   console.log(cechCanvas)
+      </script>
+</span>
+
+<span id="plotArea2">
+  <br>
+  <h2 class="header"><span id="plotHeader">Rips Complex</span></h2>
+<script>
+  var ripsCanvas = d3.select("body").append("svg")
+      .attr("class", "cech")
+      .attr("id", "ripsCanvas")
+      .attr("width", width)
+      .attr("height", height)
+      .style("display", "block")
+      .style("margin", "auto")
+      .style("border", "1px solid black");
+
+  ripsCanvas.append("path")
+      .attr("class", "grid")
+      .attr("d", d3.range(cellSize, width, cellSize)
+              .map(function(x) { return "M" + Math.round(x) + ",0V" + height; })
+              .join("")
+          + d3.range(cellSize, height, cellSize)
+              .map(function(y) { return "M0," + Math.round(y) + "H" + width; })
+              .join(""));
 </script>
   </span>
 
-  <div id="map" style="width:100%;height:500px"></div>
+  <!--<div id="map" style="width:100%;height:500px"></div>-->
 
-  <script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyAEbQqRi_xyHg8KrmhP9rRrUBi6BAn9yQ8&callback=myMap"></script>
+  <!--<script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyAEbQqRi_xyHg8KrmhP9rRrUBi6BAn9yQ8&callback=myMap"></script>-->
 
 </body>
 </html>
