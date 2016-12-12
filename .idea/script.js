@@ -42,7 +42,7 @@ function updateCech(newValue) {
 function updateRips(newValue) {
     document.getElementById("cechRadius").innerHTML=newValue;
     cechRadius=newValue;
-    constructRips(d3.select('body').select('#ripsCanvas'));
+    constructRips(d3.select('body').select('#cechCanvas'));
     console.log('updateRips');
 }
 
@@ -364,7 +364,7 @@ function constructCech(cechCanvas) {
 
 }
 
-function constructRips(ripsCanvas) {
+function constructRips(cechCanvas) {
     cechCanvas.selectAll('.circle').remove();
     cechCanvas.selectAll('.face').remove();
     cechCanvas.selectAll('.edge').remove();
@@ -488,7 +488,7 @@ function constructRips(ripsCanvas) {
             return d.yf;
         })
         .attr("id", function (d, i) {
-            return 'rips_Point_' + i.toString();
+            return 'cech_Point_' + i.toString();
         })
         .on("mouseover", complexMouseOver)
         .on("mouseout", complexMouseOut)
@@ -506,7 +506,7 @@ function constructRips(ripsCanvas) {
             return d.yf;
         })
         .attr("id", function (d, i) {
-            return 'rips_Circle_' + i.toString();
+            return 'cech_Circle_' + i.toString();
         })
         .attr("r", cechRadius);
 }
@@ -533,7 +533,6 @@ function loadData() {
         // });
         numSamples = locationData.length;
         updateCech(document.getElementById("cechInput").value);
-        updateRips(document.getElementById("cechInput").value);
     });
 }
 
@@ -635,4 +634,30 @@ function myMap() {
         zoom: 16
     };
     var map = new google.maps.Map(mapCanvas, mapOptions);
+}
+
+function showCoverage() {
+    colorOn = '#c33'
+    pointColor = colorOn;
+    fillColor = colorOn;
+    fillOpacity = '0.25';
+    strokeColor = colorOn;
+    strokeOpacity = '0.25';
+    cechCanvas.selectAll('.circle')
+        .transition()
+        .style("fill", fillColor)
+        .style("fill-opacity", fillOpacity)
+        .style("stroke", strokeColor)
+        .style("stroke-opacity", strokeOpacity);
+
+    hideComplex();
+}
+
+function hideComplex() {
+    d3.selectAll(".point")
+        .style("visibility", "hidden");
+    d3.selectAll(".edge")
+        .style("visibility", "hidden");
+    d3.selectAll(".face")
+        .style("visibility", "hidden");
 }

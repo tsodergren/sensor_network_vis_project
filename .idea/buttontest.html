@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>svg button</title>
+<body>
+<style>
+
+    body {
+        font-family: Univers, Arial, sans-serif;
+    }
+
+    .button rect {
+        stroke: #1f628d;
+        stroke-width: 2px;
+    }
+
+    .button #gradient-start {
+        /*  stop-color: #3498db; */
+        stop-color: #4d9fb6; /* 70% */
+        stop-opacity: 1;
+    }
+
+    .button #gradient-stop {
+        /*  stop-color: #2980b9; */
+        stop-color: #1a84a2; /* 100% */
+        stop-opacity: 1;
+    }
+
+    .button #gradient-start.active {
+        /*  stop-color: #3cb0fd; */
+        stop-color: #99c8d5; /* 40% */
+    }
+
+    .button #gradient-stop.active {
+        /*  stop-color: #3498db; */
+        stop-color: #4d9fb6; /* 70% */
+    }
+
+    .button text {
+        font-size: 30px;
+        fill: #eee;
+        pointer-events: none;
+        text-anchor: middle;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+    }
+
+</style>
+<body>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="button.js"></script>
+<script>
+
+    var width = 960,
+        height = 500;
+
+    var svg = d3.select('body').append('svg')
+        .attr('width', width)
+        .attr('height', height)
+
+    var g = svg.append('g')
+        .attr('class', 'button')
+        .attr('transform', 'translate(' + [width / 2, height / 2] +')')
+
+    var g2 = svg.append('g')
+        .attr('class', 'button')
+        .attr('transform', 'translate(' + [width / 4, height / 4] +')')
+
+    var text = g.append('text')
+        .text('Click me')
+
+    var text2 = g2.append('text')
+        .text('Click me too')
+
+    button()
+        .container(g)
+        .text(text)
+        .count(0)
+        .cb(function() { console.log("I've been clicked!") })();
+
+    // Button "count" keeps things unique
+    button()
+        .container(g2)
+        .text(text2)
+        .count(1)
+        .cb(function() { console.log("I've been clicked too!") })();
+
+</script>
