@@ -20,15 +20,15 @@
   <tr>
     <td id="plotArea" width="800px" style="border: 1px solid black; background-color: white" rowspan="2">
       <script>
-          var cechCanvas = d3.select("#plotArea").append("svg")
+          var complexCanvas = d3.select("#plotArea").append("svg")
               .attr("class", "cech")
-              .attr("id", "cechCanvas")
+              .attr("id", "complexCanvas")
               .attr("width", width)
               .attr("height", height)
               .style("margin", "auto")
               .style("border", "1px solid black");
 
-          cechCanvas.append("path")
+          complexCanvas.append("path")
               .attr("class", "grid")
               .attr("d", d3.range(cellSize, width, cellSize)
                       .map(function(x) { return "M" + Math.round(x) + ",0V" + height; })
@@ -40,27 +40,35 @@
     </td>
     <td style="vertical-align: top; padding: 20px; border: 1px solid black">
       <h3>Control Panel</h3>
-      <p>Radius:<input type="range" id='cechInput' min="5" max="120" value="100" step="1" oninput="changeComplex(complexType)" /><span id="cechRadius"></span></p>
+      <p>Radius:<input type="range" id='complexInput' min="5" max="120" value="100" step="1" oninput="changeComplex(complexType)" /><span id="complexRadius"></span></p>
       <form>
         <p>
-          <label for="complexType">Complex Type</label>
-          <select name="complexType" id="complexType" onchange="changeComplex(this.value)">
-            <option value="cech">Cech</option>
-            <option value="rips">Rips</option>
-          </select>
+          Complex type:
+          <input type="radio" name="complexType" value="cech" onchange="changeComplex()" checked>&#268;ech
+          <input type="radio" name="complexType" value="rips" onchange="changeComplex()">Rips-Vietoris
+          <!--<label for="complexType">Complex Type</label>-->
+          <!--<select name="complexType" id="complexType" onchange="changeComplex(this.value)">-->
+            <!--<option value="cech">Cech</option>-->
+            <!--<option value="rips">Rips</option>-->
+          <!--</select>-->
+        </p>
         <p>
         <input id="fileSelector" type="file" onchange="loadData()">
-
+        </p>
         <p>
           <button type="button" onclick="randomData()">Generate random data</button>
           # sensors:
           <input type="number" name="numSensors" id="numSensors" value="20" min="1" max="1000">
+        </p>
         <p>
           <button type="button" onclick="addNode()">Add node</button>
+        </p>
         <p>
           <button type="button" onclick="deleteNode()">Delete node</button>
+        </p>
         <p>
           <button type="button" onclick="moveNode()">Move node</button>
+        </p>
       </form>
     </td>
   </tr>

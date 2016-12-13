@@ -17,8 +17,8 @@ var yp=[];
 var complexType = 'cech';
 
 var numSamples = 12;      //Number of points to use
-var cechRadius = 50;          //epsilon ball radius
-cechRadius = dataScale(cechRadius);
+var complexRadius = 50;          //epsilon ball radius
+complexRadius = dataScale(complexRadius);
 
 //background grid information
 var cellSize = 50;
@@ -32,16 +32,15 @@ function cmp(a,b) {
 }
 
 function updateCech(newValue) {
-    document.getElementById("cechRadius").innerHTML=newValue;
-    cechRadius=newValue;
-    constructCech(d3.select('body').select('#cechCanvas'));
+    document.getElementById("complexRadius").innerHTML=newValue;
+    complexRadius=newValue;
+    constructCech(d3.select('body').select('#complexCanvas'));
 }
 
 function updateRips(newValue) {
-    document.getElementById("cechRadius").innerHTML=newValue;
-    cechRadius=newValue;
-    constructRips(d3.select('body').select('#cechCanvas'));
-    console.log('updateRips');
+    document.getElementById("complexRadius").innerHTML=newValue;
+    complexRadius=newValue;
+    constructRips(d3.select('body').select('#complexCanvas'));
 }
 
 function minimumEnclosingBallRadius(x1,y1,x2,y2,x3,y3) {
@@ -91,24 +90,6 @@ function MaximumEdgeLength(x1,y1,x2,y2,x3,y3){
     return Math.max(a,b,c)/2.;
 }
 
-function resetAll() {
-    d3.selectAll(".point")
-        .transition()
-        .style("fill", "#000");
-    d3.selectAll(".edge")
-        .transition()
-        .style("stroke", "#000");
-    d3.selectAll(".face")
-        .transition()
-        .style("fill", "#000");
-    d3.selectAll(".circle")
-        .transition()
-        .style("fill", "#fff")
-        .style("fill-opacity", "0")
-        .style("stroke", "#000")
-        .style("stroke-opacity", ".15");
-}
-
 function complexMouseOut(d) {
     toggleItem(this.id.toString(),false);
 }
@@ -122,7 +103,7 @@ function toggleItem(item, highlighted) {
     colorOn = '#c33'
     colorOff = '#000'
     var tokens = item.split('_');
-    radius = cechRadius;
+    radius = complexRadius;
 
     //Point highlighted
     if (tokens.length == 3) {
@@ -218,16 +199,16 @@ function toggleNeighbor(base,i,highlighted) {
         .style("stroke-opacity", strokeOpacity);
 }
 
-function constructCech(cechCanvas) {
-    cechCanvas.selectAll('.circle').remove();
-    cechCanvas.selectAll('.face').remove();
-    cechCanvas.selectAll('.edge').remove();
-    cechCanvas.selectAll('.point').remove();
-    var cechCircles = cechCanvas.append("g").attr("class", "circle");
-    var cechFaces = cechCanvas.append("g").attr("class", "face");
-    var cechEdges = cechCanvas.append("g").attr("class", "edge");
-    var cechPoints = cechCanvas.append("g").attr("class", "point");
-    // console.log(cechCanvas)
+function constructCech(complexCanvas) {
+    complexCanvas.selectAll('.circle').remove();
+    complexCanvas.selectAll('.face').remove();
+    complexCanvas.selectAll('.edge').remove();
+    complexCanvas.selectAll('.point').remove();
+    var complexCircles = complexCanvas.append("g").attr("class", "circle");
+    var complexFaces = complexCanvas.append("g").attr("class", "face");
+    var complexEdges = complexCanvas.append("g").attr("class", "edge");
+    var complexPoints = complexCanvas.append("g").attr("class", "point");
+    // console.log(complexCanvas)
 
 
     //Faces first
@@ -238,13 +219,13 @@ function constructCech(cechCanvas) {
             var x2 = locationData[j].xf;
             var y2 = locationData[j].yf;
             var sqDistance = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
-            var sqDiameter = 4 * Math.pow(cechRadius, 2);
+            var sqDiameter = 4 * Math.pow(complexRadius, 2);
             if (sqDistance < sqDiameter) {
                 for (var k = j + 1; k < numSamples; k++) {
                     var x3 = locationData[k].xf;
                     var y3 = locationData[k].yf;
                     var testRadius = minimumEnclosingBallRadius(x1, y1, x2, y2, x3, y3);
-                    if (testRadius <= cechRadius) {
+                    if (testRadius <= complexRadius) {
                         var idx1 = i;
                         var idx2 = j;
                         var idx3 = k;
@@ -266,10 +247,11 @@ function constructCech(cechCanvas) {
                             + idx2.toString() + "_"
                             + idx3.toString();
 
-                        cechFaces.append("polygon")
+                        complexFaces.append("polygon")
+                            .style('visibility','hidden')
                             .attr("points", pts)
                             .attr("class", "face")
-                            .attr("id", "cech_Face_" + idx)
+                            .attr("id", "complex_Face_" + idx)
                             .on("mouseout", complexMouseOut)
                             .on("mouseover", complexMouseOver);
                     }
@@ -286,51 +268,28 @@ function constructCech(cechCanvas) {
             var x2 = locationData[j].xf;
             var y2 = locationData[j].yf;
             var sqDistance = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
-            var sqDiameter = 4 * Math.pow(cechRadius, 2);
+            var sqDiameter = 4 * Math.pow(complexRadius, 2);
             if ((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) < sqDiameter) {
-                cechEdges.append("line")
+                complexEdges.append("line")
+                    .style('visibility','hidden')
                     .attr("class", "edge")
                     .attr("x1", x1)
                     .attr("y1", y1)
                     .attr("x2", x2)
                     .attr("y2", y2)
-                    .attr("id", "cech_Edge_" + i.toString() + "_" + j.toString())
+                    .attr("id", "complex_Edge_" + i.toString() + "_" + j.toString())
                     .on("mouseout", complexMouseOut)
                     .on("mouseover", complexMouseOver);
             }
         }
     }
 
-    // // Points third
-    // for (var i = 0; i < numSamples; i++)
-    // {
-    //     var x = xp[i];
-    //     var y = yp[i];
-    //
-    //     cechCircles.append("circle")
-    //         .attr("class", "circle")
-    //         .attr("r", 1e-6)
-    //         .attr("cx", x)
-    //         .attr("cy", y)
-    //         .attr("id","cech_Circle_"+i.toString())
-    //         // .transition()
-    //         .attr("r", cechRadius);
-    //
-    //     cechPoints.append("circle")
-    //         .attr("class", "point")
-    //         .attr("r", 1e-6)
-    //         .attr("cx", x)
-    //         .attr("cy", y)
-    //         .attr("id",'point'+i.toString())
-    //         .on("mouseover", complexMouseOver)
-    //         .on("mouseout", complexMouseOut)
-    //         // .transition()
-    //         .attr("r", 5);
-    // }
+    //Points third
 
-    cechPoints.selectAll('circle').data(locationData)
+    complexPoints.selectAll('circle').data(locationData)
         .enter()
         .append('circle')
+        .style('visibility','hidden')
         .attr("class", "point")
         .attr("r", 1e-6)
         .attr("cx", function (d) {
@@ -340,15 +299,17 @@ function constructCech(cechCanvas) {
             return d.yf;
         })
         .attr("id", function (d, i) {
-            return 'cech_Point_' + i.toString();
+            return 'complex_Point_' + i.toString();
         })
         .on("mouseover", complexMouseOver)
         .on("mouseout", complexMouseOut)
-        .attr("r", 5);
+        .attr("r", 5)
+        .call(d3.drag().on('drag', testfun));
 
-    cechCircles.selectAll('circle').data(locationData)
+    complexCircles.selectAll('circle').data(locationData)
         .enter()
         .append('circle')
+        .style('visibility','hidden')
         .attr("class", "circle")
         .attr("r", 1e-6)
         .attr("cx", function (d) {
@@ -358,23 +319,23 @@ function constructCech(cechCanvas) {
             return d.yf;
         })
         .attr("id", function (d, i) {
-            return 'cech_Circle_' + i.toString();
+            return 'complex_Circle_' + i.toString();
         })
-        .attr("r", cechRadius);
+        .attr("r", complexRadius);
 
-
+    renderView();
 
 }
 
-function constructRips(cechCanvas) {
-    cechCanvas.selectAll('.circle').remove();
-    cechCanvas.selectAll('.face').remove();
-    cechCanvas.selectAll('.edge').remove();
-    cechCanvas.selectAll('.point').remove();
-    var cechCircles = cechCanvas.append("g").attr("class", "circle");
-    var cechFaces = cechCanvas.append("g").attr("class", "face");
-    var cechEdges = cechCanvas.append("g").attr("class", "edge");
-    var cechPoints = cechCanvas.append("g").attr("class", "point");
+function constructRips(complexCanvas) {
+    complexCanvas.selectAll('.circle').remove();
+    complexCanvas.selectAll('.face').remove();
+    complexCanvas.selectAll('.edge').remove();
+    complexCanvas.selectAll('.point').remove();
+    var complexCircles = complexCanvas.append("g").attr("class", "circle");
+    var complexFaces = complexCanvas.append("g").attr("class", "face");
+    var complexEdges = complexCanvas.append("g").attr("class", "edge");
+    var complexPoints = complexCanvas.append("g").attr("class", "point");
 
     //Faces first
     for (var i = 0; i < numSamples; i++)
@@ -390,7 +351,7 @@ function constructRips(cechCanvas) {
                 var x3 = locationData[k].xf;
                 var y3 = locationData[k].yf;
                 var testRadius = MaximumEdgeLength(x1,y1,x2,y2,x3,y3);
-                if (testRadius <= cechRadius)
+                if (testRadius <= complexRadius)
                 {
                     var idx1 = i;
                     var idx2 = j;
@@ -414,10 +375,11 @@ function constructRips(cechCanvas) {
                         + idx2.toString() + "_"
                         + idx3.toString();
 
-                    cechFaces.append("polygon")
+                    complexFaces.append("polygon")
+                        .style('visibility','hidden')
                         .attr("class","face")
                         .attr("points",pts)
-                        .attr("id","cech_Face_"+idx)
+                        .attr("id","complex_Face_"+idx)
                         .on("mouseout", complexMouseOut)
                         .on("mouseover",complexMouseOver);
                 }
@@ -435,52 +397,27 @@ function constructRips(cechCanvas) {
             var x2 = locationData[j].xf;
             var y2 = locationData[j].yf;
             var sqDistance = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
-            var sqDiameter = 4*Math.pow(cechRadius,2);
+            var sqDiameter = 4*Math.pow(complexRadius,2);
             if(sqDistance < sqDiameter)
             {
-                cechEdges.append("line")
+                complexEdges.append("line")
+                    .style('visibility','hidden')
                     .attr("class","edge")
                     .attr("x1",x1)
                     .attr("y1",y1)
                     .attr("x2",x2)
                     .attr("y2",y2)
-                    .attr("id","cech_Edge_"+i.toString()+"_"+j.toString())
+                    .attr("id","complex_Edge_"+i.toString()+"_"+j.toString())
                     .on("mouseout", complexMouseOut)
                     .on("mouseover",complexMouseOver);
             }
         }
     }
 
-    //Points third
-    // for (var i = 0; i < numSamples; i++)
-    // {
-    //     var x = xp[i];
-    //     var y = yp[i];
-    //
-    //     cechCircles.append("circle")
-    //         .attr("class", "circle")
-    //         .attr("r", 1e-6)
-    //         .attr("cx", x)
-    //         .attr("cy", y)
-    //         .attr("id","cech_Circle_"+i.toString())
-    //         // .transition()
-    //         .attr("r", cechRadius);
-    //
-    //     cechPoints.append("circle")
-    //         .attr("class", "point")
-    //         .attr("r", 1e-6)
-    //         .attr("cx", x)
-    //         .attr("cy", y)
-    //         .attr("id",'point'+i.toString())
-    //         .on("mouseover", complexMouseOver)
-    //         .on("mouseout", complexMouseOut)
-    //         // .transition()
-    //         .attr("r", 5);
-    // }
-
-    cechPoints.selectAll('circle').data(locationData)
+    complexPoints.selectAll('circle').data(locationData)
         .enter()
         .append('circle')
+        .style('visibility','hidden')
         .attr("class", "point")
         .attr("r", 1e-6)
         .attr("cx", function (d) {
@@ -490,15 +427,16 @@ function constructRips(cechCanvas) {
             return d.yf;
         })
         .attr("id", function (d, i) {
-            return 'cech_Point_' + i.toString();
+            return 'complex_Point_' + i.toString();
         })
         .on("mouseover", complexMouseOver)
         .on("mouseout", complexMouseOut)
         .attr("r", 5);
 
-    cechCircles.selectAll('circle').data(locationData)
+    complexCircles.selectAll('circle').data(locationData)
         .enter()
         .append('circle')
+        .style('visibility','hidden')
         .attr("class", "circle")
         .attr("r", 1e-6)
         .attr("cx", function (d) {
@@ -508,9 +446,11 @@ function constructRips(cechCanvas) {
             return d.yf;
         })
         .attr("id", function (d, i) {
-            return 'cech_Circle_' + i.toString();
+            return 'complex_Circle_' + i.toString();
         })
-        .attr("r", cechRadius);
+        .attr("r", complexRadius);
+
+    renderView();
 }
 
 
@@ -533,16 +473,16 @@ function loadData() {
         });
         locationData = csv;
         numSamples = locationData.length;
-        updateCech(document.getElementById("cechInput").value);
 
-        d3.selectAll(".viewCheckbox")
-            .each(function() {
-                this.disabled=0;
-            });
-
-        document.getElementById("nodeCheckbox").checked = 1;
-        document.getElementById("edgeCheckbox").checked = 1;
-        document.getElementById("faceCheckbox").checked = 1;
+        c = document.getElementById('coverCheckbox');
+        c.disabled = false;
+        c.checked = true;
+        n = document.getElementById('nodeCheckbox');
+        n.disabled = false;
+        n.checked = true;
+        document.getElementById('edgeCheckbox').disabled = 0;
+        document.getElementById('faceCheckbox').disabled = 0;
+        changeComplex();
     });
 }
 }
@@ -561,19 +501,15 @@ function randomData() {
         locationData.push(newPoint);
     }
 
-    document.getElementById('complexType').value = 'cech';
-
-
-    updateCech(document.getElementById("cechInput").value);
-
-    d3.selectAll(".viewCheckbox")
-        .each(function() {
-            this.disabled=0;
-        });
-
-    document.getElementById("nodeCheckbox").checked = 1;
-    document.getElementById("edgeCheckbox").checked = 1;
-    document.getElementById("faceCheckbox").checked = 1;
+    c = document.getElementById('coverCheckbox');
+    c.disabled = false;
+    c.checked = true;
+    n = document.getElementById('nodeCheckbox');
+    n.disabled = false;
+    n.checked = true;
+    document.getElementById('edgeCheckbox').disabled = 0;
+    document.getElementById('faceCheckbox').disabled = 0;
+    changeComplex();
 
 }
 
@@ -581,20 +517,37 @@ function getRndInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1) ) + min;
 }
 
-function changeComplex(value) {
+function changeComplex() {
 
-    complexType = value;
-    if (complexType=="cech") {
-        updateCech(document.getElementById("cechInput").value);
+    d = document.getElementsByName('complexType');
+    console.log(d)
+    if (d[0].checked) {
+        updateCech(document.getElementById("complexInput").value);
+        console.log('cech')
     } else {
-        updateRips(document.getElementById("cechInput").value);
+        console.log('rips')
+        updateRips(document.getElementById("complexInput").value);
     }
+}
+
+function renderView() {
+
+    console.log('render')
+
+    f = document.getElementById('coverCheckbox');
+    showCoverage(f.checked);
+    f = document.getElementById('nodeCheckbox');
+    show(f.checked,'.point');
+    f = document.getElementById('edgeCheckbox');
+    show(f.checked,'.edge');
+    f = document.getElementById('faceCheckbox');
+    show(f.checked,'.face');
 
 }
 
 function addNode() {
 
-    cechCanvas.attr('cursor','crosshair')
+    complexCanvas.attr('cursor','crosshair')
         .on('click',function () {
             coords = d3.mouse(this);
             updateNode(coords);
@@ -606,8 +559,8 @@ function updateNode(coords) {
     var newPoint = {LocationID: i, xf: coords[0], yf: coords[1]};
     locationData.push(newPoint);
     numSamples = numSamples+1;
-    updateCech(document.getElementById("cechInput").value);
-    cechCanvas.attr('cursor',null)
+    updateCech(document.getElementById("complexInput").value);
+    complexCanvas.attr('cursor',null)
         .on('click',null);
 }
 
@@ -617,7 +570,7 @@ function deleteNode() {
             selectedNode = +this.id.match(/\d+/g);
             locationData.splice(selectedNode,1);
             numSamples = locationData.length;
-            updateCech(document.getElementById("cechInput").value);
+            updateCech(document.getElementById("complexInput").value);
         });
 }
 
@@ -631,7 +584,7 @@ function moveNode() {
 
 function getLocation(selectedNode) {
     window.alert('Select the new location. Press any key to update.')
-    cechCanvas.attr('cursor','crosshair')
+    complexCanvas.attr('cursor','crosshair')
         .on('click', function () {
             coords = d3.mouse(this);
             updateLocation(coords);
@@ -641,9 +594,9 @@ function getLocation(selectedNode) {
 function updateLocation(coords) {
     locationData[selectedNode].xf = coords[0];
     locationData[selectedNode].yf = coords[1];
-    updateCech(document.getElementById("cechInput").value);
+    updateCech(document.getElementById("complexInput").value);
     window.addEventListener('keypress', function (evt) {
-        cechCanvas.attr('cursor',null)
+        complexCanvas.attr('cursor',null)
             .on('click',null);
     });
 }
@@ -662,17 +615,18 @@ function showCoverage(d) {
     if (d) {
         fillColor = "#808080";
         fillOpacity = '0.25';
-        cechCanvas.selectAll('.circle')
+        complexCanvas.selectAll('.circle')
             .transition()
+            .style('visibility','visible')
             .style("fill", fillColor)
             .style("fill-opacity", fillOpacity);
         if (document.getElementById('nodeCheckbox').checked) {
-            cechCanvas.selectAll('circle')
+            complexCanvas.selectAll('circle')
                 .style("stroke","#000")
                 .style("stroke-opacity",0.15);
         }
     } else {
-        cechCanvas.selectAll('.circle')
+        complexCanvas.selectAll('.circle')
             .transition()
             .style("fill", "none");
     }
@@ -680,6 +634,23 @@ function showCoverage(d) {
 
 function show(state, type) {
     if (state) {str='visible'} else {str='hidden'};
-    cechCanvas.selectAll(type)
+    complexCanvas.selectAll(type)
         .style('visibility', str);
+}
+
+//this is a testfunction for routing actions through without having to edit the actual functions
+function testfun() {
+
+    var x = d3.event.x;
+    var y = d3.event.y;
+    d3.select(this).attr("cx", x).attr("cy", y);
+
+    t = this.id;
+    var myRe = /(\d+)/;
+    var myArray = myRe.exec(t);
+    var ind = parseInt(myArray[0]);
+
+    locationData[ind].xf = x;
+    locationData[ind].yf = y;
+    changeComplex();
 }
