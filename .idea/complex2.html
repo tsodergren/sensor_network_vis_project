@@ -7,6 +7,8 @@
   <!-- Scripts -->
   <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
   <script src="https://d3js.org/d3-dsv.v1.min.js"></script>
+  <script src="https://d3js.org/d3-dispatch.v1.min.js"></script>
+  <script src="//maps.google.com/maps/api/js?key=AIzaSyAEbQqRi_xyHg8KrmhP9rRrUBi6BAn9yQ8"></script>
   <script src="button.js"></script>
   <script src="script.js"></script>
   <link rel="stylesheet" type="text/css" href="styles.css">
@@ -14,59 +16,62 @@
 <body>
 <h1 id="site-title">Network Coverage</h1>
 
-
-
-<br>
-<h2 class="header"><span id="plotHeader">&#268;ech Complex</span></h2>
 <table>
   <tr>
-  <td id="plotArea" width="800px" style="border: 1px solid black; background-color: white">
-    <script>
-        var cechCanvas = d3.select("#plotArea").append("svg")
-            .attr("class", "cech")
-            .attr("id", "cechCanvas")
-            .attr("width", width)
-            .attr("height", height)
-            .style("margin", "auto")
-            .style("border", "1px solid black");
+    <td id="plotArea" width="800px" style="border: 1px solid black; background-color: white" rowspan="2">
+      <script>
+          var cechCanvas = d3.select("#plotArea").append("svg")
+              .attr("class", "cech")
+              .attr("id", "cechCanvas")
+              .attr("width", width)
+              .attr("height", height)
+              .style("margin", "auto")
+              .style("border", "1px solid black");
 
-        cechCanvas.append("path")
-            .attr("class", "grid")
-            .attr("d", d3.range(cellSize, width, cellSize)
-                    .map(function(x) { return "M" + Math.round(x) + ",0V" + height; })
-                    .join("")
-                + d3.range(cellSize, height, cellSize)
-                    .map(function(y) { return "M0," + Math.round(y) + "H" + width; })
-                    .join(""));
-    </script>
-  </td>
-  <td style="vertical-align: top; padding: 20px; border: 1px solid black">
-    <h3>Control Panel</h3>
-    <p class="body">Radius:<input type="range" id='cechInput' min="5" max="120" value="100" step="1" oninput="changeComplex(complexType)" /><span id="cechRadius"></span></p>
-    <form>
-      <p>
-      <label for="complexType">Complex Type</label>
-      <select name="complexType" onchange="changeComplex(this.value)">
-        <option value="cech">Cech</option>
-        <option value="rips">Rips</option>
-      </select>
-      <p>
-      <button type="button" onclick="loadData()">Load data from file</button>
-      <P>
-      <button type="button" onclick="randomData()">Generate random data</button>
-      # sensors:
-      <input type="number" name="numSensors" id="numSensors" value="20" min="1" max="100">
-      <p>
-      <button type="button" onclick="addNode()">Add node</button>
-      <p>
-      <button type="button" onclick="deleteNode()">Delete node</button>
-      <p>
-      <button type="button" onclick="moveNode()">Move node</button>
-      <p>
-      <button type="button" onclick="showCoverage()">Show coverage</button>
-    </form>
-  </td>
-</tr>
+          cechCanvas.append("path")
+              .attr("class", "grid")
+              .attr("d", d3.range(cellSize, width, cellSize)
+                      .map(function(x) { return "M" + Math.round(x) + ",0V" + height; })
+                      .join("")
+                  + d3.range(cellSize, height, cellSize)
+                      .map(function(y) { return "M0," + Math.round(y) + "H" + width; })
+                      .join(""));
+      </script>
+    </td>
+    <td style="vertical-align: top; padding: 20px; border: 1px solid black">
+      <h3>Control Panel</h3>
+      <p>Radius:<input type="range" id='cechInput' min="5" max="120" value="100" step="1" oninput="changeComplex(complexType)" /><span id="cechRadius"></span></p>
+      <form>
+        <p>
+          <label for="complexType">Complex Type</label>
+          <select name="complexType" id="complexType" onchange="changeComplex(this.value)">
+            <option value="cech">Cech</option>
+            <option value="rips">Rips</option>
+          </select>
+        <p>
+        <input id="fileSelector" type="file" onchange="loadData()">
+
+        <p>
+          <button type="button" onclick="randomData()">Generate random data</button>
+          # sensors:
+          <input type="number" name="numSensors" id="numSensors" value="20" min="1" max="1000">
+        <p>
+          <button type="button" onclick="addNode()">Add node</button>
+        <p>
+          <button type="button" onclick="deleteNode()">Delete node</button>
+        <p>
+          <button type="button" onclick="moveNode()">Move node</button>
+      </form>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 20px; border: 1px solid black">
+        <input type="checkbox" id="nodeCheckbox" class="viewCheckbox" disabled=1 onclick="show(this.checked, '.point')">Nodes</input>
+      <input type="checkbox" id="edgeCheckbox" class="viewCheckbox" disabled=1 onclick="show(this.checked, '.edge')">Edges</input>
+      <input type="checkbox" id="faceCheckbox" class="viewCheckbox" disabled=1 onclick="show(this.checked, '.face')">Faces</input>
+      <input type="checkbox" id="coverCheckbox" class="viewCheckbox" disabled=1 onclick="showCoverage(this.checked)">Coverage</input>
+    </td>
+  </tr>
 </table>
 
 <!--<div id="map" style="width:100%;height:500px"></div>-->

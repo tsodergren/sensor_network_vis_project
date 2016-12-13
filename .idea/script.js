@@ -26,17 +26,15 @@ var gridWidth = Math.ceil(width / cellSize);
 var gridHeight = Math.ceil(height / cellSize);
 var grid = new Array(gridWidth * gridHeight);
 
+
 function cmp(a,b) {
     return a[0] - b[0];
 }
-
-console.log(document.getElementById("cechCanvas"))
 
 function updateCech(newValue) {
     document.getElementById("cechRadius").innerHTML=newValue;
     cechRadius=newValue;
     constructCech(d3.select('body').select('#cechCanvas'));
-    console.log('not done')
 }
 
 function updateRips(newValue) {
@@ -185,6 +183,10 @@ function toggleItem(item, highlighted) {
         for (idx = 2; idx < tokens.length; idx++) {
             toggleNeighbor(tokens[0],parseInt(tokens[idx]),highlighted);
         }
+    }
+
+    if (!highlighted) {
+        if (document.getElementById('coverCheckbox').checked) showCoverage(1);
     }
 }
 
@@ -515,7 +517,12 @@ function constructRips(cechCanvas) {
 
 function loadData() {
 
-    d3.csv("locations.csv", function (csv) {
+    var selectedFile = document.getElementById('fileSelector');
+    var fReader = new FileReader();
+    fReader.readAsDataURL(selectedFile.files[0]);
+    fReader.onloadend = function(event) {
+
+    d3.csv(event.target.result, function (csv) {
 
         csv.forEach(function (d) {
 
@@ -525,15 +532,19 @@ function loadData() {
             d.yf = dataScale(+d.yf);
         });
         locationData = csv;
-        // xp = locationData.map( function (d) {
-        //     return dataScale(d.xf);
-        // });
-        // yp = locationData.map( function (d) {
-        //     return dataScale(d.yf)
-        // });
         numSamples = locationData.length;
         updateCech(document.getElementById("cechInput").value);
+
+        d3.selectAll(".viewCheckbox")
+            .each(function() {
+                this.disabled=0;
+            });
+
+        document.getElementById("nodeCheckbox").checked = 1;
+        document.getElementById("edgeCheckbox").checked = 1;
+        document.getElementById("faceCheckbox").checked = 1;
     });
+}
 }
 
 function randomData() {
@@ -549,8 +560,20 @@ function randomData() {
         var newPoint = {LocationID: i, xf: x, yf: y};
         locationData.push(newPoint);
     }
+
+    document.getElementById('complexType').value = 'cech';
+
+
     updateCech(document.getElementById("cechInput").value);
-    // updateRips(document.getElementById("ripsInput").value);
+
+    d3.selectAll(".viewCheckbox")
+        .each(function() {
+            this.disabled=0;
+        });
+
+    document.getElementById("nodeCheckbox").checked = 1;
+    document.getElementById("edgeCheckbox").checked = 1;
+    document.getElementById("faceCheckbox").checked = 1;
 
 }
 
@@ -562,11 +585,9 @@ function changeComplex(value) {
 
     complexType = value;
     if (complexType=="cech") {
-        document.getElementById("plotHeader").innerHTML='&#268;ech Complex';
         updateCech(document.getElementById("cechInput").value);
     } else {
         updateRips(document.getElementById("cechInput").value);
-        document.getElementById("plotHeader").innerHTML='Vietoris-Rips Complex';
     }
 
 }
@@ -636,28 +657,29 @@ function myMap() {
     var map = new google.maps.Map(mapCanvas, mapOptions);
 }
 
-function showCoverage() {
-    colorOn = '#c33'
-    pointColor = colorOn;
-    fillColor = colorOn;
-    fillOpacity = '0.25';
-    strokeColor = colorOn;
-    strokeOpacity = '0.25';
-    cechCanvas.selectAll('.circle')
-        .transition()
-        .style("fill", fillColor)
-        .style("fill-opacity", fillOpacity)
-        .style("stroke", strokeColor)
-        .style("stroke-opacity", strokeOpacity);
+function showCoverage(d) {
 
-    hideComplex();
+    if (d) {
+        fillColor = "#808080";
+        fillOpacity = '0.25';
+        cechCanvas.selectAll('.circle')
+            .transition()
+            .style("fill", fillColor)
+            .style("fill-opacity", fillOpacity);
+        if (document.getElementById('nodeCheckbox').checked) {
+            cechCanvas.selectAll('circle')
+                .style("stroke","#000")
+                .style("stroke-opacity",0.15);
+        }
+    } else {
+        cechCanvas.selectAll('.circle')
+            .transition()
+            .style("fill", "none");
+    }
 }
 
-function hideComplex() {
-    d3.selectAll(".point")
-        .style("visibility", "hidden");
-    d3.selectAll(".edge")
-        .style("visibility", "hidden");
-    d3.selectAll(".face")
-        .style("visibility", "hidden");
+function show(state, type) {
+    if (state) {str='visible'} else {str='hidden'};
+    cechCanvas.selectAll(type)
+        .style('visibility', str);
 }
