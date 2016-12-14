@@ -7,18 +7,19 @@ var width = 800;          //Width of each plot
 var height = 600;         //Height of each plot
 var buffer = 50;          //Buffer space to ensure points are adequately
                           // far from the edge of the plot
-var dataScale = d3.scaleLinear()
-    .domain([0,300])
-    .range([0,600]);
+// var dataScale = d3.scaleLinear()
+//     .domain([0,300])
+//     .range([0,600]);
 
+var filename = 'data.csv';
 var locationData;
 var xp=[];
 var yp=[];
 var complexType = 'cech';
 
 var numSamples = 12;      //Number of points to use
-var complexRadius = 50;          //epsilon ball radius
-complexRadius = dataScale(complexRadius);
+var complexRadius = 100;          //epsilon ball radius
+// complexRadius = dataScale(complexRadius);
 
 //background grid information
 var cellSize = 50;
@@ -309,7 +310,7 @@ function constructCech(complexCanvas) {
         .call(d3.drag()
             .on('drag', dragNode)
             .on('end', dragEnd))
-        .on('click', testfun);
+        .on('click', selectNode);
 
     complexCircles.selectAll('circle').data(locationData)
         .enter()
@@ -434,9 +435,13 @@ function constructRips(complexCanvas) {
         .attr('id', function (d, i) {
             return 'complex_Point_' + i.toString();
         })
+        .attr('r', 5)
         .on('mouseover', complexMouseOver)
         .on('mouseout', complexMouseOut)
-        .attr('r', 5);
+        .call(d3.drag()
+            .on('drag', dragNode)
+            .on('end', dragEnd))
+        .on('click', selectNode);
 
     complexCircles.selectAll('circle').data(locationData)
         .enter()
@@ -463,6 +468,7 @@ function loadData() {
     var selectedFile = document.getElementById('fileSelector');
     var fReader = new FileReader();
     fReader.readAsDataURL(selectedFile.files[0]);
+    filename = selectedFile.files[0].name;
     fReader.onloadend = function(event) {
 
         d3.csv(event.target.result, function (csv) {
@@ -471,10 +477,12 @@ function loadData() {
 
                 // Convert numeric values to 'numbers'
                 d.LocationID = +d.LocationID;
-                d.xf = dataScale(+d.xf);
-                d.yf = dataScale(+d.yf);
+                d.xf = +d.xf;
+                d.yf = +d.yf;
             });
             locationData = csv;
+            var csvContent = d3.csvFormat(locationData, ['LocationID', 'xf', 'yf']);
+            console.log(csvContent)
             numSamples = locationData.length;
 
             c = document.getElementById('coverCheckbox');
@@ -486,7 +494,9 @@ function loadData() {
             document.getElementById('edgeCheckbox').disabled = 0;
             document.getElementById('faceCheckbox').disabled = 0;
             changeComplex();
-                    });
+
+            testfun();
+        });
     }
 }
 
@@ -498,8 +508,8 @@ function randomData() {
     locationData = [];
 
     for (i=0; i<numSamples; i++) {
-        x = dataScale(getRndInteger(50, 330));
-        y = dataScale(getRndInteger(50, 250));
+        x = getRndInteger(100, 700);
+        y = getRndInteger(100, 500);
         var newPoint = {LocationID: i, xf: x, yf: y};
         locationData.push(newPoint);
     }
@@ -513,6 +523,28 @@ function randomData() {
     document.getElementById('edgeCheckbox').disabled = 0;
     document.getElementById('faceCheckbox').disabled = 0;
     changeComplex();
+}
+
+function saveData() {
+    var csvContent = d3.csvFormat(locationData, ['LocationID', 'xf', 'yf']);
+    console.log(csvContent)
+    var encodedUri = encodeURI(csvContent);
+    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    if (navigator.msSaveBlob) { // IE 10+
+        navigator.msSaveBlob(blob, filename);
+    } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) { // feature detection
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
 }
 
 function getRndInteger(min, max) {
@@ -559,33 +591,6 @@ function updateNode(coords) {
     updateCech(document.getElementById('complexInput').value);
     complexCanvas.attr('cursor',null)
         .on('click',null);
-}
-
-function deleteNode() {
-    d3.selectAll('.point').selectAll('circle')
-        .on('click', function () {
-            selectedNode = +this.id.match(/\d+/g);
-            locationData.splice(selectedNode,1);
-            numSamples = locationData.length;
-            updateCech(document.getElementById('complexInput').value);
-        });
-}
-
-function moveNode() {
-    d3.selectAll('.point').selectAll('circle')
-        .on('click', function () {
-            selectedNode = +this.id.match(/\d+/g);
-            getLocation(selectedNode);
-        })
-}
-
-function getLocation(selectedNode) {
-    window.alert('Select the new location. Press any key to update.')
-    complexCanvas.attr('cursor','crosshair')
-        .on('click', function () {
-            coords = d3.mouse(this);
-            updateLocation(coords);
-        });
 }
 
 function updateLocation(coords) {
@@ -654,10 +659,9 @@ function dragEnd() {
     wasDragged = false;
 }
 
-//this is a testfunction for routing actions through without having to edit the actual functions
-function testfun() {
+function selectNode() {
     if (d3.event.defaultPrevented) return;
-console.log('clicked')
+    console.log('clicked')
     i = this.id.match(/\d+/g);
     str = 'complex_Circle_'+i;
 
@@ -705,3 +709,58 @@ console.log('clicked')
         }
     }, {once:true});
 }
+
+
+
+//this is a testfunction for routing actions through without having to edit the actual functions
+function testfun() {
+    ind = comb(3, numSamples);
+    faces = new array;
+    ind.forEach( function (d, i) {
+        console.log(i)
+    })
+}
+
+function comb(n,k) {
+
+
+    // n -> [a] -> [[a]]
+    function comb(n, lst) {
+        if (!n) return [[]];
+        if (!lst.length) return [];
+
+        var x = lst[0],
+            xs = lst.slice(1);
+
+        return comb(n - 1, xs).map(function (t) {
+            return [x].concat(t);
+        }).concat(comb(n, xs));
+    }
+
+    // f -> f
+    function memoized(fn) {
+        m = {};
+        return function (x) {
+            var args = [].slice.call(arguments),
+                strKey = args.join('-');
+
+            v = m[strKey];
+            if ('u' === (typeof v)[0])
+                m[strKey] = v = fn.apply(null, args);
+            return v;
+        }
+    }
+
+    // [m..n]
+    function range(m, n) {
+        return Array.apply(null, Array(n - m + 1)).map(function (x, i) {
+            return m + i;
+        });
+    }
+
+    var fnMemoized = memoized(comb),
+        lstRange = range(0, k-1);
+
+    return fnMemoized(n, lstRange)
+
+};
