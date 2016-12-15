@@ -482,7 +482,6 @@ function loadData() {
             });
             locationData = csv;
             var csvContent = d3.csvFormat(locationData, ['LocationID', 'xf', 'yf']);
-            console.log(csvContent)
             numSamples = locationData.length;
 
             c = document.getElementById('coverCheckbox');
@@ -494,8 +493,6 @@ function loadData() {
             document.getElementById('edgeCheckbox').disabled = 0;
             document.getElementById('faceCheckbox').disabled = 0;
             changeComplex();
-
-            testfun();
         });
     }
 }
@@ -527,7 +524,6 @@ function randomData() {
 
 function saveData() {
     var csvContent = d3.csvFormat(locationData, ['LocationID', 'xf', 'yf']);
-    console.log(csvContent)
     var encodedUri = encodeURI(csvContent);
     var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     if (navigator.msSaveBlob) { // IE 10+
@@ -552,8 +548,6 @@ function getRndInteger(min, max) {
 }
 
 function changeComplex() {
-
-    console.log('changeComplex')
 
     d = document.getElementsByName('complexType');
     if (d[0].checked) {
@@ -710,15 +704,88 @@ function selectNode() {
     }, {once:true});
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*                                This area for testing functions                                                     */
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-//this is a testfunction for routing actions through without having to edit the actual functions
 function testfun() {
+    testfun2();
     ind = comb(3, numSamples);
-    faces = new array;
+    var ripsFaces = [];
+    var cechFaces = [];
+    testRadius = complexRadius*2;
     ind.forEach( function (d, i) {
-        console.log(i)
+        x1 = locationData[d[0]].xf;
+        y1 = locationData[d[0]].yf;
+        x2 = locationData[d[1]].xf;
+        y2 = locationData[d[1]].yf;
+        x3 = locationData[d[2]].xf;
+        y3 = locationData[d[2]].yf;
+        d12 = euclidDist([x1,y1], [x2, y2]);
+        if (d12<=testRadius) {
+            d23 = euclidDist([x2, y2], [x3, y3]);
+            if (d23<=testRadius) {
+                d13 = euclidDist([x1, y1], [x3, y3]);
+                if (d13<=testRadius) {
+                    ripsFaces.push(d);
+                    // console.log(d)
+
+                    //simplify calculation by translating 1st vertex to origin
+                    Bx = x2-x1;
+                    By = y2-y1;
+                    Cx = x3-x1;
+                    Cy = y3-y1;
+                    //calculate circumcenter and translate back to original triangle
+                    D = 2*( Bx*Cy - By*Cx );
+                    xc_p = 1/D * ( Cy*(Bx*Bx + By*By) - By*(Cx*Cx + Cy*Cy) );
+                    yc_p = 1/D * ( Bx*(Cx*Cx + Cy*Cy) - Cx*(Bx*Bx + By*By) );
+                    xc = xc_p+x1;
+                    yc = yc_p+y1;
+
+                    //calculate distance of each vertex to circumcenter and add face if criteria met
+                    d1 = euclidDist([x1,y1], [xc,yc]);
+                    if (d1<=testRadius) {
+                        d2 = euclidDist([x2,y2], [xc,yc]);
+                        if (d2<=testRadius) {
+                            d3 = euclidDist([x3,y3], [xc,yc]);
+                            if (d3<=testRadius) {
+                                cechFaces.push(d);
+                                // console.log(d);
+                            }
+                        }
+                    }
+
+
+                }
+            }
+        }
     })
+    console.log(ripsFaces)
+    console.log(cechFaces)
+testfun2();
+}
+
+function testfun2() {
+
+    var complexLabels = complexCanvas.selectAll('text')
+        .data(locationData)
+        .enter().append('text')
+        .text( function (d, i) {
+            return i.toString();
+        })
+        .attr('x', function (d) {
+            return d.xf;
+        })
+        .attr('y', function (d) {
+            return d.yf;
+        })
+        .attr('dx','10px')
+        .attr('dy','10px')
+        .style('font-color','red');
+}
+
+function euclidDist(pt1, pt2) {
+    return Math.sqrt( Math.pow(pt2[0]-pt1[0],2) + Math.pow(pt2[1]-pt1[1],2) );
 }
 
 function comb(n,k) {
