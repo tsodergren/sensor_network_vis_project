@@ -329,6 +329,22 @@ function constructCech(complexCanvas) {
         })
         .attr('r', complexRadius);
 
+    complexPoints.selectAll('text')
+        .data(locationData)
+        .enter().append('text')
+        .text( function (d, i) {
+            return i.toString();
+        })
+        .attr('x', function (d) {
+            return d.xf;
+        })
+        .attr('y', function (d) {
+            return d.yf;
+        })
+        .attr('dx','10px')
+        .attr('dy','10px')
+        .style('font-color','red');
+
     renderView();
 
 }
@@ -459,6 +475,22 @@ function constructRips(complexCanvas) {
             return 'complex_Circle_' + i.toString();
         })
         .attr('r', complexRadius);
+
+    complexPoints.selectAll('text')
+        .data(locationData)
+        .enter().append('text')
+        .text( function (d, i) {
+            return i.toString();
+        })
+        .attr('x', function (d) {
+            return d.xf;
+        })
+        .attr('y', function (d) {
+            return d.yf;
+        })
+        .attr('dx','10px')
+        .attr('dy','10px')
+        .style('font-color','red');
 
     renderView();
 }
@@ -709,26 +741,42 @@ function selectNode() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function testfun() {
-    testfun2();
+    t1 = Date.now();
     ind = comb(3, numSamples);
     var ripsFaces = [];
     var cechFaces = [];
-    testRadius = complexRadius*2;
+    complexDiameter = complexRadius*2;
+
+    ccTime = 0;
+    loopTime = 0;
+    dTime = 0;
+    tnTime = 0;
     ind.forEach( function (d, i) {
+
+        tn1 = Date.now();
         x1 = locationData[d[0]].xf;
         y1 = locationData[d[0]].yf;
         x2 = locationData[d[1]].xf;
         y2 = locationData[d[1]].yf;
         x3 = locationData[d[2]].xf;
         y3 = locationData[d[2]].yf;
+        tn2 = Date.now();
+        tnTime = tnTime+tn2-tn1;
+
+        tt1 = Date.now();
         d12 = euclidDist([x1,y1], [x2, y2]);
-        if (d12<=testRadius) {
+
+        if (d12<=complexDiameter) {
             d23 = euclidDist([x2, y2], [x3, y3]);
-            if (d23<=testRadius) {
+            if (d23<=complexDiameter) {
                 d13 = euclidDist([x1, y1], [x3, y3]);
-                if (d13<=testRadius) {
+                if (d13<=complexDiameter) {
                     ripsFaces.push(d);
                     // console.log(d)
+                    tt2 = Date.now();
+                    dTime = dTime + tt2-tt1;
+
+                    t2 = Date.now();
 
                     //simplify calculation by translating 1st vertex to origin
                     Bx = x2-x1;
@@ -742,55 +790,91 @@ function testfun() {
                     xc = xc_p+x1;
                     yc = yc_p+y1;
 
+                    t3 = Date.now();
+                    ccTime = ccTime + t3-t2;
                     //calculate distance of each vertex to circumcenter and add face if criteria met
                     d1 = euclidDist([x1,y1], [xc,yc]);
-                    if (d1<=testRadius) {
+                    if (d1<=complexRadius) {
                         d2 = euclidDist([x2,y2], [xc,yc]);
-                        if (d2<=testRadius) {
+                        if (d2<=complexRadius) {
                             d3 = euclidDist([x3,y3], [xc,yc]);
-                            if (d3<=testRadius) {
+                            if (d3<=complexRadius) {
                                 cechFaces.push(d);
-                                // console.log(d);
                             }
                         }
                     }
-
+                    t4 = Date.now();
+                    loopTime = loopTime + t4-t3;
 
                 }
             }
         }
     })
-    console.log(ripsFaces)
-    console.log(cechFaces)
-testfun2();
-}
+    console.log('Dist time:'+dTime+' ms');
+    console.log('Circumcircle time: '+ccTime+' ms');
+    console.log('Inner Loop time: '+loopTime+' ms');
+    t5 = Date.now();
+    console.log('My Elapsed time: '+(t5-t1)+' ms');
 
-function testfun2() {
-
-    var complexLabels = complexCanvas.selectAll('text')
-        .data(locationData)
-        .enter().append('text')
-        .text( function (d, i) {
-            return i.toString();
-        })
-        .attr('x', function (d) {
-            return d.xf;
-        })
-        .attr('y', function (d) {
-            return d.yf;
-        })
-        .attr('dx','10px')
-        .attr('dy','10px')
-        .style('font-color','red');
+    console.log('Last chance: '+tnTime+' ms');
+    testfun2();
 }
 
 function euclidDist(pt1, pt2) {
     return Math.sqrt( Math.pow(pt2[0]-pt1[0],2) + Math.pow(pt2[1]-pt1[1],2) );
 }
 
+function testfun2() {
+
+t1=Date.now();
+    //Faces first
+    for (var i = 0; i < numSamples; i++) {
+        var x1 = locationData[i].xf;
+        var y1 = locationData[i].yf;
+        for (var j = i + 1; j < numSamples; j++) {
+            var x2 = locationData[j].xf;
+            var y2 = locationData[j].yf;
+            var sqDistance = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+            var sqDiameter = 4 * Math.pow(complexRadius, 2);
+            if (sqDistance < sqDiameter) {
+                for (var k = j + 1; k < numSamples; k++) {
+                    var x3 = locationData[k].xf;
+                    var y3 = locationData[k].yf;
+                    var testRadius = minimumEnclosingBallRadius(x1, y1, x2, y2, x3, y3);
+                    if (testRadius <= complexRadius) {
+                        var idx1 = i;
+                        var idx2 = j;
+                        var idx3 = k;
+                        if (k < i) {
+                            idx1 = k;
+                            idx2 = i;
+                            idx3 = j;
+                        }
+                        else if (k < j) {
+                            idx1 = i;
+                            idx2 = k;
+                            idx3 = j;
+                        }
+                        var pts = x1.toString() + ',' + y1.toString() + ','
+                            + x2.toString() + ',' + y2.toString() + ','
+                            + x3.toString() + ',' + y3.toString();
+
+                        var idx = idx1.toString() + '_'
+                            + idx2.toString() + '_'
+                            + idx3.toString();
+                    }
+                }
+            }
+        }
+    }
+    t2 = Date.now();
+    console.log('His Elapsed time: '+(t2-t1)+' ms')
+}
+
+
 function comb(n,k) {
 
-
+t1 = Date.now();
     // n -> [a] -> [[a]]
     function comb(n, lst) {
         if (!n) return [[]];
@@ -827,6 +911,9 @@ function comb(n,k) {
 
     var fnMemoized = memoized(comb),
         lstRange = range(0, k-1);
+
+    t2 = Date.now();
+    console.log(t2-t1);
 
     return fnMemoized(n, lstRange)
 
