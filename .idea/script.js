@@ -17,7 +17,12 @@ var xp=[];
 var yp=[];
 var complexType = 'cech';
 
-var numSamples = 12;      //Number of points to use
+var cechFaces = [];
+var cechEdges = [];
+var ripsFaces = [];
+var ripsEdges = [];
+
+var numSamples;      //Number of points to use
 var complexRadius = 100;          //epsilon ball radius
 // complexRadius = dataScale(complexRadius);
 
@@ -26,15 +31,10 @@ var cellSize = 50;
 var gridWidth = Math.ceil(width / cellSize);
 var gridHeight = Math.ceil(height / cellSize);
 var grid = new Array(gridWidth * gridHeight);
-
 var wasDragged = false;
 
 
-
-function cmp(a,b) {
-    return a[0] - b[0];
-}
-
+//these functions are called whenever the data are changed
 function updateCech(newValue) {
     document.getElementById('complexRadius').innerHTML=newValue;
     complexRadius=newValue;
@@ -58,6 +58,7 @@ function minimumEnclosingBallRadius(x1,y1,x2,y2,x3,y3) {
     var yc;
     var dist;
 
+    // find the longest edge
     if (a >= b && a >= c)
     {
         xc = (x1+x2)/2.
@@ -87,6 +88,7 @@ function minimumEnclosingBallRadius(x1,y1,x2,y2,x3,y3) {
     return testRadius;
 }
 
+// The maximum edge length is set equal to the epsilon ball diameter;
 function MaximumEdgeLength(x1,y1,x2,y2,x3,y3){
     var a = Math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
     var b = Math.sqrt((x1-x3)*(x1-x3)+(y1-y3)*(y1-y3));
@@ -109,7 +111,7 @@ function toggleItem(item, highlighted) {
     var tokens = item.split('_');
     radius = complexRadius;
 
-    //Point highlighted
+    //Point highlighted, change color of point and coverage radius
     if (tokens.length == 3) {
         if (highlighted) {
             pointColor = colorOn;
@@ -153,6 +155,7 @@ function toggleItem(item, highlighted) {
             }
         }
     }
+    //edge or face highilighted
     else {
         if (highlighted) {
             strokeColor = colorOn;
@@ -176,6 +179,8 @@ function toggleItem(item, highlighted) {
 }
 
 function toggleNeighbor(base,i,highlighted) {
+
+    //highlight the nodes and coverage radii of points that make up the face or edge that is highlighted
     colorOff = '#000'
     var idx = i.toString();
     if (highlighted) {
@@ -204,6 +209,8 @@ function toggleNeighbor(base,i,highlighted) {
 }
 
 function constructCech(complexCanvas) {
+
+    //remove existing canvas elements
     complexCanvas.selectAll('.circle').remove();
     complexCanvas.selectAll('.face').remove();
     complexCanvas.selectAll('.edge').remove();
@@ -216,6 +223,9 @@ function constructCech(complexCanvas) {
 
     //Faces first
     for (var i = 0; i < numSamples; i++) {
+
+        //test first if each edge is less than the epsilon ball diameter
+        //test only one edge at a time and exit out if criteria not met to save computation time
         var x1 = locationData[i].xf;
         var y1 = locationData[i].yf;
         for (var j = i + 1; j < numSamples; j++) {
@@ -225,6 +235,9 @@ function constructCech(complexCanvas) {
             var sqDiameter = 4 * Math.pow(complexRadius, 2);
             if (sqDistance < sqDiameter) {
                 for (var k = j + 1; k < numSamples; k++) {
+
+                    //if minimum criteria met now test to make sure the distance from each point to the circumcenter
+                    //is within the epsilon ball radius
                     var x3 = locationData[k].xf;
                     var y3 = locationData[k].yf;
                     var testRadius = minimumEnclosingBallRadius(x1, y1, x2, y2, x3, y3);
@@ -250,6 +263,11 @@ function constructCech(complexCanvas) {
                             + idx2.toString() + '_'
                             + idx3.toString();
 
+
+                        face = {Pt1: i, Pt2: j, Pt3: k};
+
+                        cechFaces.push(face);
+
                         complexFaces.append('polygon')
                             .style('visibility','hidden')
                             .attr('points', pts)
@@ -263,7 +281,9 @@ function constructCech(complexCanvas) {
         }
     }
 
+
     //Edges second
+    //Test if distance between each point is within epsilon ball diameter
     for (var i = 0; i < numSamples; i++) {
         var x1 = locationData[i].xf;
         var y1 = locationData[i].yf;
@@ -273,6 +293,10 @@ function constructCech(complexCanvas) {
             var sqDistance = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
             var sqDiameter = 4 * Math.pow(complexRadius, 2);
             if ((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) < sqDiameter) {
+
+                edge = {Pt1: i, Pt2: j};
+                cechEdges.push(edge);
+
                 complexEdges.append('line')
                     .style('visibility','hidden')
                     .attr('class', 'edge')
@@ -287,7 +311,7 @@ function constructCech(complexCanvas) {
         }
     }
 
-    //Points third
+    //Points third, computation necessary, just render
 
     complexPoints.selectAll('circle').data(locationData)
         .enter()
@@ -360,6 +384,8 @@ function constructRips(complexCanvas) {
     var complexPoints = complexCanvas.append('g').attr('class', 'point');
 
     //Faces first
+    //test if each edge is less than the epsilon ball diameter
+    //test only one edge at a time and exit out if criteria not met to save computation time
     for (var i = 0; i < numSamples; i++)
     {
         var x1 = locationData[i].xf;
@@ -397,6 +423,9 @@ function constructRips(complexCanvas) {
                         + idx2.toString() + '_'
                         + idx3.toString();
 
+                    face = {Pt1: i, Pt2: j, Pt3: k};
+                    ripsFaces.push(face);
+
                     complexFaces.append('polygon')
                         .style('visibility','hidden')
                         .attr('class','face')
@@ -422,6 +451,9 @@ function constructRips(complexCanvas) {
             var sqDiameter = 4*Math.pow(complexRadius,2);
             if(sqDistance < sqDiameter)
             {
+
+                edge = {Pt1: i, Pt2: j};
+                ripsEdges.push(edge)
                 complexEdges.append('line')
                     .style('visibility','hidden')
                     .attr('class','edge')
@@ -555,6 +587,9 @@ function randomData() {
 }
 
 function saveData() {
+
+    //save nodes
+    console.log(locationData)
     var csvContent = d3.csvFormat(locationData, ['LocationID', 'xf', 'yf']);
     var encodedUri = encodeURI(csvContent);
     var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -571,6 +606,95 @@ function saveData() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            console.log('pts')
+        }
+    }
+
+    //save cech faces
+    var filename2 = filename.replace(/(\.)/,'_cech_faces.')
+    var csvContent = d3.csvFormat(cechFaces, ['Pt1', 'Pt2', 'Pt3']);
+    var encodedUri = encodeURI(csvContent);
+    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    if (navigator.msSaveBlob) { // IE 10+
+        navigator.msSaveBlob(blob, filename2);
+    } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) { // feature detection
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename2);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            console.log('faces')
+        }
+    }
+
+    //save edges
+    var filename3 = filename.replace(/(\.)/,'_cech__edges.')
+    var csvContent = d3.csvFormat(cechEdges, ['Pt1', 'Pt2']);
+    var encodedUri = encodeURI(csvContent);
+    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    if (navigator.msSaveBlob) { // IE 10+
+        navigator.msSaveBlob(blob, filename3);
+    } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) { // feature detection
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename3);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            console.log('edges')
+        }
+    }
+
+    //save faces
+    var filename2 = filename.replace(/(\.)/,'_rips_faces.')
+    var csvContent = d3.csvFormat(ripsFaces, ['Pt1', 'Pt2', 'Pt3']);
+    var encodedUri = encodeURI(csvContent);
+    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    if (navigator.msSaveBlob) { // IE 10+
+        navigator.msSaveBlob(blob, filename2);
+    } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) { // feature detection
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename2);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            console.log('faces')
+        }
+    }
+
+    //save edges
+    var filename3 = filename.replace(/(\.)/,'_rips_edges.')
+    var csvContent = d3.csvFormat(ripsEdges, ['Pt1', 'Pt2']);
+    var encodedUri = encodeURI(csvContent);
+    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    if (navigator.msSaveBlob) { // IE 10+
+        navigator.msSaveBlob(blob, filename3);
+    } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) { // feature detection
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename3);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            console.log('edges')
         }
     }
 }
