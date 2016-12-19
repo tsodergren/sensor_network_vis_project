@@ -16,6 +16,12 @@ console.log('memo elapsed time = '+str+' ms')
 
 console.log(x);
 
+// circumcenter of a triangle (just saving this as it might be useful later)
+xc = 1/(2*( x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2) ) ) *
+    ( (x1*x1+y1*y1)*(y2-y3) + (x2*x2+y2*y2)*(y3-y1) + (x3*x3+y3*y3)*(y1-y2) );
+yc = 1/(2*( x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2) ) ) *
+    ( (x1*x1+y1*y1)*(x3-x2) + (x2*x2+y2*y2)*(x1-x3) + (x3*x3+y3*y3)*(x2-x1) );
+
 function returnComb(n, k) {
 
     function comb(n, lst) {

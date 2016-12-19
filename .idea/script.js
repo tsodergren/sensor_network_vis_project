@@ -35,283 +35,284 @@ var wasDragged = false;
 
 
 //these functions are called whenever the data are changed
-function updateCech(newValue) {
+
+function updateComplex(newValue) {
     document.getElementById('complexRadius').innerHTML=newValue;
     complexRadius=newValue;
-    constructCech(d3.select('#complexCanvas'));
+    d3.select('#complexCircles').selectAll('circle').attr('r',newValue)
+    constructCech();
+    constructRips();
+    changeComplex();
 }
 
-function updateRips(newValue) {
-    document.getElementById('complexRadius').innerHTML=newValue;
-    complexRadius=newValue;
-    constructRips(d3.select('#complexCanvas'));
-}
+function highlightPoint() {
 
-function minimumEnclosingBallRadius(x1,y1,x2,y2,x3,y3) {
-    var a = Math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
-    var b = Math.sqrt((x1-x3)*(x1-x3)+(y1-y3)*(y1-y3));
-    var c = Math.sqrt((x2-x3)*(x2-x3)+(y2-y3)*(y2-y3));
-
-    var testRadius = Math.max(a,b,c)/2.;
-    //Guaranteed to be set below in the if-conditional
-    var xc;
-    var yc;
-    var dist;
-
-    // find the longest edge
-    if (a >= b && a >= c)
-    {
-        xc = (x1+x2)/2.
-        yc = (y1+y2)/2.
-        dist = Math.sqrt((x3-xc)*(x3-xc)+(y3-yc)*(y3-yc));
-    }
-    else if (b >= a && b >= c)
-    {
-        xc = (x1+x3)/2.
-        yc = (y1+y3)/2.
-        dist = Math.sqrt((x2-xc)*(x2-xc)+(y2-yc)*(y2-yc));
-    }
-    else
-    {
-        xc = (x2+x3)/2.;
-        yc = (y2+y3)/2.;
-        dist = Math.sqrt((x1-xc)*(x1-xc)+(y1-yc)*(y1-yc));
-    }
-
-    //Test if the circumcircle around the largest edge
-    // contains the third point, if not, then compute the
-    // radius of the triangle's circumcircle
-    if (testRadius < dist)
-    {
-        testRadius = (a*b*c)/Math.sqrt((a+b+c)*(b+c-a)*(a+c-b)*(a+b-c));
-    }
-    return testRadius;
-}
-
-// The maximum edge length is set equal to the epsilon ball diameter;
-function MaximumEdgeLength(x1,y1,x2,y2,x3,y3){
-    var a = Math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
-    var b = Math.sqrt((x1-x3)*(x1-x3)+(y1-y3)*(y1-y3));
-    var c = Math.sqrt((x2-x3)*(x2-x3)+(y2-y3)*(y2-y3));
-    return Math.max(a,b,c)/2.;
-}
-
-function complexMouseOut(d) {
-    toggleItem(this.id.toString(),false);
-}
-function complexMouseOver(d) {
-    toggleItem(this.id.toString(),true);
-}
-
-
-
-function toggleItem(item, highlighted) {
-    colorOn = '#c33'
-    colorOff = '#000'
-    var tokens = item.split('_');
-    radius = complexRadius;
-
-    //Point highlighted, change color of point and coverage radius
-    if (tokens.length == 3) {
-        if (highlighted) {
-            pointColor = colorOn;
-            fillColor = colorOn;
-            fillOpacity = '0.25';
-            strokeColor = colorOn;
-            strokeOpacity = '1';
-        } else {
-            pointColor = colorOff;
-            fillColor = '#fff';
-            fillOpacity = '0';
-            strokeColor = colorOff;
-            strokeOpacity = '0.15';
-        }
-        d3.selectAll('#'+item)
-            .transition()
-            .style('fill', pointColor);
-
-        d3.selectAll('#'+tokens[0]+'_Circle_' + tokens[2])
-            .transition()
-            .style('fill', fillColor)
-            .style('fill-opacity', fillOpacity)
-            .style('stroke', strokeColor)
-            .style('stroke-opacity', strokeOpacity);
-
-        var i = parseInt(tokens[2]);
-        var x1 = xp[i];
-        var y1 = yp[i];
-        for (var j = 0; j < numSamples; j++)
-        {
-            if (j != i)
-            {
-                var x2 = xp[j];
-                var y2 = yp[j];
-                var sqDistance = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
-                var sqDiameter = 4*radius*radius;
-                if(sqDistance < sqDiameter)
-                {
-                    toggleNeighbor(tokens[0],j,highlighted);
-                }
-            }
-        }
-    }
-    //edge or face highilighted
-    else {
-        if (highlighted) {
-            strokeColor = colorOn;
-            fillColor = colorOn;
-        } else {
-            strokeColor = colorOff;
-            fillColor = colorOff;
-        }
-        d3.selectAll('#' + item)
-            .transition()
-            .style('stroke', strokeColor)
-            .style('fill', fillColor);
-        for (idx = 2; idx < tokens.length; idx++) {
-            toggleNeighbor(tokens[0],parseInt(tokens[idx]),highlighted);
-        }
-    }
-
-    if (!highlighted) {
-        if (document.getElementById('coverCheckbox').checked) showCoverage(1);
-    }
-}
-
-function toggleNeighbor(base,i,highlighted) {
-
-    //highlight the nodes and coverage radii of points that make up the face or edge that is highlighted
-    colorOff = '#000'
-    var idx = i.toString();
-    if (highlighted) {
-        pointColor = colorOn;
-        fillColor = colorOn;
-        fillOpacity = '0.25';
-        strokeColor = colorOn;
-        strokeOpacity = '1';
-    } else {
-        pointColor = colorOff;
-        fillColor = '#fff';
-        fillOpacity = '0';
-        strokeColor = colorOff;
-        strokeOpacity = '.15';
-    }
-    d3.selectAll('#'+base+'_Point_' + idx)
+    d3.select('#complex_Point_'+arguments[1])
         .transition()
-        .style('fill', pointColor);
+        .style('fill','#c33');
 
-    d3.selectAll('#'+base+'_Circle_' + idx)
+    d3.select('#complex_Circle_'+arguments[1])
+        .transition()
+        .style('fill', '#c33')
+        .style('fill-opacity', 0.25)
+        .style('stroke', '#c33')
+        .style('stroke-opacity', 1);
+}
+
+function resetPoint() {
+
+    d3.select('#complex_Point_'+arguments[1])
+        .transition()
+        .style('fill','#000');
+
+    if (document.getElementById('coverCheckbox').checked) {
+        fillColor = '#808080';
+        fillOpacity = 0.25;
+    } else {
+        fillColor = '#fff';
+        fillOpacity = 0;
+    };
+
+    d3.select('#complex_Circle_'+arguments[1])
         .transition()
         .style('fill', fillColor)
         .style('fill-opacity', fillOpacity)
-        .style('stroke', strokeColor)
-        .style('stroke-opacity', strokeOpacity);
+        .style('stroke', '#000')
+        .style('stroke-opacity', 0.15);
 }
 
-function constructCech(complexCanvas) {
+function highlightEdge() {
+
+    if (arguments.length>1) {
+        edge = d3.select(this)
+        highlightPoint([], cechEdges[arguments[1]].Pt1);
+        highlightPoint([], cechEdges[arguments[1]].Pt2);
+    } else {
+        edge = d3.select(arguments[0]);
+    }
+    edge.transition()
+        .style('stroke','#c33');
+
+
+}
+
+function resetEdge() {
+
+    if (arguments.length>1) {
+        edge = d3.select(this)
+        resetPoint([], cechEdges[arguments[1]].Pt1);
+        resetPoint([], cechEdges[arguments[1]].Pt2);
+    } else {
+        edge = d3.select(arguments[0])
+    }
+    edge.transition()
+        .style('stroke','#000');
+
+}
+
+function highlightFace() {
+
+    face = d3.select(this);
+    face.transition()
+        .style('fill','#c33')
+        .style('stroke','#c33')
+        .style('stroke-width','4px')
+        .style('stroke-opacity', 1);
+
+
+    highlightEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt2);
+    highlightEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt3);
+    highlightEdge('#complex_Edge_'+arguments[0].Pt2+'_'+arguments[0].Pt3);
+
+    highlightPoint([], arguments[0].Pt1);
+    highlightPoint([], arguments[0].Pt2);
+    highlightPoint([], arguments[0].Pt3);
+
+}
+
+function resetFace() {
+
+    d3.select(this)
+        .transition()
+        .style('fill','#000')
+        .style('stroke-opacity',0);
+
+    resetEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt2);
+    resetEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt3);
+    resetEdge('#complex_Edge_'+arguments[0].Pt2+'_'+arguments[0].Pt3);
+
+    resetPoint([], arguments[0].Pt1);
+    resetPoint([], arguments[0].Pt2);
+    resetPoint([], arguments[0].Pt3);
+
+}
+
+function constructCech() {
+
+    cechEdges = [];
+    cechFaces = [];
+
+    var sqDist;
+    sqDiameter = 4 * Math.pow(complexRadius, 2);
+    sqRadius = Math.pow(complexRadius, 2);
+
+    for (i = 0; i < numSamples; i++) {
+        x1 = locationData[i].xf;
+        y1 = locationData[i].yf;
+        for (j = i + 1; j < numSamples; j++) {
+            x2 = locationData[j].xf;
+            y2 = locationData[j].yf;
+            d12 = sqEuclidDist([x1, y1], [x2, y2]);
+            if (d12 <= sqDiameter) {
+                cechEdges.push({Pt1: i, Pt2: j});
+                for (k = j + 1; k < numSamples; k++) {
+                    x3 = locationData[k].xf;
+                    y3 = locationData[k].yf;
+                    d23 = sqEuclidDist([x2, y2], [x3, y3]);
+                    if (d23 <= sqDiameter) {
+                        d13 = sqEuclidDist([x1, y1], [x3, y3]);
+
+                        if (d12 >= d13 && d12 >= d23) {
+                            xc = (x2 + x1) / 2;
+                            yc = (y2 + y1) / 2;
+                            dist = Math.sqrt(sqEuclidDist([x3, y3], [xc, yc]));
+                            testRadius = Math.sqrt(d12)/2;
+                        } else if (d13 >= d12 && d13 >= d23) {
+                            xc = (x3 + x1) / 2;
+                            yc = (y3 + y1) / 2;
+                            dist = Math.sqrt(sqEuclidDist([x2, y2], [xc, yc]));
+                            testRadius = Math.sqrt(d13)/2;
+                        } else {
+                            xc = (x3 + x2) / 2;
+                            yc = (y3 + y2) / 2;
+                            dist = Math.sqrt(sqEuclidDist([x1, y1], [xc, yc]));
+                            testRadius = Math.sqrt(d23)/2;
+                        }
+
+                        if ( dist<=testRadius ) {
+                            cechFaces.push({Pt1: i, Pt2: j, Pt3: k});
+                            console.log(i+' '+j+' '+k)
+                        } else {
+                            a = Math.sqrt(d12);
+                            b = Math.sqrt(d13);
+                            c = Math.sqrt(d23);
+                            testRadius = (a * b * c) / Math.sqrt((a + b + c) * (b + c - a) * (a + c - b) * (a + b - c));
+                            if (testRadius <= complexRadius) {
+                                cechFaces.push({Pt1: i, Pt2: j, Pt3: k})
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+function constructRips() {
+
+    ripsEdges = [];
+    ripsFaces = [];
+
+    var sqDist;
+    sqDiameter = 4 * Math.pow(complexRadius, 2);
+    sqRadius = Math.pow(complexRadius, 2);
+
+    for (i = 0; i < numSamples; i++) {
+        x1 = locationData[i].xf;
+        y1 = locationData[i].yf;
+        for (j = i + 1; j < numSamples; j++) {
+            x2 = locationData[j].xf;
+            y2 = locationData[j].yf;
+            d12 = sqEuclidDist([x1, y1], [x2, y2]);
+            if (d12 <= sqDiameter) {
+                ripsEdges.push({Pt1: i, Pt2: j});
+                for (k = j + 1; k < numSamples; k++) {
+                    x3 = locationData[k].xf;
+                    y3 = locationData[k].yf;
+                    d23 = sqEuclidDist([x2, y2], [x3, y3]);
+                    if (d23 <= sqDiameter) {
+                        d13 = sqEuclidDist([x1, y1], [x3, y3]);
+                        if (d13 <= sqDiameter) {
+                            ripsFaces.push({Pt1: i, Pt2: j, Pt3: k})
+                        }
+                    }
+                }
+            }
+        }
+    };
+}
+
+function renderComplex(edges,faces) {
+
 
     //remove existing canvas elements
-    complexCanvas.selectAll('.circle').remove();
     complexCanvas.selectAll('.face').remove();
     complexCanvas.selectAll('.edge').remove();
+    var complexFaces = complexCanvas.append('g')
+        .attr('id','complexFaces')
+        .attr('class', 'face')
+        .style('visibility','hidden');
+    var complexEdges = complexCanvas.append('g')
+        .attr('id','complexEdges')
+        .attr('class', 'edge')
+        .style('visibility','hidden');
+
+
+
+    complexFaces.selectAll('polygon').data(faces)
+        .enter().append('polygon')
+        .attr('class','face')
+        .attr('points',function (d, i) {
+                return  locationData[d.Pt1].xf+','+locationData[d.Pt1].yf+
+                    ' '+locationData[d.Pt2].xf+','+locationData[d.Pt2].yf+
+                    ' '+locationData[d.Pt3].xf+','+locationData[d.Pt3].yf;
+            }
+        )
+        .attr('id', function (d, i) {
+            return 'complex_Face_'+d.Pt1+'_'+d.Pt2+'_'+d.Pt3;
+        })
+        .on('mouseover',highlightFace)
+        .on('mouseout', resetFace);
+
+    complexEdges.selectAll('line').data(edges)
+        .enter().append('line')
+        .attr('class', 'edge')
+        .attr('x1', function (d) {
+            return locationData[d.Pt1].xf;
+        })
+        .attr('y1', function (d) {
+            return locationData[d.Pt1].yf
+        })
+        .attr('x2', function (d) {
+            return locationData[d.Pt2].xf;
+        })
+        .attr('y2', function (d) {
+            return locationData[d.Pt2].yf;
+        })
+        .attr('id', function (d) {
+            return 'complex_Edge_'+d.Pt1+'_'+d.Pt2;
+        })
+        .on('mouseover', highlightEdge)
+        .on('mouseout', resetEdge);
+
+    //Make sure points stay on top
+    pts = d3.select('#complexPoints').node();
+    pts.parentNode.appendChild(pts);
+
+    renderView();
+
+}
+
+function renderPoints() {
+
+    complexCanvas.selectAll('.circle').remove();
     complexCanvas.selectAll('.point').remove();
-    var complexCircles = complexCanvas.append('g').attr('class', 'circle');
-    var complexFaces = complexCanvas.append('g').attr('class', 'face');
-    var complexEdges = complexCanvas.append('g').attr('class', 'edge');
-    var complexPoints = complexCanvas.append('g').attr('class', 'point');
-    // 
-
-    //Faces first
-    for (var i = 0; i < numSamples; i++) {
-
-        //test first if each edge is less than the epsilon ball diameter
-        //test only one edge at a time and exit out if criteria not met to save computation time
-        var x1 = locationData[i].xf;
-        var y1 = locationData[i].yf;
-        for (var j = i + 1; j < numSamples; j++) {
-            var x2 = locationData[j].xf;
-            var y2 = locationData[j].yf;
-            var sqDistance = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
-            var sqDiameter = 4 * Math.pow(complexRadius, 2);
-            if (sqDistance < sqDiameter) {
-                for (var k = j + 1; k < numSamples; k++) {
-
-                    //if minimum criteria met now test to make sure the distance from each point to the circumcenter
-                    //is within the epsilon ball radius
-                    var x3 = locationData[k].xf;
-                    var y3 = locationData[k].yf;
-                    var testRadius = minimumEnclosingBallRadius(x1, y1, x2, y2, x3, y3);
-                    if (testRadius <= complexRadius) {
-                        var idx1 = i;
-                        var idx2 = j;
-                        var idx3 = k;
-                        if (k < i) {
-                            idx1 = k;
-                            idx2 = i;
-                            idx3 = j;
-                        }
-                        else if (k < j) {
-                            idx1 = i;
-                            idx2 = k;
-                            idx3 = j;
-                        }
-                        var pts = x1.toString() + ',' + y1.toString() + ','
-                            + x2.toString() + ',' + y2.toString() + ','
-                            + x3.toString() + ',' + y3.toString();
-
-                        var idx = idx1.toString() + '_'
-                            + idx2.toString() + '_'
-                            + idx3.toString();
-
-
-                        face = {Pt1: i, Pt2: j, Pt3: k};
-
-                        cechFaces.push(face);
-
-                        complexFaces.append('polygon')
-                            .style('visibility','hidden')
-                            .attr('points', pts)
-                            .attr('class', 'face')
-                            .attr('id', 'complex_Face_' + idx)
-                            .on('mouseout', complexMouseOut)
-                            .on('mouseover', complexMouseOver);
-                    }
-                }
-            }
-        }
-    }
-
-
-    //Edges second
-    //Test if distance between each point is within epsilon ball diameter
-    for (var i = 0; i < numSamples; i++) {
-        var x1 = locationData[i].xf;
-        var y1 = locationData[i].yf;
-        for (var j = i + 1; j < numSamples; j++) {
-            var x2 = locationData[j].xf;
-            var y2 = locationData[j].yf;
-            var sqDistance = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
-            var sqDiameter = 4 * Math.pow(complexRadius, 2);
-            if ((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) < sqDiameter) {
-
-                edge = {Pt1: i, Pt2: j};
-                cechEdges.push(edge);
-
-                complexEdges.append('line')
-                    .style('visibility','hidden')
-                    .attr('class', 'edge')
-                    .attr('x1', x1)
-                    .attr('y1', y1)
-                    .attr('x2', x2)
-                    .attr('y2', y2)
-                    .attr('id', 'complex_Edge_' + i.toString() + '_' + j.toString())
-                    .on('mouseout', complexMouseOut)
-                    .on('mouseover', complexMouseOver);
-            }
-        }
-    }
-
-    //Points third, computation necessary, just render
+    var complexCircles = complexCanvas.append('g')
+        .attr('class','circle')
+        .attr('id','complexCircles')
+    var complexPoints = complexCanvas.append('g').attr('class', 'point')
+        .attr('class', 'point')
+        .attr('id','complexPoints');
 
     complexPoints.selectAll('circle').data(locationData)
         .enter()
@@ -329,8 +330,8 @@ function constructCech(complexCanvas) {
             return 'complex_Point_' + i.toString();
         })
         .attr('r', 5)
-        .on('mouseover', complexMouseOver)
-        .on('mouseout', complexMouseOut)
+        .on('mouseover', highlightPoint)
+        .on('mouseout', resetPoint)
         .call(d3.drag()
             .on('drag', dragNode)
             .on('end', dragEnd))
@@ -366,166 +367,24 @@ function constructCech(complexCanvas) {
             return d.yf;
         })
         .attr('dx','10px')
-        .attr('dy','10px')
-        .style('font-color','red');
+        .attr('dy','10px');
 
-    renderView();
+    renderView()
 
 }
 
-function constructRips(complexCanvas) {
-    complexCanvas.selectAll('.circle').remove();
-    complexCanvas.selectAll('.face').remove();
-    complexCanvas.selectAll('.edge').remove();
-    complexCanvas.selectAll('.point').remove();
-    var complexCircles = complexCanvas.append('g').attr('class', 'circle');
-    var complexFaces = complexCanvas.append('g').attr('class', 'face');
-    var complexEdges = complexCanvas.append('g').attr('class', 'edge');
-    var complexPoints = complexCanvas.append('g').attr('class', 'point');
-
-    //Faces first
-    //test if each edge is less than the epsilon ball diameter
-    //test only one edge at a time and exit out if criteria not met to save computation time
-    for (var i = 0; i < numSamples; i++)
-    {
-        var x1 = locationData[i].xf;
-        var y1 = locationData[i].yf;
-        for (var j = i+1; j < numSamples; j++)
-        {
-            var x2 = locationData[j].xf;
-            var y2 = locationData[j].yf;
-            for (var k = j+1; k < numSamples; k++)
-            {
-                var x3 = locationData[k].xf;
-                var y3 = locationData[k].yf;
-                var testRadius = MaximumEdgeLength(x1,y1,x2,y2,x3,y3);
-                if (testRadius <= complexRadius)
-                {
-                    var idx1 = i;
-                    var idx2 = j;
-                    var idx3 = k;
-                    if (k < i)
-                    {
-                        idx1 = k;
-                        idx2 = i;
-                        idx3 = j;
-                    }
-                    else if (k < j)
-                    {
-                        idx1 = i;
-                        idx2 = k;
-                        idx3 = j;
-                    }
-                    var pts =   x1.toString() + ',' + y1.toString() + ','
-                        + x2.toString() + ',' + y2.toString() + ','
-                        + x3.toString() + ',' + y3.toString();
-                    var idx =   idx1.toString() + '_'
-                        + idx2.toString() + '_'
-                        + idx3.toString();
-
-                    face = {Pt1: i, Pt2: j, Pt3: k};
-                    ripsFaces.push(face);
-
-                    complexFaces.append('polygon')
-                        .style('visibility','hidden')
-                        .attr('class','face')
-                        .attr('points',pts)
-                        .attr('id','complex_Face_'+idx)
-                        .on('mouseout', complexMouseOut)
-                        .on('mouseover',complexMouseOver);
-                }
-            }
-        }
-    }
-
-    //Edges second
-    for (var i = 0; i < numSamples; i++)
-    {
-        var x1 = locationData[i].xf;
-        var y1 = locationData[i].yf;
-        for (var j = i+1; j < numSamples; j++)
-        {
-            var x2 = locationData[j].xf;
-            var y2 = locationData[j].yf;
-            var sqDistance = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
-            var sqDiameter = 4*Math.pow(complexRadius,2);
-            if(sqDistance < sqDiameter)
-            {
-
-                edge = {Pt1: i, Pt2: j};
-                ripsEdges.push(edge)
-                complexEdges.append('line')
-                    .style('visibility','hidden')
-                    .attr('class','edge')
-                    .attr('x1',x1)
-                    .attr('y1',y1)
-                    .attr('x2',x2)
-                    .attr('y2',y2)
-                    .attr('id','complex_Edge_'+i.toString()+'_'+j.toString())
-                    .on('mouseout', complexMouseOut)
-                    .on('mouseover',complexMouseOver);
-            }
-        }
-    }
-
-    complexPoints.selectAll('circle').data(locationData)
-        .enter()
-        .append('circle')
-        .style('visibility','hidden')
-        .attr('class', 'point')
-        .attr('r', 1e-6)
-        .attr('cx', function (d) {
-            return d.xf;
-        })
-        .attr('cy', function (d) {
-            return d.yf;
-        })
-        .attr('id', function (d, i) {
-            return 'complex_Point_' + i.toString();
-        })
-        .attr('r', 5)
-        .on('mouseover', complexMouseOver)
-        .on('mouseout', complexMouseOut)
-        .call(d3.drag()
-            .on('drag', dragNode)
-            .on('end', dragEnd))
-        .on('click', selectNode);
-
-    complexCircles.selectAll('circle').data(locationData)
-        .enter()
-        .append('circle')
-        .style('visibility','hidden')
-        .attr('class', 'circle')
-        .attr('r', 1e-6)
-        .attr('cx', function (d) {
-            return d.xf;
-        })
-        .attr('cy', function (d) {
-            return d.yf;
-        })
-        .attr('id', function (d, i) {
-            return 'complex_Circle_' + i.toString();
-        })
-        .attr('r', complexRadius);
-
-    complexPoints.selectAll('text')
-        .data(locationData)
-        .enter().append('text')
-        .text( function (d, i) {
-            return i.toString();
-        })
-        .attr('x', function (d) {
-            return d.xf;
-        })
-        .attr('y', function (d) {
-            return d.yf;
-        })
-        .attr('dx','10px')
-        .attr('dy','10px')
-        .style('font-color','red');
-
-    renderView();
+function renderView() {
+    f = document.getElementById('coverCheckbox');
+    showCoverage(f.checked);
+    f = document.getElementById('nodeCheckbox');
+    show(f.checked,'.point');
+    f = document.getElementById('edgeCheckbox');
+    show(f.checked,'.edge');
+    f = document.getElementById('faceCheckbox');
+    show(f.checked,'.face');
 }
+
+
 
 function loadData() {
 
@@ -556,7 +415,8 @@ function loadData() {
             n.checked = true;
             document.getElementById('edgeCheckbox').disabled = 0;
             document.getElementById('faceCheckbox').disabled = 0;
-            changeComplex();
+            renderPoints();
+            updateComplex(document.getElementById('complexInput').value);
         });
     }
 }
@@ -583,6 +443,7 @@ function randomData() {
     n.checked = true;
     document.getElementById('edgeCheckbox').disabled = 0;
     document.getElementById('faceCheckbox').disabled = 0;
+
     changeComplex();
 }
 
@@ -707,22 +568,12 @@ function changeComplex() {
 
     d = document.getElementsByName('complexType');
     if (d[0].checked) {
-        updateCech(document.getElementById('complexInput').value);
+        renderComplex(cechEdges, cechFaces);
     } else {
-        updateRips(document.getElementById('complexInput').value);
+        renderComplex(ripsEdges, ripsFaces);
     }
 }
 
-function renderView() {
-    f = document.getElementById('coverCheckbox');
-    showCoverage(f.checked);
-    f = document.getElementById('nodeCheckbox');
-    show(f.checked,'.point');
-    f = document.getElementById('edgeCheckbox');
-    show(f.checked,'.edge');
-    f = document.getElementById('faceCheckbox');
-    show(f.checked,'.face');
-}
 
 function addNode() {
 
@@ -811,7 +662,6 @@ function dragEnd() {
 
 function selectNode() {
     if (d3.event.defaultPrevented) return;
-    console.log('clicked')
     i = this.id.match(/\d+/g);
     str = 'complex_Circle_'+i;
 
@@ -865,92 +715,77 @@ function selectNode() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function testfun() {
+    highlightPoint([],10)
+}
+
+function testfun3() {
     t1 = Date.now();
-    ind = comb(3, numSamples);
+    // ind = comb(3, numSamples);
     var ripsFaces = [];
     var cechFaces = [];
-    complexDiameter = complexRadius*2;
+    var sqDist;
+    sqDiameter = 4*Math.pow(complexRadius, 2);
+    sqRadius = Math.pow(complexRadius, 2);
 
-    ccTime = 0;
-    loopTime = 0;
-    dTime = 0;
-    tnTime = 0;
-    ind.forEach( function (d, i) {
+    for (i=0; i<numSamples; i++) {
+        x1 = locationData[i].xf;
+        y1 = locationData[i].yf;
+        for (j=i+1; j<numSamples; j++) {
+            x2 = locationData[j].xf;
+            y2 = locationData[j].yf;
+            d12 = sqEuclidDist([x1, y1], [x2, y2]);
+            if (d12 <= sqDiameter) {
+                for (k = j + 1; k < numSamples; k++) {
+                    x3 = locationData[k].xf;
+                    y3 = locationData[k].yf;
+                    d23 = sqEuclidDist([x2, y2], [x3, y3]);
+                    if (d23 <= sqDiameter) {
+                        d13 = sqEuclidDist([x1, y1], [x3, y3]);
 
-        tn1 = Date.now();
-        x1 = locationData[d[0]].xf;
-        y1 = locationData[d[0]].yf;
-        x2 = locationData[d[1]].xf;
-        y2 = locationData[d[1]].yf;
-        x3 = locationData[d[2]].xf;
-        y3 = locationData[d[2]].yf;
-        tn2 = Date.now();
-        tnTime = tnTime+tn2-tn1;
+                        if (d12 >= d13 && d12 >= d23) {
+                            xc = Math.abs(x2 - x1) / 2;
+                            yc = Math.abs(y2 - y1) / 2;
+                            sqDist = sqEuclidDist([x3, y3], [xc, yc]);
+                        } else if (d13 >= d12 && d13 >= d23) {
+                            xc = Math.abs(x3 - x1) / 2;
+                            yc = Math.abs(y3 - y1) / 2;
+                            sqDist = sqEuclidDist([x2, y2], [xc, yc]);
+                        } else {
+                            xc = Math.abs(x3 - x2) / 2;
+                            yc = Math.abs(y3 - y2) / 2;
+                            sqDist = sqEuclidDist([x1, y1], [xc, yc]);
+                        }
 
-        tt1 = Date.now();
-        d12 = euclidDist([x1,y1], [x2, y2]);
-
-        if (d12<=complexDiameter) {
-            d23 = euclidDist([x2, y2], [x3, y3]);
-            if (d23<=complexDiameter) {
-                d13 = euclidDist([x1, y1], [x3, y3]);
-                if (d13<=complexDiameter) {
-                    ripsFaces.push(d);
-                    // console.log(d)
-                    tt2 = Date.now();
-                    dTime = dTime + tt2-tt1;
-
-                    t2 = Date.now();
-
-                    //simplify calculation by translating 1st vertex to origin
-                    Bx = x2-x1;
-                    By = y2-y1;
-                    Cx = x3-x1;
-                    Cy = y3-y1;
-                    //calculate circumcenter and translate back to original triangle
-                    D = 2*( Bx*Cy - By*Cx );
-                    xc_p = 1/D * ( Cy*(Bx*Bx + By*By) - By*(Cx*Cx + Cy*Cy) );
-                    yc_p = 1/D * ( Bx*(Cx*Cx + Cy*Cy) - Cx*(Bx*Bx + By*By) );
-                    xc = xc_p+x1;
-                    yc = yc_p+y1;
-
-                    t3 = Date.now();
-                    ccTime = ccTime + t3-t2;
-                    //calculate distance of each vertex to circumcenter and add face if criteria met
-                    d1 = euclidDist([x1,y1], [xc,yc]);
-                    if (d1<=complexRadius) {
-                        d2 = euclidDist([x2,y2], [xc,yc]);
-                        if (d2<=complexRadius) {
-                            d3 = euclidDist([x3,y3], [xc,yc]);
-                            if (d3<=complexRadius) {
-                                cechFaces.push(d);
+                        if (sqDist <= sqRadius) {
+                            cechFaces.push([i, j, k]);
+                        } else {
+                            a = Math.sqrt(d12);
+                            b = Math.sqrt(d13);
+                            c = Math.sqrt(d23);
+                            testRadius = (a * b * c) / Math.sqrt((a + b + c) * (b + c - a) * (a + c - b) * (a + b - c));
+                            if (testRadius <= complexRadius) {
+                                cechFaces.push([i, j, k])
                             }
                         }
                     }
-                    t4 = Date.now();
-                    loopTime = loopTime + t4-t3;
-
                 }
             }
         }
-    })
-    console.log('Dist time:'+dTime+' ms');
-    console.log('Circumcircle time: '+ccTime+' ms');
-    console.log('Inner Loop time: '+loopTime+' ms');
+    };
+
+// console.log(cechFaces)
     t5 = Date.now();
     console.log('My Elapsed time: '+(t5-t1)+' ms');
-
-    console.log('Last chance: '+tnTime+' ms');
     testfun2();
 }
 
-function euclidDist(pt1, pt2) {
-    return Math.sqrt( Math.pow(pt2[0]-pt1[0],2) + Math.pow(pt2[1]-pt1[1],2) );
+function sqEuclidDist(pt1, pt2) {
+    return Math.pow(pt2[0]-pt1[0],2) + Math.pow(pt2[1]-pt1[1],2);
 }
 
 function testfun2() {
 
-t1=Date.now();
+    t1=Date.now();
     //Faces first
     for (var i = 0; i < numSamples; i++) {
         var x1 = locationData[i].xf;
@@ -998,7 +833,7 @@ t1=Date.now();
 
 function comb(n,k) {
 
-t1 = Date.now();
+    t1 = Date.now();
     // n -> [a] -> [[a]]
     function comb(n, lst) {
         if (!n) return [[]];
@@ -1036,8 +871,8 @@ t1 = Date.now();
     var fnMemoized = memoized(comb),
         lstRange = range(0, k-1);
 
-    t2 = Date.now();
-    console.log(t2-t1);
+    t2 = Date.now()-t1;
+    console.log('comb time: '+t2+'ms');
 
     return fnMemoized(n, lstRange)
 

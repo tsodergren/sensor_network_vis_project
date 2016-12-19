@@ -15,7 +15,7 @@
 <body>
 <h1 id="site-title">Network Coverage</h1>
 
-<a href="help.html" class="helplink">Help</a>
+<a href="help.html" class="helplink" target="_blank5">Help</a>
 
 <table>
   <tr>
@@ -52,12 +52,12 @@
         <p>
           <button type="button" onclick="randomData()">Generate random data</button>
           # sensors:
-          <input type="number" name="numSensors" id="numSensors" value="20" min="1" max="1000">
+          <input type="number" name="numSensors" id="numSensors" value="200" min="1" max="1000">
         </p>
         <p>
           <button type="button" onclick="addNode()">Add node</button>
         </p>
-        <p>Radius:<input type="range" id='complexInput' min="5" max="120" value="100" step="1" oninput="changeComplex(complexType)" /><span id="complexRadius"></span></p>
+        <p>Radius:<input type="range" id='complexInput' min="5" max="120" value="100" step="1" oninput="updateComplex(this.value)" /><span id="complexRadius"></span></p>
         <form>
           <p>
             Complex type:
@@ -79,7 +79,7 @@
 </table>
 
 <!--this button is for testing components, keep hidden-->
-<!--<button type="button" onclick="testfun()">Test</button>-->
+<button type="button" onclick="testfun()">Test</button>
 
 </body>
 </html>
