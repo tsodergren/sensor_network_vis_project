@@ -1,5 +1,11 @@
 /**
-
+ * @method constructCech
+ * @param {String} foo Argument 1
+ * @param {Object} config A config object
+ * @param {String} config.name The name on the config object
+ * @param {Function} config.callback A callback function on the config object
+ * @param {Boolean} [extra=false] Do extra, optional work
+ * @return {Boolean} Returns true on success
  * Created by Tim on 11/10/2016.
  */
 <!-- Common variables and functions used by all of the example plots -->
@@ -11,6 +17,8 @@ var buffer = 50;          //Buffer space to ensure points are adequately
 //     .domain([0,300])
 //     .range([0,600]);
 
+
+//Initialize the data
 var filename = 'data.csv';
 var locationData;
 var xp=[];
@@ -34,7 +42,7 @@ var grid = new Array(gridWidth * gridHeight);
 var wasDragged = false;
 
 
-//these functions are called whenever the data are changed
+//this function is called whenever the data are changed.
 
 function updateComplex(newValue) {
     document.getElementById('complexRadius').innerHTML=newValue;
@@ -45,12 +53,14 @@ function updateComplex(newValue) {
     changeComplex();
 }
 
+//graphical highlighting
 function highlightPoint() {
 
     d3.select('#complex_Point_'+arguments[1])
         .transition()
         .style('fill','#c33');
 
+    //highlight the corresponding coverage circle
     d3.select('#complex_Circle_'+arguments[1])
         .transition()
         .style('fill', '#c33')
@@ -61,6 +71,7 @@ function highlightPoint() {
 
 function resetPoint() {
 
+    //return point and coverage circle to default view
     d3.select('#complex_Point_'+arguments[1])
         .transition()
         .style('fill','#000');
@@ -81,6 +92,7 @@ function resetPoint() {
         .style('stroke-opacity', 0.15);
 }
 
+//highlight edge and corresponding points
 function highlightEdge() {
 
     if (arguments.length>1) {
@@ -96,6 +108,7 @@ function highlightEdge() {
 
 }
 
+//restore default view
 function resetEdge() {
 
     if (arguments.length>1) {
@@ -110,6 +123,7 @@ function resetEdge() {
 
 }
 
+//highlight faces
 function highlightFace() {
 
     face = d3.select(this);
@@ -119,17 +133,19 @@ function highlightFace() {
         .style('stroke-width','4px')
         .style('stroke-opacity', 1);
 
-
+//highlight corresponding edges
     highlightEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt2);
     highlightEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt3);
     highlightEdge('#complex_Edge_'+arguments[0].Pt2+'_'+arguments[0].Pt3);
 
+    //highlight corresponding points
     highlightPoint([], arguments[0].Pt1);
     highlightPoint([], arguments[0].Pt2);
     highlightPoint([], arguments[0].Pt3);
 
 }
 
+//reset to default view
 function resetFace() {
 
     d3.select(this)
@@ -147,15 +163,18 @@ function resetFace() {
 
 }
 
+//construct the Cech complex
 function constructCech() {
 
     cechEdges = [];
     cechFaces = [];
 
     var sqDist;
+    //calculate the squared diameter to compare each pair to. Use square diameter to compare to squared euclidean distanct
+    //of each pair so save computation.
     sqDiameter = 4 * Math.pow(complexRadius, 2);
-    sqRadius = Math.pow(complexRadius, 2);
 
+    //interate over all possible permutations (n-choose-3) of the location data.
     for (i = 0; i < numSamples; i++) {
         x1 = locationData[i].xf;
         y1 = locationData[i].yf;
@@ -164,41 +183,49 @@ function constructCech() {
             y2 = locationData[j].yf;
             d12 = sqEuclidDist([x1, y1], [x2, y2]);
             if (d12 <= sqDiameter) {
+                //save the edge
                 cechEdges.push({Pt1: i, Pt2: j});
+                //compute distance to third point only if first 2 points are within coverage ball
                 for (k = j + 1; k < numSamples; k++) {
                     x3 = locationData[k].xf;
                     y3 = locationData[k].yf;
                     d23 = sqEuclidDist([x2, y2], [x3, y3]);
+                    // only continue computation if third point is pairwise within coverage ball of other 2 points
                     if (d23 <= sqDiameter) {
                         d13 = sqEuclidDist([x1, y1], [x3, y3]);
 
-                        if (d12 >= d13 && d12 >= d23) {
-                            xc = (x2 + x1) / 2;
-                            yc = (y2 + y1) / 2;
-                            dist = Math.sqrt(sqEuclidDist([x3, y3], [xc, yc]));
-                            testRadius = Math.sqrt(d12)/2;
-                        } else if (d13 >= d12 && d13 >= d23) {
-                            xc = (x3 + x1) / 2;
-                            yc = (y3 + y1) / 2;
-                            dist = Math.sqrt(sqEuclidDist([x2, y2], [xc, yc]));
-                            testRadius = Math.sqrt(d13)/2;
-                        } else {
-                            xc = (x3 + x2) / 2;
-                            yc = (y3 + y2) / 2;
-                            dist = Math.sqrt(sqEuclidDist([x1, y1], [xc, yc]));
-                            testRadius = Math.sqrt(d23)/2;
-                        }
+                        if (d13 <= sqDiameter) {
 
-                        if ( dist<=testRadius ) {
-                            cechFaces.push({Pt1: i, Pt2: j, Pt3: k});
-                            console.log(i+' '+j+' '+k)
-                        } else {
-                            a = Math.sqrt(d12);
-                            b = Math.sqrt(d13);
-                            c = Math.sqrt(d23);
-                            testRadius = (a * b * c) / Math.sqrt((a + b + c) * (b + c - a) * (a + c - b) * (a + b - c));
-                            if (testRadius <= complexRadius) {
-                                cechFaces.push({Pt1: i, Pt2: j, Pt3: k})
+                            //determine longest edge
+                            if (d12 >= d13 && d12 >= d23) {
+                                xc = (x2 + x1) / 2;
+                                yc = (y2 + y1) / 2;
+                                dist = Math.sqrt(sqEuclidDist([x3, y3], [xc, yc]));
+                                testRadius = Math.sqrt(d12) / 2;
+                            } else if (d13 >= d12 && d13 >= d23) {
+                                xc = (x3 + x1) / 2;
+                                yc = (y3 + y1) / 2;
+                                dist = Math.sqrt(sqEuclidDist([x2, y2], [xc, yc]));
+                                testRadius = Math.sqrt(d13) / 2;
+                            } else {
+                                xc = (x3 + x2) / 2;
+                                yc = (y3 + y2) / 2;
+                                dist = Math.sqrt(sqEuclidDist([x1, y1], [xc, yc]));
+                                testRadius = Math.sqrt(d23) / 2;
+                            }
+
+                            if (dist <= testRadius) {
+                                //determine if third point is within circumcircle of longest edge
+                                cechFaces.push({Pt1: i, Pt2: j, Pt3: k});
+                            } else {
+                                //otherwise determine triangle circumcircle radius is smaller than the coverage radius
+                                a = Math.sqrt(d12);
+                                b = Math.sqrt(d13);
+                                c = Math.sqrt(d23);
+                                testRadius = (a * b * c) / Math.sqrt((a + b + c) * (b + c - a) * (a + c - b) * (a + b - c));
+                                if (testRadius <= complexRadius) {
+                                    cechFaces.push({Pt1: i, Pt2: j, Pt3: k})
+                                }
                             }
                         }
                     }
@@ -214,9 +241,11 @@ function constructRips() {
     ripsFaces = [];
 
     var sqDist;
+    //calculate the squared diameter to compare each pair to. Use square diameter to compare to squared euclidean distanct
+    //of each pair so save computation.
     sqDiameter = 4 * Math.pow(complexRadius, 2);
-    sqRadius = Math.pow(complexRadius, 2);
 
+    //interate over all possible permutations (n-choose-3) of the location data.
     for (i = 0; i < numSamples; i++) {
         x1 = locationData[i].xf;
         y1 = locationData[i].yf;
@@ -225,7 +254,9 @@ function constructRips() {
             y2 = locationData[j].yf;
             d12 = sqEuclidDist([x1, y1], [x2, y2]);
             if (d12 <= sqDiameter) {
+                //save the edge
                 ripsEdges.push({Pt1: i, Pt2: j});
+                //compute distance to third point only if first 2 points are within coverage ball
                 for (k = j + 1; k < numSamples; k++) {
                     x3 = locationData[k].xf;
                     y3 = locationData[k].yf;
@@ -233,6 +264,7 @@ function constructRips() {
                     if (d23 <= sqDiameter) {
                         d13 = sqEuclidDist([x1, y1], [x3, y3]);
                         if (d13 <= sqDiameter) {
+                            //all three pairwise distances within coverage ball, save face
                             ripsFaces.push({Pt1: i, Pt2: j, Pt3: k})
                         }
                     }
@@ -248,6 +280,7 @@ function renderComplex(edges,faces) {
     //remove existing canvas elements
     complexCanvas.selectAll('.face').remove();
     complexCanvas.selectAll('.edge').remove();
+    //add g for each layer, this makes it easier to toggle each component on and off
     var complexFaces = complexCanvas.append('g')
         .attr('id','complexFaces')
         .attr('class', 'face')
@@ -258,6 +291,9 @@ function renderComplex(edges,faces) {
         .style('visibility','hidden');
 
 
+//render faces, give each an id with corresponding vertex indices. This makes it easier to find and highlight the corresponding
+    //points and edges, do the same for each edge. Start with everything hidden then render view according to what the user
+    //has selected
 
     complexFaces.selectAll('polygon').data(faces)
         .enter().append('polygon')
@@ -304,6 +340,8 @@ function renderComplex(edges,faces) {
 }
 
 function renderPoints() {
+
+    //render each point and coverage circle. The id simply corresponds to its index within locationData
 
     complexCanvas.selectAll('.circle').remove();
     complexCanvas.selectAll('.point').remove();
@@ -354,26 +392,27 @@ function renderPoints() {
         })
         .attr('r', complexRadius);
 
-    complexPoints.selectAll('text')
-        .data(locationData)
-        .enter().append('text')
-        .text( function (d, i) {
-            return i.toString();
-        })
-        .attr('x', function (d) {
-            return d.xf;
-        })
-        .attr('y', function (d) {
-            return d.yf;
-        })
-        .attr('dx','10px')
-        .attr('dy','10px');
+    // complexPoints.selectAll('text')
+    //     .data(locationData)
+    //     .enter().append('text')
+    //     .text( function (d, i) {
+    //         return i.toString();
+    //     })
+    //     .attr('x', function (d) {
+    //         return d.xf;
+    //     })
+    //     .attr('y', function (d) {
+    //         return d.yf;
+    //     })
+    //     .attr('dx','10px')
+    //     .attr('dy','10px');
 
     renderView()
 
 }
 
 function renderView() {
+    //query the various view options toggle visibility of each "g" element accordingly
     f = document.getElementById('coverCheckbox');
     showCoverage(f.checked);
     f = document.getElementById('nodeCheckbox');
@@ -388,6 +427,7 @@ function renderView() {
 
 function loadData() {
 
+    //allow user to select file
     var selectedFile = document.getElementById('fileSelector');
     var fReader = new FileReader();
     fReader.readAsDataURL(selectedFile.files[0]);
@@ -403,10 +443,12 @@ function loadData() {
                 d.xf = +d.xf;
                 d.yf = +d.yf;
             });
+            //read data into locationData array and update number of samples
             locationData = csv;
             var csvContent = d3.csvFormat(locationData, ['LocationID', 'xf', 'yf']);
             numSamples = locationData.length;
 
+            //reset to default view and calculate complexes
             c = document.getElementById('coverCheckbox');
             c.disabled = false;
             c.checked = true;
@@ -422,7 +464,7 @@ function loadData() {
 }
 
 function randomData() {
-
+//generate uniform randaom data points
     n = document.getElementById('numSensors').value;
     numSamples = +n;
 
@@ -444,13 +486,13 @@ function randomData() {
     document.getElementById('edgeCheckbox').disabled = 0;
     document.getElementById('faceCheckbox').disabled = 0;
 
-    changeComplex();
+    renderPoints();
+    updateComplex(document.getElementById('complexInput').value);
 }
 
 function saveData() {
 
     //save nodes
-    console.log(locationData)
     var csvContent = d3.csvFormat(locationData, ['LocationID', 'xf', 'yf']);
     var encodedUri = encodeURI(csvContent);
     var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -467,7 +509,6 @@ function saveData() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            console.log('pts')
         }
     }
 
@@ -489,11 +530,10 @@ function saveData() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            console.log('faces')
         }
     }
 
-    //save edges
+    //save cech edges
     var filename3 = filename.replace(/(\.)/,'_cech__edges.')
     var csvContent = d3.csvFormat(cechEdges, ['Pt1', 'Pt2']);
     var encodedUri = encodeURI(csvContent);
@@ -511,11 +551,10 @@ function saveData() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            console.log('edges')
         }
     }
 
-    //save faces
+    //save rips faces
     var filename2 = filename.replace(/(\.)/,'_rips_faces.')
     var csvContent = d3.csvFormat(ripsFaces, ['Pt1', 'Pt2', 'Pt3']);
     var encodedUri = encodeURI(csvContent);
@@ -533,11 +572,10 @@ function saveData() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            console.log('faces')
         }
     }
 
-    //save edges
+    //save rips edges
     var filename3 = filename.replace(/(\.)/,'_rips_edges.')
     var csvContent = d3.csvFormat(ripsEdges, ['Pt1', 'Pt2']);
     var encodedUri = encodeURI(csvContent);
@@ -555,7 +593,6 @@ function saveData() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            console.log('edges')
         }
     }
 }
@@ -589,7 +626,8 @@ function updateNode(coords) {
     var newPoint = {LocationID: i, xf: coords[0], yf: coords[1]};
     locationData.push(newPoint);
     numSamples = numSamples+1;
-    updateCech(document.getElementById('complexInput').value);
+    renderPoints();
+    updateComplex(document.getElementById('complexInput').value);
     complexCanvas.attr('cursor',null)
         .on('click',null);
 }
@@ -656,7 +694,9 @@ function dragNode() {
 }
 
 function dragEnd() {
-    if (wasDragged) changeComplex();
+    if (wasDragged) {
+        updateComplex(document.getElementById('complexInput').value);
+    }
     wasDragged = false;
 }
 
@@ -688,24 +728,11 @@ function selectNode() {
         if (event.code=='Delete') {
             locationData.splice(i,1);
             numSamples = locationData.length;
-            changeComplex();
+            renderPoints();
         } else if (event.code=='Escape') {
-            d3.select('#complexCanvas').selectAll('circle')
-                .on('mouseover',complexMouseOver)
-                .on('mouseout',complexMouseOut);
-            d3.select('#complexCanvas').selectAll('line')
-                .on('mouseover',complexMouseOver)
-                .on('mouseout',complexMouseOut);
-            d3.select('#complexCanvas').selectAll('polygon')
-                .on('mouseover',complexMouseOver)
-                .on('mouseout',complexMouseOut);
-            d3.select('complex_Point_'+i)
-                .style('fill','#000');
-            d3.select(str)
-                .style('fill', '#fff')
-                .style('fill-opacity', 0)
-                .style('stroke', '#000')
-                .style('stroke-opacity', 0.15);
+
+            renderPoints();
+            updateComplex(document.getElementById('complexInput').value);
         }
     }, {once:true});
 }
@@ -720,7 +747,6 @@ function testfun() {
 
 function testfun3() {
     t1 = Date.now();
-    // ind = comb(3, numSamples);
     var ripsFaces = [];
     var cechFaces = [];
     var sqDist;

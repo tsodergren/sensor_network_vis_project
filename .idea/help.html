@@ -9,8 +9,75 @@
 
 <h1>Sensor network generator</h1>
 <h2>User manual</h2>
+This tool allows you to visualize sensor network coverage.
 
+<h3>Loading data</h3>
+To load data select the "Choose File" button. Browse for the file you wish to load and select "Open". Files must be in
+CSV format with the column headers: LocationID, xf, yf. LocationID is a string containing the label of the node while xf
+and yf refer to the actual node locations.
 
+<h3>Saving data</h3>
+To save your work select the "Save" button. You will be prompted to save the node locations along with several additional
+files containing information on the generated complexes. File naming must be consistent. You may name the primary file
+whatever you like but the supporting file names must not be changed or else they will not load.
 
+<h3>Random data generation</h3>
+You may generate a set of randomly distributed nodes by selecting the "Generate random data" button. Enter the number of
+desired nodes in the "# sensors" box up to 250. Note that selecting a number of nodes greater than approximately ~150 will
+slow down all computations.
+
+<h3>Data Editing</h3>
+
+<p>
+    <b>Moving nodes.</b> To move a node simply drag and drop. The location and coverage circle will move along with the mouse.
+    After you have dropped the node into the new location the complex will be recalculated and rendered.
+</p>
+
+<p>
+    <b>Deleting nodes.</b> To delete a node click once on any node location. The selected node will be highlighted. To delete
+    the node press the "Delete" key on your keyboard. The node will be deleted and the complex will be updated. To cancel,
+    press the "Escape" key.
+</p>
+
+<p>
+    <b>Adding nodes.</b> To add a new node simply press the "Add node" button. The cursor will change to a crosshair. Click the
+    desired location and the new node will be inserted and the complex updated.
+</p>
+
+<h3>Changing coverage radius.</h3>
+
+Dragging the "Radius" slider will dynamically change the coverage radius for all nodes and update the complex accordingly.
+
+<h3>View options</h3>
+There are several options for visualizing network coverage. To add or remove each layer from the canvas simply toggle
+the corresponding checkbox.
+
+<p>
+    <b>Nodes</b> correspond to sensor locations. Hovering over a node will
+    highlight the coverage radius for that individual sensor.
+</p>
+
+<p>
+    <b>Edges</b> correspond to the lines connecting each node. An edge only exists if the coverage radii overlap for two nodes.
+    Hovering over an edge will highlight the edge and its corresponding nodes.
+</p>
+
+<p>
+    <b>Faces</b> correspond to filled triangles indicating where three points are mutually connected. Hovering over a face
+    will highlight the face along with the corresponding three points and edges that form the triangle. The presence of a face
+    depends on which complex type you select:
+    <br>
+    <br>
+    <b>&#268;ech</b> pertains to a simplicial complex constructed such that where the coverage for each of the three nodes overlaps,
+    we can guarantee "good" coverage and represent this geometric area as a face or 2-simplex in topological space. (
+    <a href="https://en.wikipedia.org/wiki/%C4%8Cech_cohomology">Reference</a>)
+    <br>
+    <br>
+    <b>Vietoris-Rips</b> is another, less computationally expensive way of calculating coverage. In this simplicial complex, faces
+    are generated when 3 points are all pairwise within range of each other with no requirement that all three nodes simultaneously overlap.
+    The advantage of this over the &#268;ech complex is that it is computationally much less expensive. The disadvantage lies in the fact that
+    there is the possibility of small coverage gaps within each face where the coverage radii do not all intersect the circumcenter of the resulting triangle
+    in geometric space. (<a href="https://en.wikipedia.org/wiki/Vietoris%E2%80%93Rips_complex">Reference</a>)
+</p>
 </body>
 </html>
