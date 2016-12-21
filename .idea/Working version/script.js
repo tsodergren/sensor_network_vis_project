@@ -1,11 +1,4 @@
-/**
- * @method constructCech
- * @param {String} foo Argument 1
- * @param {Object} config A config object
- * @param {String} config.name The name on the config object
- * @param {Function} config.callback A callback function on the config object
- * @param {Boolean} [extra=false] Do extra, optional work
- * @return {Boolean} Returns true on success
+/*
  * Created by Tim on 11/10/2016.
  */
 <!-- Common variables and functions used by all of the example plots -->
@@ -19,11 +12,11 @@ var buffer = 50;          //Buffer space to ensure points are adequately
 
 
 //Initialize the data
-var filename = 'data.csv';
+var filename = 'data.off';
 var locationData;
 var xp=[];
 var yp=[];
-var complexType = 'cech';
+var complexType;
 
 var cechFaces = [];
 var cechEdges = [];
@@ -32,7 +25,6 @@ var ripsEdges = [];
 
 var numSamples;      //Number of points to use
 var complexRadius = 100;          //epsilon ball radius
-// complexRadius = dataScale(complexRadius);
 
 //background grid information
 var cellSize = 50;
@@ -40,7 +32,63 @@ var gridWidth = Math.ceil(width / cellSize);
 var gridHeight = Math.ceil(height / cellSize);
 var grid = new Array(gridWidth * gridHeight);
 var wasDragged = false;
+var zoomOn = false;
 
+//Construct the main plot area and add gridlines
+var complexSVG = d3.select("#plotArea").append('svg')
+    .attr("class", "cech")
+    .attr("id", "complexSVG")
+    .attr("width", width)
+    .attr("height", height)
+    .style("margin", "auto")
+    .style("border", "1px solid black");
+
+complexSVG.append("rect")
+    .attr("width", width)
+    .attr("height", height)
+    .attr('id','zoomBox')
+    .style("fill", "none")
+    .style("pointer-events", "all")
+    .call(d3.zoom()
+        .scaleExtent([1 / 2, 4])
+        .on("zoom", function () {
+            complexCanvas.attr("transform", d3.event.transform)
+        }));
+
+complexSVG.append("path")
+    .attr("class", "grid")
+    .attr("d", d3.range(cellSize, width, cellSize)
+            .map(function(x) { return "M" + Math.round(x) + ",0V" + height; })
+            .join("")
+        + d3.range(cellSize, height, cellSize)
+            .map(function(y) { return "M0," + Math.round(y) + "H" + width; })
+            .join(""));
+
+var complexCanvas = complexSVG.append('g')
+    .attr('class','cech')
+    .attr('id','complexCanvas');
+
+
+
+window.addEventListener('keydown', function (event) {
+    if (event.key=='z') {
+        zoomBox = d3.select('#zoomBox').node();
+        if (zoomOn) {
+            console.log('Zoom mode turned off')
+            d3.select('#zoomBox').attr('cursor','auto');
+            child1 = zoomBox.parentNode.firstChild;
+            zoomBox.parentNode.insertBefore(zoomBox, child1);
+            zoomOn = false;
+        } else {
+            console.log('Zoom mode turned on')
+            d3.select('#zoomBox').attr('cursor','move');
+            zoomBox.parentNode.appendChild(zoomBox);
+            zoomOn = true;
+            console.log(complexCanvas)
+        }
+
+    }
+});
 
 //this function is called whenever the data are changed.
 
@@ -348,7 +396,7 @@ function renderPoints() {
     var complexCircles = complexCanvas.append('g')
         .attr('class','circle')
         .attr('id','complexCircles')
-    var complexPoints = complexCanvas.append('g').attr('class', 'point')
+    var complexPoints = complexCanvas.append('g')
         .attr('class', 'point')
         .attr('id','complexPoints');
 
@@ -421,17 +469,20 @@ function renderView() {
     show(f.checked,'.edge');
     f = document.getElementById('faceCheckbox');
     show(f.checked,'.face');
+
+    zoomBox = d3.select('#zoomBox').node();
+    child1 = zoomBox.parentNode.firstChild;
+    zoomBox.parentNode.insertBefore(zoomBox, child1);
 }
 
 
 
-function loadData() {
+function importData() {
 
     //allow user to select file
     var selectedFile = document.getElementById('fileSelector');
     var fReader = new FileReader();
     fReader.readAsDataURL(selectedFile.files[0]);
-    filename = selectedFile.files[0].name;
     fReader.onloadend = function(event) {
 
         d3.csv(event.target.result, function (csv) {
@@ -493,9 +544,41 @@ function randomData() {
 function saveData() {
 
     //save nodes
-    var csvContent = d3.csvFormat(locationData, ['LocationID', 'xf', 'yf']);
-    var encodedUri = encodeURI(csvContent);
-    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    var header = 'OFF\n'+
+        '#\n'+
+        '# Simplicial complex of 2-D location data\n'+
+        '# Generated on '+Date()+'\n'+
+        '# Complex type: '+complexType+'\n'+
+        '# Coverage radius: '+complexRadius+'\n'+
+        '#\n'+
+        numSamples+' '+cechFaces.length+' '+cechEdges.length;
+
+
+    var tempData = JSON.parse(JSON.stringify(locationData));
+    tempData.forEach( function(d) {
+        d.z = 0;
+    });
+    var verticesStr = d3.dsvFormat(' ').format(tempData, ['xf', 'yf', 'z']);
+    verticesStr = verticesStr.replace('xf yf z', []);
+
+    if (complexType=='Cech') {
+        faces = cechFaces;
+        edges = cechEdges;
+    } else {
+        faces = ripsFaces;
+        edges = ripsEdges;
+    };
+
+    var facesStr = d3.dsvFormat(' ').format(faces, ['Pt1', 'Pt2', 'Pt3']);
+    facesStr = facesStr.replace('Pt1 Pt2 Pt3', []);
+    var edgesStr = d3.dsvFormat(' ').format(edges, ['Pt1', 'Pt2']);
+    edgesStr = edgesStr.replace('Pt1 Pt2', []);
+
+    dsvContent = header+verticesStr+facesStr+edgesStr;
+    dsvContent = dsvContent.replace(/\n/g,'\r\n');
+
+    var blob = new Blob([dsvContent], { type: 'text/csv;charset=utf-8;' });
     if (navigator.msSaveBlob) { // IE 10+
         navigator.msSaveBlob(blob, filename);
     } else {
@@ -511,90 +594,79 @@ function saveData() {
             document.body.removeChild(link);
         }
     }
+}
 
-    //save cech faces
-    var filename2 = filename.replace(/(\.)/,'_cech_faces.')
-    var csvContent = d3.csvFormat(cechFaces, ['Pt1', 'Pt2', 'Pt3']);
-    var encodedUri = encodeURI(csvContent);
-    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    if (navigator.msSaveBlob) { // IE 10+
-        navigator.msSaveBlob(blob, filename2);
-    } else {
-        var link = document.createElement("a");
-        if (link.download !== undefined) { // feature detection
-            // Browsers that support HTML5 download attribute
-            var url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", filename2);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+function loadData() {
+
+    //allow user to select file
+    var selectedFile = document.getElementById('openButton');
+    var fReader = new FileReader();
+    fReader.readAsDataURL(selectedFile.files[0]);
+    fReader.onloadend = function(event) {
+
+        d3.text(event.target.result, function (txt) {
+
+            str = txt.match(/Complex type: (\w*)/);
+            complexType = str[1];
+            str = txt.match(/Coverage radius: (\w*)/);
+            complexRadius = +str[1];
+
+            str = txt.replace(/#[^\n]*\n/g, []);
+            str = str.replace(/OFF\r\n/i, []);
+
+            line1 = str.match(/([^\r\n]*)\r\n/);
+            line1 = line1[1];
+            line1 = line1.match(/(\d*)\w/g);
+            numSamples = +line1[0];
+            numFaces = +line1[1];
+            numEdges = +line1[2];
+
+            locationData = d3.dsvFormat(' ').parseRows(str, function (d,i) {
+                if (i<numSamples) {
+                    return {
+                        xf: +d[0],
+                        yf: +d[1]
+                    };
+                };
+            });
+
+            var faces = d3.dsvFormat(' ').parseRows(str, function (d,i) {
+                if (i>=numSamples && i<numSamples+numFaces) {
+                    return {
+                        Pt1: +d[0],
+                        Pt2: +d[1],
+                        Pt3: +d[2]
+                    }
+                }
+            })
+
+            var edges = d3.dsvFormat(' ').parseRows(str, function (d,i) {
+                if (i>=numSamples+numFaces) {
+                    return {
+                        Pt1: +d[0],
+                        Pt2: +d[1]
+                    }
+                }
+            })
+
+            console.log(locationData)
+            console.log(faces)
+            console.log(edges)
+            return
+            //reset to default view and calculate complexes
+            c = document.getElementById('coverCheckbox');
+            c.disabled = false;
+            c.checked = true;
+            n = document.getElementById('nodeCheckbox');
+            n.disabled = false;
+            n.checked = true;
+            document.getElementById('edgeCheckbox').disabled = 0;
+            document.getElementById('faceCheckbox').disabled = 0;
+            renderPoints();
+            updateComplex(document.getElementById('complexInput').value);
+        });
     }
 
-    //save cech edges
-    var filename3 = filename.replace(/(\.)/,'_cech__edges.')
-    var csvContent = d3.csvFormat(cechEdges, ['Pt1', 'Pt2']);
-    var encodedUri = encodeURI(csvContent);
-    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    if (navigator.msSaveBlob) { // IE 10+
-        navigator.msSaveBlob(blob, filename3);
-    } else {
-        var link = document.createElement("a");
-        if (link.download !== undefined) { // feature detection
-            // Browsers that support HTML5 download attribute
-            var url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", filename3);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    }
-
-    //save rips faces
-    var filename2 = filename.replace(/(\.)/,'_rips_faces.')
-    var csvContent = d3.csvFormat(ripsFaces, ['Pt1', 'Pt2', 'Pt3']);
-    var encodedUri = encodeURI(csvContent);
-    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    if (navigator.msSaveBlob) { // IE 10+
-        navigator.msSaveBlob(blob, filename2);
-    } else {
-        var link = document.createElement("a");
-        if (link.download !== undefined) { // feature detection
-            // Browsers that support HTML5 download attribute
-            var url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", filename2);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    }
-
-    //save rips edges
-    var filename3 = filename.replace(/(\.)/,'_rips_edges.')
-    var csvContent = d3.csvFormat(ripsEdges, ['Pt1', 'Pt2']);
-    var encodedUri = encodeURI(csvContent);
-    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    if (navigator.msSaveBlob) { // IE 10+
-        navigator.msSaveBlob(blob, filename3);
-    } else {
-        var link = document.createElement("a");
-        if (link.download !== undefined) { // feature detection
-            // Browsers that support HTML5 download attribute
-            var url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", filename3);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    }
 }
 
 function getRndInteger(min, max) {
@@ -605,8 +677,10 @@ function changeComplex() {
 
     d = document.getElementsByName('complexType');
     if (d[0].checked) {
+        complexType = 'Cech'
         renderComplex(cechEdges, cechFaces);
     } else {
+        complexType = 'Vietoris-Rips'
         renderComplex(ripsEdges, ripsFaces);
     }
 }
@@ -707,7 +781,8 @@ function selectNode() {
 
     d3.select('#complexCanvas').selectAll('circle')
         .on('mouseover',null)
-        .on('mouseout',null);
+        .on('mouseout',null)
+        .on('click',null)
     d3.select('#complexCanvas').selectAll('line')
         .on('mouseover',null)
         .on('mouseout',null);
@@ -715,191 +790,22 @@ function selectNode() {
         .on('mouseover',null)
         .on('mouseout',null);
 
-    d3.select(str)
-        .style('fill', '#c33')
-        .style('fill-opacity', 0.25)
-        .style('stroke', '#c33')
-        .style('stroke-opacity', 1);
-
-    d3.select(this)
-        .style('fill','#c33');
+    highlightPoint([],i);
 
     window.addEventListener('keydown', function (event) {
         if (event.code=='Delete') {
             locationData.splice(i,1);
             numSamples = locationData.length;
             renderPoints();
+            updateComplex(document.getElementById('complexInput').value);
         } else if (event.code=='Escape') {
 
             renderPoints();
-            updateComplex(document.getElementById('complexInput').value);
+            changeComplex();
         }
     }, {once:true});
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*                                This area for testing functions                                                     */
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-function testfun() {
-    highlightPoint([],10)
-}
-
-function testfun3() {
-    t1 = Date.now();
-    var ripsFaces = [];
-    var cechFaces = [];
-    var sqDist;
-    sqDiameter = 4*Math.pow(complexRadius, 2);
-    sqRadius = Math.pow(complexRadius, 2);
-
-    for (i=0; i<numSamples; i++) {
-        x1 = locationData[i].xf;
-        y1 = locationData[i].yf;
-        for (j=i+1; j<numSamples; j++) {
-            x2 = locationData[j].xf;
-            y2 = locationData[j].yf;
-            d12 = sqEuclidDist([x1, y1], [x2, y2]);
-            if (d12 <= sqDiameter) {
-                for (k = j + 1; k < numSamples; k++) {
-                    x3 = locationData[k].xf;
-                    y3 = locationData[k].yf;
-                    d23 = sqEuclidDist([x2, y2], [x3, y3]);
-                    if (d23 <= sqDiameter) {
-                        d13 = sqEuclidDist([x1, y1], [x3, y3]);
-
-                        if (d12 >= d13 && d12 >= d23) {
-                            xc = Math.abs(x2 - x1) / 2;
-                            yc = Math.abs(y2 - y1) / 2;
-                            sqDist = sqEuclidDist([x3, y3], [xc, yc]);
-                        } else if (d13 >= d12 && d13 >= d23) {
-                            xc = Math.abs(x3 - x1) / 2;
-                            yc = Math.abs(y3 - y1) / 2;
-                            sqDist = sqEuclidDist([x2, y2], [xc, yc]);
-                        } else {
-                            xc = Math.abs(x3 - x2) / 2;
-                            yc = Math.abs(y3 - y2) / 2;
-                            sqDist = sqEuclidDist([x1, y1], [xc, yc]);
-                        }
-
-                        if (sqDist <= sqRadius) {
-                            cechFaces.push([i, j, k]);
-                        } else {
-                            a = Math.sqrt(d12);
-                            b = Math.sqrt(d13);
-                            c = Math.sqrt(d23);
-                            testRadius = (a * b * c) / Math.sqrt((a + b + c) * (b + c - a) * (a + c - b) * (a + b - c));
-                            if (testRadius <= complexRadius) {
-                                cechFaces.push([i, j, k])
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    };
-
-// console.log(cechFaces)
-    t5 = Date.now();
-    console.log('My Elapsed time: '+(t5-t1)+' ms');
-    testfun2();
 }
 
 function sqEuclidDist(pt1, pt2) {
     return Math.pow(pt2[0]-pt1[0],2) + Math.pow(pt2[1]-pt1[1],2);
 }
-
-function testfun2() {
-
-    t1=Date.now();
-    //Faces first
-    for (var i = 0; i < numSamples; i++) {
-        var x1 = locationData[i].xf;
-        var y1 = locationData[i].yf;
-        for (var j = i + 1; j < numSamples; j++) {
-            var x2 = locationData[j].xf;
-            var y2 = locationData[j].yf;
-            var sqDistance = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
-            var sqDiameter = 4 * Math.pow(complexRadius, 2);
-            if (sqDistance < sqDiameter) {
-                for (var k = j + 1; k < numSamples; k++) {
-                    var x3 = locationData[k].xf;
-                    var y3 = locationData[k].yf;
-                    var testRadius = minimumEnclosingBallRadius(x1, y1, x2, y2, x3, y3);
-                    if (testRadius <= complexRadius) {
-                        var idx1 = i;
-                        var idx2 = j;
-                        var idx3 = k;
-                        if (k < i) {
-                            idx1 = k;
-                            idx2 = i;
-                            idx3 = j;
-                        }
-                        else if (k < j) {
-                            idx1 = i;
-                            idx2 = k;
-                            idx3 = j;
-                        }
-                        var pts = x1.toString() + ',' + y1.toString() + ','
-                            + x2.toString() + ',' + y2.toString() + ','
-                            + x3.toString() + ',' + y3.toString();
-
-                        var idx = idx1.toString() + '_'
-                            + idx2.toString() + '_'
-                            + idx3.toString();
-                    }
-                }
-            }
-        }
-    }
-    t2 = Date.now();
-    console.log('His Elapsed time: '+(t2-t1)+' ms')
-}
-
-
-function comb(n,k) {
-
-    t1 = Date.now();
-    // n -> [a] -> [[a]]
-    function comb(n, lst) {
-        if (!n) return [[]];
-        if (!lst.length) return [];
-
-        var x = lst[0],
-            xs = lst.slice(1);
-
-        return comb(n - 1, xs).map(function (t) {
-            return [x].concat(t);
-        }).concat(comb(n, xs));
-    }
-
-    // f -> f
-    function memoized(fn) {
-        m = {};
-        return function (x) {
-            var args = [].slice.call(arguments),
-                strKey = args.join('-');
-
-            v = m[strKey];
-            if ('u' === (typeof v)[0])
-                m[strKey] = v = fn.apply(null, args);
-            return v;
-        }
-    }
-
-    // [m..n]
-    function range(m, n) {
-        return Array.apply(null, Array(n - m + 1)).map(function (x, i) {
-            return m + i;
-        });
-    }
-
-    var fnMemoized = memoized(comb),
-        lstRange = range(0, k-1);
-
-    t2 = Date.now()-t1;
-    console.log('comb time: '+t2+'ms');
-
-    return fnMemoized(n, lstRange)
-
-};
