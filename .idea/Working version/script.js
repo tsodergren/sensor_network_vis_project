@@ -6,9 +6,8 @@ var width = 800;          //Width of each plot
 var height = 600;         //Height of each plot
 var buffer = 50;          //Buffer space to ensure points are adequately
                           // far from the edge of the plot
-// var dataScale = d3.scaleLinear()
-//     .domain([0,300])
-//     .range([0,600]);
+var dataScale = d3.scaleLinear()
+    .range([0,height]);
 
 
 //Initialize the data
@@ -17,6 +16,7 @@ var locationData;
 var xp=[];
 var yp=[];
 var complexType;
+var selectedNodes = [];
 
 var cechFaces = [];
 var cechEdges = [];
@@ -74,17 +74,14 @@ window.addEventListener('keydown', function (event) {
     if (event.key=='z') {
         zoomBox = d3.select('#zoomBox').node();
         if (zoomOn) {
-            console.log('Zoom mode turned off')
             d3.select('#zoomBox').attr('cursor','auto');
             child1 = zoomBox.parentNode.firstChild;
             zoomBox.parentNode.insertBefore(zoomBox, child1);
             zoomOn = false;
         } else {
-            console.log('Zoom mode turned on')
             d3.select('#zoomBox').attr('cursor','move');
             zoomBox.parentNode.appendChild(zoomBox);
             zoomOn = true;
-            console.log(complexCanvas)
         }
 
     }
@@ -324,6 +321,17 @@ function constructRips() {
 
 function renderComplex(edges,faces) {
 
+    if (edges.length==0) {
+        if (complexType=='Cech') {
+            constructCech();
+            edges = cechEdges
+            faces = cechFaces
+        } else if (complexType=='Vietoris-Rips') {
+            constructRips();
+            edges = ripsEdges;
+            faces = ripsFaces;
+        }
+    };
 
     //remove existing canvas elements
     complexCanvas.selectAll('.face').remove();
@@ -400,7 +408,7 @@ function renderPoints() {
         .attr('class', 'point')
         .attr('id','complexPoints');
 
-    complexPoints.selectAll('circle').data(locationData)
+    var pts = complexPoints.selectAll('circle').data(locationData)
         .enter()
         .append('circle')
         .style('visibility','hidden')
@@ -416,12 +424,13 @@ function renderPoints() {
             return 'complex_Point_' + i.toString();
         })
         .attr('r', 5)
+        .on('click', console.log('clicked'))
         .on('mouseover', highlightPoint)
         .on('mouseout', resetPoint)
         .call(d3.drag()
             .on('drag', dragNode)
-            .on('end', dragEnd))
-        .on('click', selectNode);
+            .on('end', dragEnd));
+
 
     complexCircles.selectAll('circle').data(locationData)
         .enter()
@@ -614,12 +623,15 @@ function loadData() {
             str = txt.replace(/#[^\n]*\n/g, []);
             str = str.replace(/OFF\r\n/i, []);
 
-            line1 = str.match(/([^\r\n]*)\r\n/);
+            re = /([^\r\n]*)\r\n/;
+            line1 = str.match(re);
             line1 = line1[1];
             line1 = line1.match(/(\d*)\w/g);
             numSamples = +line1[0];
             numFaces = +line1[1];
             numEdges = +line1[2];
+
+            str = str.replace(re,[]);
 
             locationData = d3.dsvFormat(' ').parseRows(str, function (d,i) {
                 if (i<numSamples) {
@@ -649,11 +661,25 @@ function loadData() {
                 }
             })
 
-            console.log(locationData)
-            console.log(faces)
-            console.log(edges)
-            return
-            //reset to default view and calculate complexes
+            complexSelector = document.getElementsByName('complexType');
+            if (complexType=='Cech') {
+                cechFaces = faces;
+                cechEdges = edges;
+                ripsFaces = [];
+                ripsEdges = [];
+                complexSelector[0].checked = true;
+            } else if (complexType=='Vietoris-Rips') {
+                ripsFaces = faces;
+                ripsEdges = edges;
+                cechFaces = [];
+                cechEdges = [];
+                complexSelector[1].checked = true;
+            }
+
+
+            document.getElementById('complexRadius').innerHTML=complexRadius;
+            d3.select('#complexInput').node().value = complexRadius;
+
             c = document.getElementById('coverCheckbox');
             c.disabled = false;
             c.checked = true;
@@ -662,8 +688,9 @@ function loadData() {
             n.checked = true;
             document.getElementById('edgeCheckbox').disabled = 0;
             document.getElementById('faceCheckbox').disabled = 0;
+
             renderPoints();
-            updateComplex(document.getElementById('complexInput').value);
+            changeComplex();
         });
     }
 
@@ -684,7 +711,6 @@ function changeComplex() {
         renderComplex(ripsEdges, ripsFaces);
     }
 }
-
 
 function addNode() {
 
@@ -775,14 +801,24 @@ function dragEnd() {
 }
 
 function selectNode() {
-    if (d3.event.defaultPrevented) return;
+    if (d3.event.defaultPrevented) {
+        console.log('here')
+        return;
+    }
     i = this.id.match(/\d+/g);
-    str = 'complex_Circle_'+i;
+
+    selectedNodes.push(i);
+
+    // d3.select('#complexPoint_'+i).node()
+    //     .on('mouseover',null)
+    //     .on('mouseout',null)
+    //     .on('click',null);
 
     d3.select('#complexCanvas').selectAll('circle')
-        .on('mouseover',null)
-        .on('mouseout',null)
-        .on('click',null)
+        .on('mouseover', null)
+        .on('mouseout', null)
+        .on('click', null);
+
     d3.select('#complexCanvas').selectAll('line')
         .on('mouseover',null)
         .on('mouseout',null);
@@ -790,10 +826,13 @@ function selectNode() {
         .on('mouseover',null)
         .on('mouseout',null);
 
+    console.log('selected')
+
     highlightPoint([],i);
 
     window.addEventListener('keydown', function (event) {
         if (event.code=='Delete') {
+
             locationData.splice(i,1);
             numSamples = locationData.length;
             renderPoints();
