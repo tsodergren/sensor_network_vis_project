@@ -43,17 +43,7 @@ var complexSVG = d3.select("#plotArea").append('svg')
     .style("margin", "auto")
     .style("border", "1px solid black");
 
-complexSVG.append("rect")
-    .attr("width", width)
-    .attr("height", height)
-    .attr('id','zoomBox')
-    .style("fill", "none")
-    .style("pointer-events", "all")
-    .call(d3.zoom()
-        .scaleExtent([1 / 2, 4])
-        .on("zoom", function () {
-            complexCanvas.attr("transform", d3.event.transform)
-        }));
+
 
 complexSVG.append("path")
     .attr("class", "grid")
@@ -72,20 +62,37 @@ var complexCanvas = complexSVG.append('g')
 
 window.addEventListener('keydown', function (event) {
     if (event.key=='z') {
-        zoomBox = d3.select('#zoomBox').node();
         if (zoomOn) {
-            d3.select('#zoomBox').attr('cursor','auto');
-            child1 = zoomBox.parentNode.firstChild;
-            zoomBox.parentNode.insertBefore(zoomBox, child1);
+            d3.select('#zoomBox').remove();
             zoomOn = false;
         } else {
-            d3.select('#zoomBox').attr('cursor','move');
-            zoomBox.parentNode.appendChild(zoomBox);
+            var zoom = d3.zoom()
+                .scaleExtent([0.1, 10])
+                .on('zoom', zoomed);
+
+            complexSVG.append("rect")
+                .attr('cursor','move')
+                .attr("width", width)
+                .attr("height", height)
+                .attr('id','zoomBox')
+                .style("fill", "none")
+                .style("pointer-events", "all")
+                .call(zoom);
             zoomOn = true;
         }
 
     }
 });
+
+function zoomed() {
+    complexCanvas.attr("transform", d3.event.transform)
+    if (d3.event.sourceEvent.type=='wheel') {
+        d3.select('#complexPoints').selectAll('circle')
+            .attr('r', 5/d3.event.transform.k);
+        d3.select('#complexEdges').selectAll('line')
+            .style('stroke-width',4/d3.event.transform.k);
+    }
+}
 
 //this function is called whenever the data are changed.
 
@@ -171,12 +178,8 @@ function resetEdge() {
 //highlight faces
 function highlightFace() {
 
-    face = d3.select(this);
-    face.transition()
-        .style('fill','#c33')
-        .style('stroke','#c33')
-        .style('stroke-width','4px')
-        .style('stroke-opacity', 1);
+    d3.select(this).transition()
+        .style('fill','#c33');
 
 //highlight corresponding edges
     highlightEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt2);
@@ -195,8 +198,7 @@ function resetFace() {
 
     d3.select(this)
         .transition()
-        .style('fill','#000')
-        .style('stroke-opacity',0);
+        .style('fill','#000');
 
     resetEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt2);
     resetEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt3);
@@ -424,7 +426,7 @@ function renderPoints() {
             return 'complex_Point_' + i.toString();
         })
         .attr('r', 5)
-        .on('click', console.log('clicked'))
+        .on('click', selectNode)
         .on('mouseover', highlightPoint)
         .on('mouseout', resetPoint)
         .call(d3.drag()
@@ -448,6 +450,7 @@ function renderPoints() {
             return 'complex_Circle_' + i.toString();
         })
         .attr('r', complexRadius);
+
 
     // complexPoints.selectAll('text')
     //     .data(locationData)
@@ -478,10 +481,6 @@ function renderView() {
     show(f.checked,'.edge');
     f = document.getElementById('faceCheckbox');
     show(f.checked,'.face');
-
-    zoomBox = d3.select('#zoomBox').node();
-    child1 = zoomBox.parentNode.firstChild;
-    zoomBox.parentNode.insertBefore(zoomBox, child1);
 }
 
 
@@ -714,11 +713,18 @@ function changeComplex() {
 
 function addNode() {
 
-    complexCanvas.attr('cursor','crosshair')
+    complexSVG.attr('cursor','crosshair')
         .on('click',function () {
             coords = d3.mouse(this);
             updateNode(coords);
         });
+
+    window.addEventListener('keydown', function(event) {
+        if (event.code=='Escape') {
+            complexSVG.attr('cursor', null)
+                .on('click', null);
+        }
+    });
 }
 
 function updateNode(coords) {
@@ -728,8 +734,6 @@ function updateNode(coords) {
     numSamples = numSamples+1;
     renderPoints();
     updateComplex(document.getElementById('complexInput').value);
-    complexCanvas.attr('cursor',null)
-        .on('click',null);
 }
 
 function updateLocation(coords) {
@@ -798,51 +802,46 @@ function dragEnd() {
         updateComplex(document.getElementById('complexInput').value);
     }
     wasDragged = false;
+    for (i=0; i<selectedNodes.length; i++) {
+        highlightPoint([],selectedNodes[i])
+    }
 }
 
 function selectNode() {
     if (d3.event.defaultPrevented) {
-        console.log('here')
         return;
     }
-    i = this.id.match(/\d+/g);
+    i = +this.id.match(/\d+/g);
 
     selectedNodes.push(i);
+    highlightPoint([],i);
 
-    // d3.select('#complexPoint_'+i).node()
-    //     .on('mouseover',null)
-    //     .on('mouseout',null)
-    //     .on('click',null);
-
-    d3.select('#complexCanvas').selectAll('circle')
-        .on('mouseover', null)
-        .on('mouseout', null)
-        .on('click', null);
-
-    d3.select('#complexCanvas').selectAll('line')
+    d3.select('#complex_Point_'+i)
         .on('mouseover',null)
-        .on('mouseout',null);
-    d3.select('#complexCanvas').selectAll('polygon')
-        .on('mouseover',null)
-        .on('mouseout',null);
+        .on('mouseout',null)
+        .on('click',null);
 
-    console.log('selected')
 
     highlightPoint([],i);
 
-    window.addEventListener('keydown', function (event) {
-        if (event.code=='Delete') {
-
-            locationData.splice(i,1);
-            numSamples = locationData.length;
-            renderPoints();
-            updateComplex(document.getElementById('complexInput').value);
-        } else if (event.code=='Escape') {
-
-            renderPoints();
-            changeComplex();
-        }
-    }, {once:true});
+    if (selectedNodes.length==1) {
+        window.addEventListener('keydown', function (event) {
+            if (event.code == 'Delete') {
+                selectedNodes = selectedNodes.sort(function(a, b){return a-b});
+                for (j = 0; j < selectedNodes.length; j++) {
+                    locationData.splice(selectedNodes[j]-j, 1);
+                }
+                numSamples = locationData.length;
+                selectedNodes = [];
+                renderPoints();
+                updateComplex(document.getElementById('complexInput').value);
+            } else if (event.code == 'Escape') {
+                selectedNodes = [];
+                renderPoints();
+                changeComplex();
+            }
+        }, {once: true});
+    }
 }
 
 function sqEuclidDist(pt1, pt2) {
