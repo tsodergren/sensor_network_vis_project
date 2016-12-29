@@ -17,7 +17,7 @@
 
 <table>
   <tr>
-    <td id="plotArea" width="600px" style="border: 1px solid black; background-color: white" rowspan="2"></td>
+    <td id="plotArea" width="800px" style="border: 1px solid black; background-color: white" rowspan="2"></td>
     <td style="vertical-align: top; padding: 20px; border: 1px solid black">
       <!-- The control panel for data loading and saving as well as data manipulation-->
       <h3>Control Panel</h3>
@@ -41,7 +41,7 @@
       <p>
         <button type="button" onclick="addNode()">Add nodes</button>
       </p>
-      <p>Radius:<input type="range" id='complexInput' min="5" max="50" value="20" oninput="updateComplex(this.value)" /><span id="complexRadius">20</span></p>
+      <p>Radius:<input type="range" id='complexInput' min="5" max="120" value="100" step="1" oninput="updateComplex(this.value)" /><span id="complexRadius"></span></p>
     </td>
   </tr>
   <tr>

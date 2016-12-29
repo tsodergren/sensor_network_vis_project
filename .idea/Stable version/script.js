@@ -2,18 +2,17 @@
  * Created by Tim on 11/10/2016.
  */
 <!-- Common variables and functions used by all of the example plots -->
-var width = 600;          //Width of each plot
+var width = 800;          //Width of each plot
 var height = 600;         //Height of each plot
-var padding = 50;          //Buffer space to ensure points are adequately
+var buffer = 50;          //Buffer space to ensure points are adequately
                           // far from the edge of the plot
 var dataScale = d3.scaleLinear()
-    .domain([0,100])
     .range([0,height]);
 
 
 //Initialize the data
 var filename = 'data.off';
-var locationData = [];
+var locationData;
 var xp=[];
 var yp=[];
 var complexType;
@@ -23,15 +22,14 @@ var cechFaces = [];
 var cechEdges = [];
 var ripsFaces = [];
 var ripsEdges = [];
-var dataMin = 0;
 
-var numSamples = 0;      //Number of points to use
-var complexRadius = 20;          //epsilon ball radius
+var numSamples;      //Number of points to use
+var complexRadius = 100;          //epsilon ball radius
 
 //background grid information
 var cellSize = 50;
-var gridWidth = Math.ceil( (width+padding*2) / cellSize);
-var gridHeight = Math.ceil( (height+padding*2) / cellSize);
+var gridWidth = Math.ceil(width / cellSize);
+var gridHeight = Math.ceil(height / cellSize);
 var grid = new Array(gridWidth * gridHeight);
 var wasDragged = false;
 var zoomOn = false;
@@ -40,8 +38,8 @@ var zoomOn = false;
 var complexSVG = d3.select("#plotArea").append('svg')
     .attr("class", "cech")
     .attr("id", "complexSVG")
-    .attr("width", width+padding*2)
-    .attr("height", height+padding*2)
+    .attr("width", width)
+    .attr("height", height)
     .style("margin", "auto")
     .style("border", "1px solid black");
 
@@ -49,50 +47,18 @@ var complexSVG = d3.select("#plotArea").append('svg')
 
 complexSVG.append("path")
     .attr("class", "grid")
-    .attr("d", d3.range(cellSize, width+padding*2, cellSize)
-            .map(function(x) { return "M" + Math.round(x) + ",0V" + height+padding; })
+    .attr("d", d3.range(cellSize, width, cellSize)
+            .map(function(x) { return "M" + Math.round(x) + ",0V" + height; })
             .join("")
-        + d3.range(cellSize, height+padding*2, cellSize)
-            .map(function(y) { return "M0," + Math.round(y) + "H" + width+padding; })
+        + d3.range(cellSize, height, cellSize)
+            .map(function(y) { return "M0," + Math.round(y) + "H" + width; })
             .join(""));
 
 var complexCanvas = complexSVG.append('g')
     .attr('class','cech')
     .attr('id','complexCanvas');
 
-min = dataScale.invert(-padding);
-xmax = dataScale.invert(width+padding*2);
-ymax = dataScale.invert(height+padding*2);
 
-xScale = d3.scaleLinear()
-    .domain([min, xmax])
-    .range([0, width+padding*2])
-    .nice();
-
-var xAxis = d3.axisBottom();
-xAxis.scale(xScale);
-
-var gX = complexSVG.append('g')
-    .call(xAxis);
-
-yScale = d3.scaleLinear()
-    .domain([min, ymax])
-    .range([0, height+padding*2])
-    .nice();
-
-var yAxis = d3.axisRight();
-yAxis.scale(yScale);
-
-var gY = complexSVG.append('g')
-    .call(yAxis);
-
-// complexSVG.attr('cursor','crosshair')
-//     .on('click',function () {
-//         coords = d3.mouse(this);
-//         console.log(coords)
-//     });
-
-var zoom
 
 window.addEventListener('keydown', function (event) {
     if (event.key=='z') {
@@ -100,14 +66,14 @@ window.addEventListener('keydown', function (event) {
             d3.select('#zoomBox').remove();
             zoomOn = false;
         } else {
-            zoom = d3.zoom()
+            var zoom = d3.zoom()
                 .scaleExtent([0.1, 10])
                 .on('zoom', zoomed);
 
             complexSVG.append("rect")
                 .attr('cursor','move')
-                .attr("width", width+padding*2)
-                .attr("height", height+padding*2)
+                .attr("width", width)
+                .attr("height", height)
                 .attr('id','zoomBox')
                 .style("fill", "none")
                 .style("pointer-events", "all")
@@ -120,26 +86,20 @@ window.addEventListener('keydown', function (event) {
 
 function zoomed() {
     complexCanvas.attr("transform", d3.event.transform)
-    gX.call(xAxis.scale(d3.event.transform.rescaleX(xScale)));
-    gY.call(yAxis.scale(d3.event.transform.rescaleY(yScale)));
     if (d3.event.sourceEvent.type=='wheel') {
         d3.select('#complexPoints').selectAll('circle')
             .attr('r', 5/d3.event.transform.k);
         d3.select('#complexEdges').selectAll('line')
             .style('stroke-width',4/d3.event.transform.k);
     }
-    var newdataScale = d3.event.transform.rescaleX(dataScale);
-    console.log(newdataScale.domain())
-    dataScale.domain(newdataScale.domain());
-    console.log(dataScale.domain())
 }
 
 //this function is called whenever the data are changed.
 
 function updateComplex(newValue) {
     document.getElementById('complexRadius').innerHTML=newValue;
-    complexRadius=+newValue;
-    d3.select('#complexCircles').selectAll('circle').attr('r',dataScale(complexRadius+dataMin))
+    complexRadius=newValue;
+    d3.select('#complexCircles').selectAll('circle').attr('r',newValue)
     constructCech();
     constructRips();
     changeComplex();
@@ -378,7 +338,7 @@ function renderComplex(edges,faces) {
     //remove existing canvas elements
     complexCanvas.selectAll('.face').remove();
     complexCanvas.selectAll('.edge').remove();
-    //add group for each layer, this makes it easier to toggle each component on and off
+    //add g for each layer, this makes it easier to toggle each component on and off
     var complexFaces = complexCanvas.append('g')
         .attr('id','complexFaces')
         .attr('class', 'face')
@@ -397,9 +357,9 @@ function renderComplex(edges,faces) {
         .enter().append('polygon')
         .attr('class','face')
         .attr('points',function (d, i) {
-                return  (dataScale(locationData[d.Pt1].xf)+padding)+','+(dataScale(locationData[d.Pt1].yf)+padding)+
-                    ' '+(dataScale(locationData[d.Pt2].xf)+padding)+','+(dataScale(locationData[d.Pt2].yf)+padding)+
-                    ' '+(dataScale(locationData[d.Pt3].xf)+padding)+','+(dataScale(locationData[d.Pt3].yf)+padding);
+                return  locationData[d.Pt1].xf+','+locationData[d.Pt1].yf+
+                    ' '+locationData[d.Pt2].xf+','+locationData[d.Pt2].yf+
+                    ' '+locationData[d.Pt3].xf+','+locationData[d.Pt3].yf;
             }
         )
         .attr('id', function (d, i) {
@@ -412,16 +372,16 @@ function renderComplex(edges,faces) {
         .enter().append('line')
         .attr('class', 'edge')
         .attr('x1', function (d) {
-            return dataScale(locationData[d.Pt1].xf)+padding;
+            return locationData[d.Pt1].xf;
         })
         .attr('y1', function (d) {
-            return dataScale(locationData[d.Pt1].yf)+padding;
+            return locationData[d.Pt1].yf
         })
         .attr('x2', function (d) {
-            return dataScale(locationData[d.Pt2].xf)+padding;
+            return locationData[d.Pt2].xf;
         })
         .attr('y2', function (d) {
-            return dataScale(locationData[d.Pt2].yf)+padding;
+            return locationData[d.Pt2].yf;
         })
         .attr('id', function (d) {
             return 'complex_Edge_'+d.Pt1+'_'+d.Pt2;
@@ -455,11 +415,12 @@ function renderPoints() {
         .append('circle')
         .style('visibility','hidden')
         .attr('class', 'point')
+        .attr('r', 1e-6)
         .attr('cx', function (d) {
-            return dataScale(d.xf)+padding;
+            return d.xf;
         })
         .attr('cy', function (d) {
-            return dataScale(d.yf)+padding;
+            return d.yf;
         })
         .attr('id', function (d, i) {
             return 'complex_Point_' + i.toString();
@@ -478,16 +439,17 @@ function renderPoints() {
         .append('circle')
         .style('visibility','hidden')
         .attr('class', 'circle')
+        .attr('r', 1e-6)
         .attr('cx', function (d) {
-            return dataScale(d.xf)+padding;
+            return d.xf;
         })
         .attr('cy', function (d) {
-            return dataScale(d.yf)+padding;
+            return d.yf;
         })
         .attr('id', function (d, i) {
             return 'complex_Circle_' + i.toString();
         })
-        .attr('r', dataScale(complexRadius+dataMin));
+        .attr('r', complexRadius);
 
 
     // complexPoints.selectAll('text')
@@ -544,25 +506,6 @@ function importData() {
             locationData = csv;
             var csvContent = d3.csvFormat(locationData, ['LocationID', 'xf', 'yf']);
             numSamples = locationData.length;
-
-            //set data scale
-            dataMin = d3.min(locationData.map( function (d) {
-                return d.yf;
-            }));
-            dataMax = d3.max(locationData.map( function (d) {
-                return d.yf;
-            }));
-            dataRange = dataMax-dataMin;
-
-            dataScale.domain([ dataMin, dataMax]);
-
-            d3.select('#complexInput')
-                .attr('min', 0.05*dataRange)
-                .attr('max', 0.5*dataRange)
-                .attr('value', 0.2*dataRange);
-
-            console.log(d3.select('#complexInput').node().value);
-
 
             //reset to default view and calculate complexes
             c = document.getElementById('coverCheckbox');
@@ -736,30 +679,6 @@ function loadData() {
             document.getElementById('complexRadius').innerHTML=complexRadius;
             d3.select('#complexInput').node().value = complexRadius;
 
-
-
-            //set data scale
-            dataMin = d3.min(locationData.map( function (d) {
-                return d.yf;
-            }));
-            dataMax = d3.max(locationData.map( function (d) {
-                return d.yf;
-            }));
-            dataRange = dataMax-dataMin;
-            dataScale.domain([ dataMin, dataMax]);
-
-            //adjust radius slider and snap to actual radius
-            d3.select('#complexInput')
-                .attr('min', 0.05*dataRange)
-                .attr('max', d3.max([complexRadius, 0.5*dataRange]));
-            var tempValue = d3.select('#complexInput').node().value;
-            var offset = complexRadius-tempValue;
-            d3.select('#complexInput')
-                .attr('min', 0.05*dataRange+offset)
-                .attr('max', d3.max([complexRadius, 0.5*dataRange])+offset);
-
-
-
             c = document.getElementById('coverCheckbox');
             c.disabled = false;
             c.checked = true;
@@ -768,8 +687,6 @@ function loadData() {
             n.checked = true;
             document.getElementById('edgeCheckbox').disabled = 0;
             document.getElementById('faceCheckbox').disabled = 0;
-
-            console.log(d3.select('#complexInput').node().value)
 
             renderPoints();
             changeComplex();
@@ -811,30 +728,12 @@ function addNode() {
 }
 
 function updateNode(coords) {
-
-    if (locationData.length==0) {
-        c = document.getElementById('coverCheckbox');
-        c.disabled = false;
-        c.checked = true;
-        n = document.getElementById('nodeCheckbox');
-        n.disabled = false;
-        n.checked = true;
-        document.getElementById('edgeCheckbox').disabled = 0;
-        document.getElementById('faceCheckbox').disabled = 0;
-    };
-
     i = locationData.length;
-
-    console.log(coords);
-    newcoords = [dataScale.invert(coords[0]-padding), dataScale.invert(coords[1]-padding)];
-    console.log(newcoords)
-    var newPoint = {LocationID: i, xf: dataScale.invert(coords[0]-padding), yf: dataScale.invert(coords[1]-padding)};
+    var newPoint = {LocationID: i, xf: coords[0], yf: coords[1]};
     locationData.push(newPoint);
-    numSamples++;
+    numSamples = numSamples+1;
     renderPoints();
     updateComplex(document.getElementById('complexInput').value);
-
-
 }
 
 function updateLocation(coords) {
@@ -893,8 +792,8 @@ function dragNode() {
     d3.select(this)
         .attr('cx', d3.event.x)
         .attr('cy', d3.event.y);
-    locationData[i].xf = dataScale.invert(d3.event.x-padding);
-    locationData[i].yf = dataScale.invert(d3.event.y-padding);
+    locationData[i].xf = d3.event.x;
+    locationData[i].yf = d3.event.y;
     wasDragged = true;
 }
 
