@@ -45,46 +45,46 @@ var complexSVG = d3.select("#plotArea").append('svg')
     .style("margin", "auto")
     .style("border", "1px solid black");
 
+var xScale = d3.scaleLinear()
+    .domain([0,100])
+    .range([0, width]);
+var newxScale = d3.scaleLinear()
+    .range([0, width]);
+
+var xAxis = d3.axisTop()
+    .scale(xScale);
+
+var gX = complexSVG.append('g')
+    .attr('transform','translate('+padding+','+padding+')')
+    .call(xAxis);
+
+var yScale = d3.scaleLinear()
+    .domain([0,100])
+    .range([0, width]);
+var newyScale = d3.scaleLinear()
+    .range([0, width]);
+
+var yAxis = d3.axisLeft()
+    .scale(yScale);
+
+var gY = complexSVG.append('g')
+    .attr('transform','translate('+padding+','+padding+')')
+    .call(yAxis);
 
 
-complexSVG.append("path")
-    .attr("class", "grid")
-    .attr("d", d3.range(cellSize, width+padding*2, cellSize)
-            .map(function(x) { return "M" + Math.round(x) + ",0V" + height+padding; })
-            .join("")
-        + d3.range(cellSize, height+padding*2, cellSize)
-            .map(function(y) { return "M0," + Math.round(y) + "H" + width+padding; })
-            .join(""));
+//
+// complexSVG.append("path")
+//     .attr("class", "grid")
+//     .attr("d", d3.range(cellSize, width+padding*2, cellSize)
+//             .map(function(x) { return "M" + Math.round(x) + ",0V" + height+padding; })
+//             .join("")
+//         + d3.range(cellSize, height+padding*2, cellSize)
+//             .map(function(y) { return "M0," + Math.round(y) + "H" + width+padding; })
+//             .join(""));
 
 var complexCanvas = complexSVG.append('g')
     .attr('class','cech')
     .attr('id','complexCanvas');
-
-min = dataScale.invert(-padding);
-xmax = dataScale.invert(width+padding*2);
-ymax = dataScale.invert(height+padding*2);
-
-xScale = d3.scaleLinear()
-    .domain([min, xmax])
-    .range([0, width+padding*2])
-    .nice();
-
-var xAxis = d3.axisBottom();
-xAxis.scale(xScale);
-
-var gX = complexSVG.append('g')
-    .call(xAxis);
-
-yScale = d3.scaleLinear()
-    .domain([min, ymax])
-    .range([0, height+padding*2])
-    .nice();
-
-var yAxis = d3.axisRight();
-yAxis.scale(yScale);
-
-var gY = complexSVG.append('g')
-    .call(yAxis);
 
 // complexSVG.attr('cursor','crosshair')
 //     .on('click',function () {
@@ -128,10 +128,8 @@ function zoomed() {
         d3.select('#complexEdges').selectAll('line')
             .style('stroke-width',4/d3.event.transform.k);
     }
-    var newdataScale = d3.event.transform.rescaleX(dataScale);
-    console.log(newdataScale.domain())
-    dataScale.domain(newdataScale.domain());
-    console.log(dataScale.domain())
+    newxScale = d3.event.transform.rescaleX(xScale);
+    newyScale = d3.event.transform.rescaleY(yScale);
 }
 
 //this function is called whenever the data are changed.
@@ -456,10 +454,10 @@ function renderPoints() {
         .style('visibility','hidden')
         .attr('class', 'point')
         .attr('cx', function (d) {
-            return dataScale(d.xf)+padding;
+            return newxScale(d.xf)+padding;
         })
         .attr('cy', function (d) {
-            return dataScale(d.yf)+padding;
+            return newyScale(d.yf)+padding;
         })
         .attr('id', function (d, i) {
             return 'complex_Point_' + i.toString();
@@ -479,15 +477,15 @@ function renderPoints() {
         .style('visibility','hidden')
         .attr('class', 'circle')
         .attr('cx', function (d) {
-            return dataScale(d.xf)+padding;
+            return newxScale(d.xf)+padding;
         })
         .attr('cy', function (d) {
-            return dataScale(d.yf)+padding;
+            return newyScale(d.yf)+padding;
         })
         .attr('id', function (d, i) {
             return 'complex_Circle_' + i.toString();
         })
-        .attr('r', dataScale(complexRadius+dataMin));
+        .attr('r', 50);
 
 
     // complexPoints.selectAll('text')
@@ -546,22 +544,32 @@ function importData() {
             numSamples = locationData.length;
 
             //set data scale
-            dataMin = d3.min(locationData.map( function (d) {
+            xMin = d3.min(locationData.map( function (d) {
+                return d.xf;
+            }));
+            xMax = d3.max(locationData.map( function (d) {
+                return d.xf;
+            }));
+            xRange = xMax-xMin;
+            yMin = d3.min(locationData.map( function (d) {
                 return d.yf;
             }));
-            dataMax = d3.max(locationData.map( function (d) {
+            yMax = d3.max(locationData.map( function (d) {
                 return d.yf;
             }));
-            dataRange = dataMax-dataMin;
-
-            dataScale.domain([ dataMin, dataMax]);
+            yRange = yMax-yMin;
+            dataRange = d3.max([xRange, yRange]);
+            dataPadding = 0.1*dataRange;
+            xScale.domain([xMin-dataPadding, xMin+dataPadding]);
+            yScale.domain([yMin-dataPadding, yMin+dataPadding]);
+            newxScale.domain([xMin-dataPadding, xMin+dataPadding]);
+            newyScale.domain([yMin-dataPadding, yMin+dataPadding]);
 
             d3.select('#complexInput')
                 .attr('min', 0.05*dataRange)
                 .attr('max', 0.5*dataRange)
                 .attr('value', 0.2*dataRange);
 
-            console.log(d3.select('#complexInput').node().value);
 
 
             //reset to default view and calculate complexes
@@ -768,8 +776,6 @@ function loadData() {
             n.checked = true;
             document.getElementById('edgeCheckbox').disabled = 0;
             document.getElementById('faceCheckbox').disabled = 0;
-
-            console.log(d3.select('#complexInput').node().value)
 
             renderPoints();
             changeComplex();
