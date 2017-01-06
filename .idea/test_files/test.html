@@ -1,95 +1,107 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <script src="https://d3js.org/d3.v4.min.js"></script>
-</head>
-<body>
-<script>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <script src="https://d3js.org/d3.v4.min.js"></script>
+    </head>
+    <body>
+    <script>
 
-    var data = [{x:17,y:3},
-        {x:20,y:16},
-        {x:2,y:13},
-        {x:19,y:10},
-        {x:13,y:15},
-        {x:2,y:2},
-        {x:5,y:8},
-        {x:11,y:19},
-        {x:20,y:12},
-        {x:10,y:20}];
+        var data = [{x:17,y:3},
+            {x:20,y:16},
+            {x:2,y:13},
+            {x:19,y:10},
+            {x:13,y:15},
+            {x:2,y:2},
+            {x:5,y:8},
+            {x:11,y:19},
+            {x:20,y:12},
+            {x:10,y:20}];
 
-    var width = 600;
-    var height = 600;
-    var padding = 50;
+        var width = 600;
+        var height = 600;
+        var padding = 50;
+        var newXscale, newYscale;
 
-    var dataScale = d3.scaleLinear()
-        .domain([0,21])
-        .range([0, width]);
+        var dataScale = d3.scaleLinear()
+            .domain([0,21])
+            .range([0, width]);
 
-    var svg = d3.select('body').append('svg')
-        .attr('width', width+2*padding)
-        .attr('height', height+2*padding)
-        .on('click', function () {
-            coords = d3.mouse(this);
-            console.log(coords)
+        var svg = d3.select('body').append('svg')
+            .attr('width', width+2*padding)
+            .attr('height', height+2*padding)
+            .on('click', clicked)
+            .attr('cursor','crosshair');
+
+        var xAxis = d3.axisTop()
+            .scale(dataScale);
+
+        var gX = svg.append('g')
+            .attr('transform','translate(50,50)')
+            .call(xAxis);
+
+        var yAxis = d3.axisLeft()
+            .scale(dataScale);
+
+        var gY = svg.append('g')
+            .attr('transform','translate(50,50)')
+            .call(yAxis);
+
+        var canvas = svg.append('g')
+
+        var points = canvas.append('g');
+        points.selectAll('circle').data(data)
+            .enter().append('circle')
+            .attr('cx', function(d) {return dataScale(d.x)+padding})
+            .attr('cy', function(d) {return dataScale(d.y)+padding})
+            .attr('r', 5);
+
+        var zoom
+        var zoomOn = false;
+        window.addEventListener('keydown', function (event) {
+            if (event.key=='z') {
+                if (zoomOn) {
+                    d3.select('#zoomBox').remove();
+                    zoomOn = false;
+                } else {
+                    zoom = d3.zoom()
+                        .scaleExtent([0.1, 10])
+                        .on('zoom', zoomed);
+
+                    svg.append("rect")
+                        .attr('cursor','move')
+                        .attr("width", width+padding*2)
+                        .attr("height", height+padding*2)
+                        .attr('id','zoomBox')
+                        .style("fill", "none")
+                        .style("pointer-events", "all")
+                        .call(zoom);
+                    zoomOn = true;
+                }
+
+            }
         });
 
-    var xAxis = d3.axisTop()
-        .scale(dataScale);
-
-    var gX = svg.append('g')
-        .attr('transform','translate(50,50)')
-        .call(xAxis);
-
-    var yAxis = d3.axisLeft()
-        .scale(dataScale);
-
-    var gY = svg.append('g')
-        .attr('transform','translate(50,50)')
-        .call(yAxis);
-
-    var canvas = svg.append('g')
-
-    var points = canvas.append('g');
-    points.selectAll('circle').data(data)
-        .enter().append('circle')
-        .attr('cx', function(d) {return dataScale(d.x)+padding})
-        .attr('cy', function(d) {return dataScale(d.y)+padding})
-        .attr('r', 5);
-
-    var zoom
-    var zoomOn = false;
-    window.addEventListener('keydown', function (event) {
-        if (event.key=='z') {
-            if (zoomOn) {
-                d3.select('#zoomBox').remove();
-                zoomOn = false;
-            } else {
-                zoom = d3.zoom()
-                    .scaleExtent([0.1, 10])
-                    .on('zoom', zoomed);
-
-                svg.append("rect")
-                    .attr('cursor','move')
-                    .attr("width", width+padding*2)
-                    .attr("height", height+padding*2)
-                    .attr('id','zoomBox')
-                    .style("fill", "none")
-                    .style("pointer-events", "all")
-                    .call(zoom);
-                zoomOn = true;
-            }
-
+        function zoomed() {
+            canvas.attr("transform", d3.event.transform)
+            newXscale = d3.event.transform.rescaleX(dataScale);
+            newYscale = d3.event.transform.rescaleY(dataScale);
+            gX.call(xAxis.scale(newXscale));
+            gY.call(yAxis.scale(newYscale));
         }
-    });
 
-    function zoomed() {
-        canvas.attr("transform", d3.event.transform)
-        gX.call(xAxis.scale(d3.event.transform.rescaleX(dataScale)));
-        gY.call(yAxis.scale(d3.event.transform.rescaleY(dataScale)));
-    }
+        function clicked() {
+            var coords = d3.mouse(this);
+            points.append('circle')
+                .attr('cx',coords[0])
+                .attr('cy',coords[1])
+                .attr('r',5);
+            var x = newXscale.invert(coords[0]-padding);
+            var y = newYscale.invert(coords[1]-padding);
+            console.log(x+' '+y);
+        }
 
-</script>
+    </script>
 
-</body>
-</html>
+    </body>
+    </html>
