@@ -88,17 +88,21 @@
             newYscale = d3.event.transform.rescaleY(dataScale);
             gX.call(xAxis.scale(newXscale));
             gY.call(yAxis.scale(newYscale));
+            newZscale = d3.event.transform.k;
         }
 
         function clicked() {
             var coords = d3.mouse(this);
+            if (newXscale && newYscale) {
+                var x = newXscale.invert(coords[0] - padding);
+                var y = newYscale.invert(coords[1] - padding);
+            };
+            console.log(newZscale);
             points.append('circle')
-                .attr('cx',coords[0])
-                .attr('cy',coords[1])
-                .attr('r',5);
-            var x = newXscale.invert(coords[0]-padding);
-            var y = newYscale.invert(coords[1]-padding);
-            console.log(x+' '+y);
+                .attr('cx', (!x) ? coords[0] : dataScale(x) + (padding / newZscale))
+                .attr('cy', (!y) ? coords[1] : dataScale(y) + (padding / newZscale))
+                .attr('r', 5);
+            console.log(x + ' ' + y);
         }
 
     </script>
