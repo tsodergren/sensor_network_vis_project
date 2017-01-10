@@ -4,7 +4,7 @@
 <!-- Common variables and functions used by all of the example plots -->
 var width = 600;          //Width of each plot
 var height = 600;         //Height of each plot
-var padding = 50;          //Buffer space to ensure points are adequately
+var padding = 30;          //Buffer space to ensure points are adequately
 // far from the edge of the plot
 var dataScale = d3.scaleLinear()
     .domain([0,100])
@@ -84,6 +84,15 @@ var complexCanvas = complexSVG.append('g')
     .attr('class','cech')
     .attr('id','complexCanvas');
 
+complexSVG.append('rect')
+    .attr('x', padding)
+    .attr('y', padding)
+    .attr('width', width)
+    .attr('height', height)
+    .style('fill','none')
+    .style('stroke','#000')
+    .style('stroke-opacity',1);
+
 // complexSVG.attr('cursor','crosshair')
 //     .on('click',function () {
 //         coords = d3.mouse(this);
@@ -122,7 +131,12 @@ window.addEventListener('keydown', function (event) {
     }
 });
 
+function renderGrid() {
+
+}
+
 function zoomed() {
+    console.log('zoomed')
     complexCanvas.attr("transform", d3.event.transform)
     newxScale = d3.event.transform.rescaleX(xScale);
     newyScale = d3.event.transform.rescaleY(yScale);
@@ -135,6 +149,11 @@ function zoomed() {
         d3.select('#complexEdges').selectAll('line')
             .style('stroke-width', 4 / newZscale);
     }
+    if (d3.event.sourceEvent.type == 'wheel') {
+        renderPoints();
+        changeComplex();
+    }
+    console.log(xAxis.scale().ticks())
 }
 
 //this function is called whenever the data are changed.
@@ -503,7 +522,7 @@ function renderPoints() {
         .attr('id', function (d, i) {
             return 'complex_Circle_' + i.toString();
         })
-        .attr('r', 1);
+        .attr('r', xScale(complexRadius + xScale.domain()[0]));
 
 
     // complexPoints.selectAll('text')
@@ -850,7 +869,6 @@ function updateNode(coords) {
 
     i = locationData.length;
     if (newxScale && newyScale) {
-        console.log(' now here')
         var x = newxScale.invert(coords[0] - padding);
         var y = newyScale.invert(coords[1] - padding);
     } else {
@@ -862,7 +880,6 @@ function updateNode(coords) {
 
     var newPoint = {LocationID: i, xf: x, yf: y};
     locationData.push(newPoint);
-    console.log(locationData)
     numSamples++;
     renderPoints();
     updateComplex(document.getElementById('complexInput').value);
@@ -888,11 +905,10 @@ function myMap() {
 }
 
 function showCoverage(d) {
-
     if (d) {
         fillColor = '#808080';
         fillOpacity = '0.25';
-        complexCanvas.selectAll('.circle')
+        d3.select('#complexCircles').selectAll('circle')
             .transition()
             .style('visibility','visible')
             .style('fill', fillColor)
@@ -903,7 +919,8 @@ function showCoverage(d) {
                 .style('stroke-opacity',0.15);
         }
     } else {
-        complexCanvas.selectAll('.circle')
+        console.log('here')
+        d3.select('#complexCircles').selectAll('circle')
             .transition()
             .style('fill', 'none');
     }
