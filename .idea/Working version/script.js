@@ -131,12 +131,64 @@ window.addEventListener('keydown', function (event) {
     }
 });
 
+renderGrid();
+
+
 function renderGrid() {
 
+    d3.select('#xlines').remove();
+    d3.select('#ylines').remove();
+
+    var xt = xAxis.scale().ticks();
+
+    var xticks = (newxScale) ?
+        xt.map( function (d) {
+            return newxScale(d) + padding;
+        }) :
+        xt.map( function (d) {
+            return xScale(d) + padding;
+        });
+
+    var xlines = complexSVG.append('g')
+        .attr('class','grid')
+        .attr('id','xlines');
+
+
+    xlines.selectAll('line').data(xticks)
+        .enter().append('line')
+        .attr('id','xline')
+        .attr('class','grid')
+        .attr('x1', function (d) { return d })
+        .attr('y1', padding)
+        .attr('x2', function (d) { return d })
+        .attr('y2', height+padding);
+
+    var yt = yAxis.scale().ticks();
+
+    var yticks = (newyScale) ?
+        yt.map( function (d) {
+            return newyScale(d) + padding;
+        }) :
+        yt.map( function (d) {
+            return yScale(d) + padding;
+        });
+
+    var ylines = complexSVG.append('g')
+        .attr('class','grid')
+        .attr('id','ylines');
+
+
+    ylines.selectAll('line').data(yticks)
+        .enter().append('line')
+        .attr('id','yline')
+        .attr('class','grid')
+        .attr('y1', function (d) { return d })
+        .attr('x1', padding)
+        .attr('y2', function (d) { return d })
+        .attr('x2', height+padding);
 }
 
 function zoomed() {
-    console.log('zoomed')
     complexCanvas.attr("transform", d3.event.transform)
     newxScale = d3.event.transform.rescaleX(xScale);
     newyScale = d3.event.transform.rescaleY(yScale);
@@ -153,7 +205,7 @@ function zoomed() {
         renderPoints();
         changeComplex();
     }
-    console.log(xAxis.scale().ticks())
+    renderGrid();
 }
 
 //this function is called whenever the data are changed.
@@ -609,6 +661,7 @@ function importData() {
 
             gX.call(xAxis.scale(xScale));
             gY.call(yAxis.scale(yScale));
+            renderGrid()
 
             //reset to default view and calculate complexes
             c = document.getElementById('coverCheckbox');
@@ -627,17 +680,31 @@ function importData() {
 
 function randomData() {
 //generate uniform randaom data points
-    n = document.getElementById('numSensors').value;
-    numSamples = +n;
 
-    locationData = [];
+    var xd = (newxScale) ? newxScale.domain() : xScale.domain();
+    var xmin = xd[0] + 0.1*(xd[1]-xd[0]);
+    var xmax = xd[1] - 0.1*(xd[1]-xd[0]);
+
+    var yd = (newyScale) ? newyScale.domain() : yScale.domain();
+    var ymin = yd[0] + 0.1*(yd[1]-yd[0]);
+    var ymax = yd[1] - 0.1*(yd[1]-yd[0]);
+
+
+    numSamples = +document.getElementById('numSensors').value;
 
     for (i=0; i<numSamples; i++) {
-        x = getRndInteger(100, 700);
-        y = getRndInteger(100, 500);
-        var newPoint = {LocationID: i, xf: x, yf: y};
-        locationData.push(newPoint);
-    }
+        var x = Math.random() * (xmax - xmin + 1)  + xmin;
+        var y = Math.random() * (ymax - ymin + 1)  + ymin;
+        locationData[i] = {LocationID: i, xf: x, yf: y};
+    };
+
+    dataRange = d3.max([xd[1]-xd[0], yd[1]-yd[0]]);
+    dataPadding = 0.1*dataRange;
+
+    d3.select('#complexInput')
+        .attr('min', 0.05*dataRange)
+        .attr('max', 0.5*dataRange)
+        .attr('value', 0.2*dataRange);
 
     c = document.getElementById('coverCheckbox');
     c.disabled = false;
@@ -784,15 +851,41 @@ function loadData() {
 
 
 
+            // //set data scale
+            // dataMin = d3.min(locationData.map( function (d) {
+            //     return d.yf;
+            // }));
+            // dataMax = d3.max(locationData.map( function (d) {
+            //     return d.yf;
+            // }));
+            // dataRange = dataMax-dataMin;
+            // dataScale.domain([ dataMin, dataMax]);
+
             //set data scale
-            dataMin = d3.min(locationData.map( function (d) {
+            var xMin = d3.min(locationData.map( function (d) {
+                return d.xf;
+            }));
+            var xMax = d3.max(locationData.map( function (d) {
+                return d.xf;
+            }));
+            var xRange = xMax-xMin;
+            var yMin = d3.min(locationData.map( function (d) {
                 return d.yf;
             }));
-            dataMax = d3.max(locationData.map( function (d) {
+            var yMax = d3.max(locationData.map( function (d) {
                 return d.yf;
             }));
-            dataRange = dataMax-dataMin;
-            dataScale.domain([ dataMin, dataMax]);
+            var yRange = yMax-yMin;
+
+            var dataRange = d3.max([xRange, yRange]);
+            var dataPadding = 0.1*dataRange;
+            // dataMin = d3.min([xMin, yMin]);
+            xScale.domain([xMin-dataPadding, xMin+dataRange+dataPadding]);
+            yScale.domain([yMin-dataPadding, yMin+dataRange+dataPadding]);
+
+            gX.call(xAxis.scale(xScale));
+            gY.call(yAxis.scale(yScale));
+            renderGrid()
 
             //adjust radius slider and snap to actual radius
             d3.select('#complexInput')
@@ -820,10 +913,6 @@ function loadData() {
         });
     }
 
-}
-
-function getRndInteger(min, max) {
-    return Math.floor(Math.random() * (max - min + 1) ) + min;
 }
 
 function changeComplex() {
@@ -919,7 +1008,6 @@ function showCoverage(d) {
                 .style('stroke-opacity',0.15);
         }
     } else {
-        console.log('here')
         d3.select('#complexCircles').selectAll('circle')
             .transition()
             .style('fill', 'none');
