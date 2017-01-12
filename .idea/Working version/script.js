@@ -5,10 +5,6 @@
 var width = 600;          //Width of each plot
 var height = 600;         //Height of each plot
 var padding = 30;          //Buffer space to ensure points are adequately
-// far from the edge of the plot
-var dataScale = d3.scaleLinear()
-    .domain([0,100])
-    .range([0,height]);
 
 
 //Initialize the data
@@ -132,6 +128,8 @@ window.addEventListener('keydown', function (event) {
 });
 
 renderGrid();
+
+console.log(d3.select('#plotArea'));
 
 
 function renderGrid() {
@@ -659,6 +657,13 @@ function importData() {
                 .attr('max', 0.5*dataRange)
                 .attr('value', 0.2*dataRange);
 
+
+
+            complexCanvas.attr("transform", d3.zoomIdentity)
+            newxScale = false;
+            newyScale = false;
+            newZscale = 1;
+
             gX.call(xAxis.scale(xScale));
             gY.call(yAxis.scale(yScale));
             renderGrid()
@@ -730,7 +735,7 @@ function saveData() {
         '# Complex type: '+complexType+'\n'+
         '# Coverage radius: '+complexRadius+'\n'+
         '#\n'+
-        numSamples+' '+cechFaces.length+' '+cechEdges.length;
+        numSamples+' ' + (cechFaces.length + cechEdges.length) + ' 0';
 
 
     var tempData = JSON.parse(JSON.stringify(locationData));
@@ -748,12 +753,14 @@ function saveData() {
         edges = ripsEdges;
     };
 
-    var facesStr = d3.dsvFormat(' ').format(faces, ['Pt1', 'Pt2', 'Pt3']);
-    facesStr = facesStr.replace('Pt1 Pt2 Pt3', []);
     var edgesStr = d3.dsvFormat(' ').format(edges, ['Pt1', 'Pt2']);
+    edgesStr = edgesStr.replace(/\n/g, '\n2 ')
     edgesStr = edgesStr.replace('Pt1 Pt2', []);
+    var facesStr = d3.dsvFormat(' ').format(faces, ['Pt1', 'Pt2', 'Pt3']);
+    facesStr = facesStr.replace(/\n/g, '\n3 ')
+    facesStr = facesStr.replace('Pt1 Pt2 Pt3', []);
 
-    dsvContent = header+verticesStr+facesStr+edgesStr;
+    dsvContent = header+verticesStr+edgesStr+facesStr;
     dsvContent = dsvContent.replace(/\n/g,'\r\n');
 
     var blob = new Blob([dsvContent], { type: 'text/csv;charset=utf-8;' });
@@ -802,33 +809,24 @@ function loadData() {
 
             str = str.replace(re,[]);
 
+            var edges = [];
+            var faces = [];
+
             locationData = d3.dsvFormat(' ').parseRows(str, function (d,i) {
                 if (i<numSamples) {
                     return {
                         xf: +d[0],
                         yf: +d[1]
-                    };
+                    }
+                } else {
+                    if (d[0]==3) {
+                        faces.push( { Pt1: +d[1], Pt2: +d[2], Pt3: +d[3] } );
+                    } else if (d[0]==2) {
+                        edges.push( { Pt1: +d[1], Pt2: +d[2] } );
+                    }
+
                 };
             });
-
-            var faces = d3.dsvFormat(' ').parseRows(str, function (d,i) {
-                if (i>=numSamples && i<numSamples+numFaces) {
-                    return {
-                        Pt1: +d[0],
-                        Pt2: +d[1],
-                        Pt3: +d[2]
-                    }
-                }
-            })
-
-            var edges = d3.dsvFormat(' ').parseRows(str, function (d,i) {
-                if (i>=numSamples+numFaces) {
-                    return {
-                        Pt1: +d[0],
-                        Pt2: +d[1]
-                    }
-                }
-            })
 
             complexSelector = document.getElementsByName('complexType');
             if (complexType=='Cech') {
@@ -883,6 +881,11 @@ function loadData() {
             xScale.domain([xMin-dataPadding, xMin+dataRange+dataPadding]);
             yScale.domain([yMin-dataPadding, yMin+dataRange+dataPadding]);
 
+            complexCanvas.attr("transform", d3.zoomIdentity)
+            newxScale = false;
+            newyScale = false;
+            newZscale = 1;
+
             gX.call(xAxis.scale(xScale));
             gY.call(yAxis.scale(yScale));
             renderGrid()
@@ -897,7 +900,10 @@ function loadData() {
                 .attr('min', 0.05*dataRange+offset)
                 .attr('max', d3.max([complexRadius, 0.5*dataRange])+offset);
 
+            d3.select('#complexInput').node().value = complexRadius;
 
+            console.log(complexRadius)
+            console.log(d3.select('#complexInput').node().value)
 
             c = document.getElementById('coverCheckbox');
             c.disabled = false;
@@ -931,7 +937,7 @@ function addNode() {
 
     complexSVG.attr('cursor','crosshair')
         .on('click',function () {
-            coords = d3.mouse(this);
+            coords = d3.mouse(d3.select('#complexSVG').node());
             updateNode(coords);
         });
 
@@ -965,6 +971,7 @@ function updateNode(coords) {
         var y = yScale.invert(coords[1] - padding);
     };
 
+    console.log(coords)
     console.log(x + ' ' + y);
 
     var newPoint = {LocationID: i, xf: x, yf: y};
@@ -1036,15 +1043,31 @@ function dragNode() {
 
 function dragEnd() {
     if (wasDragged) {
-        coords = d3.mouse(this)
+        coords = d3.mouse(d3.select('#complexSVG').node());
         i = this.id.match(/\d+/g);
+
+
         if (newxScale && newyScale) {
-            locationData[i].xf = newxScale.invert(coords[0] - padding);
-            locationData[i].yf = newyScale.invert(coords[1] - padding);
+            var x = newxScale.invert(coords[0] - padding);
+            var y = newyScale.invert(coords[1] - padding);
         } else {
-            locationData[i].xf = xScale.invert(coords[0] - padding);
-            locationData[i].yf = yScale.invert(coords[1] - padding);
+            var x = xScale.invert(coords[0] - padding);
+            var y = yScale.invert(coords[1] - padding);
         };
+
+        console.log(x + ' ' + y);
+
+        locationData[i].xf = x;
+        locationData[i].yf = y;
+
+
+        // if (newxScale && newyScale) {
+        //     locationData[i].xf = newxScale.invert(coords[0] - padding);
+        //     locationData[i].yf = newyScale.invert(coords[1] - padding);
+        // } else {
+        //     locationData[i].xf = xScale.invert(coords[0] - padding);
+        //     locationData[i].yf = yScale.invert(coords[1] - padding);
+        // };
 
         renderPoints();
         updateComplex(document.getElementById('complexInput').value);

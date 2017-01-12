@@ -13,7 +13,7 @@
 <body>
 <h1 id="site-title">Network Coverage</h1>
 
-<a href="../help.html" class="helplink" target="_blank5">Help</a>
+<a href="help.html" class="helplink" target="_blank5">Help</a>
 
 <table>
   <tr>
@@ -34,12 +34,14 @@
         <label for="saveButton">Save</label>
       </p>
       <p>
-        <button type="button" onclick="randomData()">Generate random data</button>
+        <button type="button" name="randButton" id="randButton" class="inputfile" onclick="randomData()">Random data</button>
+        <label for="randButton">Random data</label>
         # sensors:
         <input type="number" name="numSensors" id="numSensors" value="20" min="1" max="1000">
       </p>
       <p>
-        <button type="button" onclick="addNode()">Add nodes</button>
+        <button type="button" name="addButton" id="addButton" class="inputfile" onclick="addNode()">Add nodes</button>
+        <label for="addButton">Add nodes</label>
       </p>
       <p>Radius:<input type="range" id='complexInput' min="5" max="50" value="20" oninput="updateComplex(this.value)" /><span id="complexRadius">20</span></p>
     </td>
