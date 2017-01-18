@@ -10,8 +10,6 @@ var padding = 30;          //Buffer space to ensure points are adequately
 //Initialize the data
 var filename = 'data.off';
 var locationData = [];
-var xp=[];
-var yp=[];
 var complexType;
 var selectedNodes = [];
 var newZscale = 1;
@@ -129,8 +127,7 @@ window.addEventListener('keydown', function (event) {
 
 renderGrid();
 
-console.log(d3.select('#plotArea'));
-
+dataLoader('data/data.off')
 
 function renderGrid() {
 
@@ -193,15 +190,17 @@ function zoomed() {
     newZscale = d3.event.transform.k;
     gX.call(xAxis.scale(newxScale));
     gY.call(yAxis.scale(newyScale));
-    if (d3.event.sourceEvent.type == 'wheel') {
-        d3.select('#complexPoints').selectAll('circle')
-            .attr('r', 5 / newZscale);
-        d3.select('#complexEdges').selectAll('line')
-            .style('stroke-width', 4 / newZscale);
-    }
-    if (d3.event.sourceEvent.type == 'wheel') {
-        renderPoints();
-        changeComplex();
+    if (locationData.length != 0) {
+        if (d3.event.sourceEvent.type == 'wheel') {
+            d3.select('#complexPoints').selectAll('circle')
+                .attr('r', 5 / newZscale);
+            d3.select('#complexEdges').selectAll('line')
+                .style('stroke-width', 4 / newZscale);
+        }
+        if (d3.event.sourceEvent.type == 'wheel') {
+            renderPoints();
+            changeComplex();
+        }
     }
     renderGrid();
 }
@@ -697,6 +696,8 @@ function randomData() {
 
     numSamples = +document.getElementById('numSensors').value;
 
+    locationData = [];
+
     for (i=0; i<numSamples; i++) {
         var x = Math.random() * (xmax - xmin + 1)  + xmin;
         var y = Math.random() * (ymax - ymin + 1)  + ymin;
@@ -788,136 +789,126 @@ function loadData() {
     var fReader = new FileReader();
     fReader.readAsDataURL(selectedFile.files[0]);
     fReader.onloadend = function(event) {
-
-        d3.text(event.target.result, function (txt) {
-
-            str = txt.match(/Complex type: (\w*)/);
-            complexType = str[1];
-            str = txt.match(/Coverage radius: (\w*)/);
-            complexRadius = +str[1];
-
-            str = txt.replace(/#[^\n]*\n/g, []);
-            str = str.replace(/OFF\r\n/i, []);
-
-            re = /([^\r\n]*)\r\n/;
-            line1 = str.match(re);
-            line1 = line1[1];
-            line1 = line1.match(/(\d*)\w/g);
-            numSamples = +line1[0];
-            numFaces = +line1[1];
-            numEdges = +line1[2];
-
-            str = str.replace(re,[]);
-
-            var edges = [];
-            var faces = [];
-
-            locationData = d3.dsvFormat(' ').parseRows(str, function (d,i) {
-                if (i<numSamples) {
-                    return {
-                        xf: +d[0],
-                        yf: +d[1]
-                    }
-                } else {
-                    if (d[0]==3) {
-                        faces.push( { Pt1: +d[1], Pt2: +d[2], Pt3: +d[3] } );
-                    } else if (d[0]==2) {
-                        edges.push( { Pt1: +d[1], Pt2: +d[2] } );
-                    }
-
-                };
-            });
-
-            complexSelector = document.getElementsByName('complexType');
-            if (complexType=='Cech') {
-                cechFaces = faces;
-                cechEdges = edges;
-                ripsFaces = [];
-                ripsEdges = [];
-                complexSelector[0].checked = true;
-            } else if (complexType=='Vietoris-Rips') {
-                ripsFaces = faces;
-                ripsEdges = edges;
-                cechFaces = [];
-                cechEdges = [];
-                complexSelector[1].checked = true;
-            }
-
-
-            document.getElementById('complexRadius').innerHTML=complexRadius;
-            d3.select('#complexInput').node().value = complexRadius;
-
-
-
-            // //set data scale
-            // dataMin = d3.min(locationData.map( function (d) {
-            //     return d.yf;
-            // }));
-            // dataMax = d3.max(locationData.map( function (d) {
-            //     return d.yf;
-            // }));
-            // dataRange = dataMax-dataMin;
-            // dataScale.domain([ dataMin, dataMax]);
-
-            //set data scale
-            var xMin = d3.min(locationData.map( function (d) {
-                return d.xf;
-            }));
-            var xMax = d3.max(locationData.map( function (d) {
-                return d.xf;
-            }));
-            var xRange = xMax-xMin;
-            var yMin = d3.min(locationData.map( function (d) {
-                return d.yf;
-            }));
-            var yMax = d3.max(locationData.map( function (d) {
-                return d.yf;
-            }));
-            var yRange = yMax-yMin;
-
-            var dataRange = d3.max([xRange, yRange]);
-            var dataPadding = 0.1*dataRange;
-            // dataMin = d3.min([xMin, yMin]);
-            xScale.domain([xMin-dataPadding, xMin+dataRange+dataPadding]);
-            yScale.domain([yMin-dataPadding, yMin+dataRange+dataPadding]);
-
-            complexCanvas.attr("transform", d3.zoomIdentity)
-            newxScale = false;
-            newyScale = false;
-            newZscale = 1;
-
-            gX.call(xAxis.scale(xScale));
-            gY.call(yAxis.scale(yScale));
-            renderGrid()
-
-            //adjust radius slider and snap to actual radius
-            d3.select('#complexInput')
-                .attr('min', 0.05*dataRange)
-                .attr('max', d3.max([complexRadius, 0.5*dataRange]));
-            var tempValue = d3.select('#complexInput').node().value;
-            var offset = complexRadius-tempValue;
-            d3.select('#complexInput')
-                .attr('min', 0.05*dataRange+offset)
-                .attr('max', d3.max([complexRadius, 0.5*dataRange])+offset);
-
-            d3.select('#complexInput').node().value = complexRadius;
-
-            console.log(complexRadius)
-            console.log(d3.select('#complexInput').node().value)
-
-            c = document.getElementById('coverCheckbox');
-            c.disabled = false;
-            c.checked = true;
-            n = document.getElementById('nodeCheckbox');
-            n.disabled = false;
-            n.checked = true;
-            document.getElementById('edgeCheckbox').disabled = 0;
-            document.getElementById('faceCheckbox').disabled = 0;
-
-            renderPoints();
-            changeComplex();
-        });
+        dataLoader(event.target.result)
     }
+
+}
+
+function dataLoader(file) {
+    d3.text(file, function (txt) {
+
+        str = txt.match(/Complex type: (\w*)/);
+        complexType = str[1];
+        str = txt.match(/Coverage radius: (\w*)/);
+        complexRadius = +str[1];
+
+        str = txt.replace(/#[^\n]*\n/g, []);
+        str = str.replace(/OFF\r\n/i, []);
+
+        re = /([^\r\n]*)\r\n/;
+        line1 = str.match(re);
+        line1 = line1[1];
+        line1 = line1.match(/(\d*)\w/g);
+        numSamples = +line1[0];
+        numFaces = +line1[1];
+        numEdges = +line1[2];
+
+        str = str.replace(re,[]);
+
+        var edges = [];
+        var faces = [];
+
+        locationData = d3.dsvFormat(' ').parseRows(str, function (d,i) {
+            if (i<numSamples) {
+                return {
+                    xf: +d[0],
+                    yf: +d[1]
+                }
+            } else {
+                if (d[0]==3) {
+                    faces.push( { Pt1: +d[1], Pt2: +d[2], Pt3: +d[3] } );
+                } else if (d[0]==2) {
+                    edges.push( { Pt1: +d[1], Pt2: +d[2] } );
+                }
+
+            };
+        });
+
+        complexSelector = document.getElementsByName('complexType');
+        if (complexType=='Cech') {
+            cechFaces = faces;
+            cechEdges = edges;
+            ripsFaces = [];
+            ripsEdges = [];
+            complexSelector[0].checked = true;
+        } else if (complexType=='Vietoris-Rips') {
+            ripsFaces = faces;
+            ripsEdges = edges;
+            cechFaces = [];
+            cechEdges = [];
+            complexSelector[1].checked = true;
+        }
+
+
+        document.getElementById('complexRadius').innerHTML=complexRadius;
+        d3.select('#complexInput').node().value = complexRadius;
+
+
+        //set data scale
+        var xMin = d3.min(locationData.map( function (d) {
+            return d.xf;
+        }));
+        var xMax = d3.max(locationData.map( function (d) {
+            return d.xf;
+        }));
+        var xRange = xMax-xMin;
+        var yMin = d3.min(locationData.map( function (d) {
+            return d.yf;
+        }));
+        var yMax = d3.max(locationData.map( function (d) {
+            return d.yf;
+        }));
+        var yRange = yMax-yMin;
+
+        var dataRange = d3.max([xRange, yRange]);
+        var dataPadding = 0.1*dataRange;
+        // dataMin = d3.min([xMin, yMin]);
+        xScale.domain([xMin-dataPadding, xMin+dataRange+dataPadding]);
+        yScale.domain([yMin-dataPadding, yMin+dataRange+dataPadding]);
+
+        complexCanvas.attr("transform", d3.zoomIdentity)
+        newxScale = false;
+        newyScale = false;
+        newZscale = 1;
+
+        gX.call(xAxis.scale(xScale));
+        gY.call(yAxis.scale(yScale));
+        renderGrid()
+
+        //adjust radius slider and snap to actual radius
+        d3.select('#complexInput')
+            .attr('min', 0.05*dataRange)
+            .attr('max', d3.max([complexRadius, 0.5*dataRange]));
+        var tempValue = d3.select('#complexInput').node().value;
+        var offset = complexRadius-tempValue;
+        d3.select('#complexInput')
+            .attr('min', 0.05*dataRange+offset)
+            .attr('max', d3.max([complexRadius, 0.5*dataRange])+offset);
+
+        d3.select('#complexInput').node().value = complexRadius;
+
+        c = document.getElementById('coverCheckbox');
+        c.disabled = false;
+        c.checked = true;
+        n = document.getElementById('nodeCheckbox');
+        n.disabled = false;
+        n.checked = true;
+        document.getElementById('edgeCheckbox').disabled = 0;
+        document.getElementById('faceCheckbox').disabled = 0;
+
+        renderPoints();
+        changeComplex();
+    });
 
 }
 
@@ -970,9 +961,6 @@ function updateNode(coords) {
         var x = xScale.invert(coords[0] - padding);
         var y = yScale.invert(coords[1] - padding);
     };
-
-    console.log(coords)
-    console.log(x + ' ' + y);
 
     var newPoint = {LocationID: i, xf: x, yf: y};
     locationData.push(newPoint);
@@ -1055,8 +1043,6 @@ function dragEnd() {
             var y = yScale.invert(coords[1] - padding);
         };
 
-        console.log(x + ' ' + y);
-
         locationData[i].xf = x;
         locationData[i].yf = y;
 
@@ -1117,4 +1103,21 @@ function selectNode() {
 
 function sqEuclidDist(pt1, pt2) {
     return Math.pow(pt2[0]-pt1[0],2) + Math.pow(pt2[1]-pt1[1],2);
+}
+
+function clearScreen() {
+    complexCanvas.selectAll('.face').remove();
+    complexCanvas.selectAll('.edge').remove();
+    complexCanvas.selectAll('.circle').remove();
+    complexCanvas.selectAll('.point').remove();
+    locationData = [];
+    selectedNodes = [];
+    newZscale = 1;
+    xScale.domain([0,100]);
+    yScale.domain([0,100]);
+    gX.call(xAxis.scale(xScale));
+    gY.call(yAxis.scale(yScale));
+    newxScale = false;
+    newyScale = false;
+    renderGrid();
 }
