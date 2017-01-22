@@ -1082,23 +1082,29 @@ function selectNode() {
     highlightPoint([],i);
 
     if (selectedNodes.length==1) {
-        window.addEventListener('keydown', function (event) {
-            if (event.code == 'Delete') {
-                selectedNodes = selectedNodes.sort(function(a, b){return a-b});
-                for (j = 0; j < selectedNodes.length; j++) {
-                    locationData.splice(selectedNodes[j]-j, 1);
-                }
-                numSamples = locationData.length;
-                selectedNodes = [];
-                renderPoints();
-                updateComplex(document.getElementById('complexInput').value);
-            } else if (event.code == 'Escape') {
-                selectedNodes = [];
-                renderPoints();
-                changeComplex();
-            }
-        }, {once: true});
+        window.addEventListener('keydown', nodeSelector);
     }
+}
+
+function nodeSelector() {
+    if (event.code=='Delete' || event.code=='Backspace') {
+        console.log(event.code)
+        window.removeEventListener('keydown', nodeSelector)
+        selectedNodes = selectedNodes.sort(function(a, b){return a-b});
+        for (j = 0; j < selectedNodes.length; j++) {
+            locationData.splice(selectedNodes[j]-j, 1);
+        }
+        numSamples = locationData.length;
+        selectedNodes = [];
+        renderPoints();
+        updateComplex(document.getElementById('complexInput').value);
+    } else if (event.code == 'Escape') {
+        window.removeEventListener('keydown', nodeSelector)
+        selectedNodes = [];
+        renderPoints();
+        changeComplex();
+    }
+
 }
 
 function sqEuclidDist(pt1, pt2) {
