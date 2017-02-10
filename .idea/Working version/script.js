@@ -208,8 +208,9 @@ function zoomed() {
 //this function is called whenever the data are changed.
 
 function updateComplex(newValue) {
-    document.getElementById('complexRadius').innerHTML=newValue;
     complexRadius=+newValue;
+    d3.select('#complexRadius').attr('value', complexRadius);
+    d3.select('#complexInput').node().value = complexRadius;
     xMin = xScale.domain()[0];
     screenRadius = xScale(complexRadius+xMin);
     d3.select('#complexCircles').selectAll('circle').attr('r',screenRadius)
@@ -328,7 +329,6 @@ function constructCech() {
 
     cechEdges = [];
     cechFaces = [];
-
     var sqDist;
     //calculate the squared diameter to compare each pair to. Use square diameter to compare to squared euclidean distanct
     //of each pair so save computation.
@@ -850,7 +850,7 @@ function dataLoader(file) {
         }
 
 
-        document.getElementById('complexRadius').innerHTML=complexRadius;
+        d3.select('#complexRadius').attr('value',complexRadius)
         d3.select('#complexInput').node().value = complexRadius;
 
 
@@ -941,6 +941,7 @@ function addNode() {
 }
 
 function updateNode(coords) {
+    console.log("update radius:"+complexRadius)
 
     if (locationData.length==0) {
         c = document.getElementById('coverCheckbox');
@@ -1126,4 +1127,13 @@ function clearScreen() {
     newxScale = false;
     newyScale = false;
     renderGrid();
+
+    complexRadius = 10;
+    numSamples = 0;
+
+    d3.select('#complexInput')
+        .attr('min', 1)
+        .attr('max', 50);
+    d3.select('#complexInput').node().value = complexRadius;
+    document.getElementById('complexRadius').innerHTML = complexRadius.toString();
 }
