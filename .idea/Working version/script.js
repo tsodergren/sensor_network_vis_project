@@ -209,7 +209,7 @@ function zoomed() {
 
 function updateComplex(newValue) {
     complexRadius=+newValue;
-    d3.select('#complexRadius').attr('value', complexRadius);
+    d3.select('#complexRadius').node().value =  complexRadius;
     d3.select('#complexInput').node().value = complexRadius;
     xMin = xScale.domain()[0];
     screenRadius = xScale(complexRadius+xMin);
@@ -850,8 +850,6 @@ function dataLoader(file) {
         }
 
 
-        d3.select('#complexRadius').attr('value',complexRadius)
-        d3.select('#complexInput').node().value = complexRadius;
 
 
         //set data scale
@@ -872,7 +870,8 @@ function dataLoader(file) {
 
         var dataRange = d3.max([xRange, yRange]);
         var dataPadding = 0.1*dataRange;
-        // dataMin = d3.min([xMin, yMin]);
+        var rmax = d3.max([complexRadius, Math.ceil(0.5*dataRange)]);
+
         xScale.domain([xMin-dataPadding, xMin+dataRange+dataPadding]);
         yScale.domain([yMin-dataPadding, yMin+dataRange+dataPadding]);
 
@@ -885,17 +884,15 @@ function dataLoader(file) {
         gY.call(yAxis.scale(yScale));
         renderGrid()
 
-        //adjust radius slider and snap to actual radius
+        //adjust radius slider
         d3.select('#complexInput')
-            .attr('min', 0.05*dataRange)
-            .attr('max', d3.max([complexRadius, 0.5*dataRange]));
-        var tempValue = d3.select('#complexInput').node().value;
-        var offset = complexRadius-tempValue;
-        d3.select('#complexInput')
-            .attr('min', 0.05*dataRange+offset)
-            .attr('max', d3.max([complexRadius, 0.5*dataRange])+offset);
-
+            .attr('min', 1)
+            .attr('max', rmax);
         d3.select('#complexInput').node().value = complexRadius;
+        d3.select('#complexRadius')
+            .attr('min', 1)
+            .attr('max', rmax);
+        d3.select('#complexRadius').attr('value',complexRadius)
 
         c = document.getElementById('coverCheckbox');
         c.disabled = false;
@@ -1136,4 +1133,12 @@ function clearScreen() {
         .attr('max', 50);
     d3.select('#complexInput').node().value = complexRadius;
     document.getElementById('complexRadius').innerHTML = complexRadius.toString();
+}
+
+function setMax() {
+
+    var rmax = d3.select('#complexInput').node().max.toString();
+    var maxval = prompt('Enter maximum radius value',rmax)
+    d3.select('#complexInput').attr('max', maxval);
+    d3.select('#complexRadius').attr('max', maxval);
 }

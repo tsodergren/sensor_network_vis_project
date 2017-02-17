@@ -43,8 +43,9 @@
         <button type="button" name="addButton" id="addButton" class="inputfile" onclick="addNode()">Add nodes</button>
         <label for="addButton">Add nodes</label>
       </p>
-      <p>Radius:<input type="range" id='complexInput' min="5" max="50" value="20" oninput="updateComplex(this.value)" />
-        <input type="number" name="complexRadius" id="complexRadius" value="20" min="5" max="50" onchange="updateComplex(this.value)">
+      <p>Radius:<input type="range" id="complexInput" min="1" max="50" value="20" oninput="updateComplex(this.value)" />
+        <input type="number" name="complexRadius" id="complexRadius" min="1" max="50" value="20"  onchange="updateComplex(this.value)" />
+        <button type="button" onclick="setMax()">Max</button>
     </td>
   </tr>
   <tr>
