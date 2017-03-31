@@ -557,7 +557,34 @@ function renderPoints() {
         .on('mouseout', resetPoint)
         .call(d3.drag()
             .on('drag', dragNode)
-            .on('end', dragEnd));
+            .on('end', dragEnd))
+        .each(function(d){
+            complexPoints.selectAll('.small_circle').data(d.points)
+                .enter()
+                .append('circle')
+                .attr('class', 'point')
+                .attr('cx', function (d) {
+                    console.log(d);
+                    if (newxScale && newyScale) {
+                        return xScale(d.x) + padding/newZscale;
+                    }
+                    else {
+                        return xScale(d.x) + padding;
+                    }
+                })
+                .attr('cy', function (d) {
+                    if (newxScale && newyScale) {
+                        return yScale(d.y) + padding/newZscale;
+                    }
+                    else {
+                        return yScale(d.y) + padding / newZscale;
+                    }
+                })
+                .attr('id', function (d, i) {
+                    return 'complex_small_Point_' + i.toString();
+                })
+                .attr('r', 3/newZscale);
+        });
 
     complexCircles.selectAll('circle').data(locationData)
         .enter()
