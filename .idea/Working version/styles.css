@@ -13,9 +13,13 @@
     stroke-opacity: 0.15;
 }
 
+.small_circle {
+    fill: yellow;
+}
+
 .point
 {
-    fill: #000;
+    fill: mediumpurple;
     stroke-width: 0px;
 }
 

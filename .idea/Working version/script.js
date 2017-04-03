@@ -242,7 +242,7 @@ function resetPoint() {
     //return point and coverage circle to default view
     d3.select('#complex_Point_'+arguments[1])
         .transition()
-        .style('fill','#000');
+        .style('fill','mediumpurple');
 
     if (document.getElementById('coverCheckbox').checked) {
         fillColor = '#808080';
@@ -559,12 +559,11 @@ function renderPoints() {
             .on('drag', dragNode)
             .on('end', dragEnd))
         .each(function(d){
-            complexPoints.selectAll('.small_circle').data(d.points)
+            complexPoints.selectAll('small_circle').data(d.points)
                 .enter()
                 .append('circle')
-                .attr('class', 'point')
+                .attr('class', 'small_circle')
                 .attr('cx', function (d) {
-                    console.log(d);
                     if (newxScale && newyScale) {
                         return xScale(d.x) + padding/newZscale;
                     }
@@ -583,7 +582,7 @@ function renderPoints() {
                 .attr('id', function (d, i) {
                     return 'complex_small_Point_' + i.toString();
                 })
-                .attr('r', 3/newZscale);
+                .attr('r', 2/newZscale);
         });
 
     complexCircles.selectAll('circle').data(locationData)
