@@ -1051,7 +1051,8 @@ function showCoverage(d) {
     } else {
         d3.select('#complexCircles').selectAll('circle')
             .transition()
-            .style('fill', 'none');
+            .style('fill', 'none')
+            .style('stroke', 'none');
     }
 }
 
