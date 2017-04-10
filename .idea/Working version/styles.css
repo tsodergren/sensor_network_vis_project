@@ -5,12 +5,10 @@
     shape-rendering: crispEdges;
 }
 
-.circle
-{
-    fill: #f00;
-    fill-opacity: 0;
-    stroke: #000;
-    stroke-opacity: 0.15;
+
+#dataCircles circle {
+    fill: #808080;
+    fill-opacity: 0.2;
 }
 
 .small_circle {
