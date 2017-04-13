@@ -252,8 +252,8 @@ function resetPoint() {
         .style('fill','mediumpurple');
 
     if (document.getElementById('coverCheckbox').checked) {
-        fillColor = '#808080';
-        fillOpacity = 0.25;
+        fillColor = 'mediumpurple';
+        fillOpacity = 0.1;
     } else {
         fillColor = '#fff';
         fillOpacity = 0;
@@ -599,6 +599,9 @@ function renderPoints() {
     var complexPoints = complexCanvas.append('g')
         .attr('class', 'point')
         .attr('id','complexPoints');
+    var dataCircles = complexCanvas.append('g')
+        .attr('class', 'circle')
+        .attr('id', 'dataCircles');
 
     var pts = complexPoints.selectAll('circle').data(locationData)
         .enter()
@@ -673,6 +676,21 @@ function renderPoints() {
             return 'complex_Circle_' + i.toString();
         })
         .attr('r', xScale(complexRadius + xScale.domain()[0]));
+
+    dataCircles.selectAll('circle').data(locationData)
+        .enter()
+        .append('circle')
+        .attr('class', 'circle')
+        .attr('cx', function (d) {
+            return xScale(d.anchor.x) + padding/newZscale;
+        })
+        .attr('cy', function (d) {
+            return yScale(d.anchor.y) + padding/newZscale;
+        })
+        .attr('id', function (d, i) {
+            return 'data_Circle_' + i.toString();
+        })
+        .attr('r', dataRadius * 2);
 
 
     // complexPoints.selectAll('text')
@@ -1107,8 +1125,8 @@ function myMap() {
 
 function showCoverage(d) {
     if (d) {
-        fillColor = '#808080';
-        fillOpacity = '0.25';
+        fillColor = 'mediumpurple';
+        fillOpacity = '0.1';
         d3.select('#complexCircles').selectAll('circle')
             .transition()
             .style('visibility','visible')
@@ -1117,10 +1135,18 @@ function showCoverage(d) {
         if (document.getElementById('nodeCheckbox').checked) {
             complexCanvas.selectAll('circle')
                 .style('stroke','#000')
-                .style('stroke-opacity',0.15);
+                .style('stroke-opacity',0.2);
+            d3.select("#dataCircles").selectAll('circle')
+                .style('fill','#808080')
+                .style('fill-opacity', 0.2);
+
         }
     } else {
         d3.select('#complexCircles').selectAll('circle')
+            .transition()
+            .style('fill', 'none')
+            .style('stroke', 'none');
+        d3.select("#dataCircles").selectAll('circle')
             .transition()
             .style('fill', 'none');
     }
