@@ -404,6 +404,80 @@ function constructCech() {
     }
 }
 
+function constructEdges() {
+
+    var sqDiameter = 4 * Math.pow(complexRadius, 2);
+    var sqDiameterMin = 4 * Math.pow(complexRadius-dataRadius, 2);
+    var sqDiameterMax = 4 * Math.pow(complexRadius+dataRadius, 2);
+    distances = [];
+    var tempEdges = [];
+    var count, p;
+
+    for (i = 0; i < numSamples - 1; i++) {
+        x1 = locationData[i].anchor.x;
+        y1 = locationData[i].anchor.y;
+        distances.push([0]);
+        for (j = i + 1; j < numSamples; j++) {
+            x2 = locationData[j].anchor.x;
+            y2 = locationData[j].anchor.y;
+            d12 = sqEuclidDist([x1, y1], [x2, y2]);
+            if (d12 <= sqDiameterMin) {
+                tempEdges.push({Pt1: i, Pt2: j, Pedge: 1})
+                distances[i].push(1)
+            } else if (d12 > sqDiameterMax){
+                distances[i].push(0)
+            } else {
+                count = 0;
+                for (m=0; m<numPoints; m++) {
+                    x1 = locationData[i].points[m].x;
+                    y1 = locationData[i].points[m].y;
+                    for (n=0; n<numPoints; n++) {
+                        x2 = locationData[j].points[n].x;
+                        y2 = locationData[j].points[n].y;
+                        d12 = sqEuclidDist([x1, y1],[x2,y2]);
+                        if (d12 <= sqDiameter) {
+                            count++
+                        }
+                    }
+                }
+                p = count/(numPoints*numPoints);
+                tempEdges.push({Pt1: i, Pt2: j, Pedge: p})
+                distances[i].push(p)
+            }
+        }
+    }
+
+    return tempEdges
+
+}
+
+function constructRips() {
+
+    ripsEdges = constructEdges();
+    ripsFaces = [];
+
+    for (i = 0; i < numSamples - 2; i++) {
+        for (j = i; j < numSamples - 1; j++) {
+            if (distances[i][j - i] > 0) {
+                for (k = j; k < numSamples; k++) {
+                    if (distances[j][k - j] > 0 && distances[i][k-i] > 0) {
+                        ripsFaces.push({Pt1: i, Pt2: j, Pt3: k, Pface: 0})
+                    } else if (distances[j][k - j] == 1 && distances[i][k-i] == 1) {
+                        ripsFaces.push({Pt1: i, Pt2: j, Pt3: k, Pface: 1})
+                    }
+                }
+            }
+        }
+    }
+
+    ripsFaces.forEach( function(d) {
+        if (d.Pface == 0) {
+            d.Pface = comparePoints(d.Pt1, d.Pt2, d.Pt3);
+        }
+    })
+
+}
+
 function comparePoints(p1, p2, p3) {
     var sqDiameter = 4 * Math.pow(complexRadius, 2);
     var count = 0;
@@ -428,78 +502,6 @@ function comparePoints(p1, p2, p3) {
         }
     }
     return count/Math.pow(numPoints,3)
-}
-
-function constructRips() {
-
-    ripsEdges = [];
-    ripsFaces = [];
-
-    //calculate the squared diameter to compare each pair to. Use square diameter to compare to squared euclidean distanct
-    //of each pair so save computation.
-    var sqDiameter = 4 * Math.pow(complexRadius, 2);
-    var sqDiameterMin = 4 * Math.pow(complexRadius-dataRadius, 2);
-    var sqDiameterMax = 4 * Math.pow(complexRadius+dataRadius, 2);
-    distances = [];
-    var count, p;
-
-    for (i = 0; i < numSamples - 1; i++) {
-        x1 = locationData[i].anchor.x;
-        y1 = locationData[i].anchor.y;
-        distances.push([0]);
-        for (j = i + 1; j < numSamples; j++) {
-            x2 = locationData[j].anchor.x;
-            y2 = locationData[j].anchor.y;
-            d12 = sqEuclidDist([x1, y1], [x2, y2]);
-            if (d12 <= sqDiameterMin) {
-                ripsEdges.push({Pt1: i, Pt2: j, Pedge: 1})
-                distances[i].push(1)
-            } else if (d12 > sqDiameterMax){
-                distances[i].push(0)
-            } else {
-                count = 0;
-                for (m=0; m<numPoints; m++) {
-                    x1 = locationData[i].points[m].x;
-                    y1 = locationData[i].points[m].y;
-                    for (n=0; n<numPoints; n++) {
-                        x2 = locationData[j].points[n].x;
-                        y2 = locationData[j].points[n].y;
-                        d12 = sqEuclidDist([x1, y1],[x2,y2]);
-                        if (d12 <= sqDiameter) {
-                            count++
-                        }
-                    }
-                }
-                p = count/(numPoints*numPoints);
-                ripsEdges.push({Pt1: i, Pt2: j, Pedge: p})
-                distances[i].push(p)
-            }
-        }
-    }
-
-
-
-    for (i = 0; i < numSamples - 2; i++) {
-        for (j = i; j < numSamples - 1; j++) {
-            if (distances[i][j - i] > 0) {
-                for (k = j; k < numSamples; k++) {
-                    if (distances[j][k - j] > 0 && distances[i][k-i] > 0) {
-                        ripsFaces.push({Pt1: i, Pt2: j, Pt3: k, Pface: 0})
-                    } else if (distances[j][k - j] == 1 && distances[i][k-i] == 1) {
-                        ripsFaces.push({Pt1: i, Pt2: j, Pt3: k, Pface: 1})
-                    }
-                }
-            }
-        }
-    }
-
-    ripsFaces.forEach( function(d) {
-        if (d.Pface == 0) {
-            d.Pface = comparePoints(d.Pt1, d.Pt2, d.Pt3);
-        }
-    })
-    console.log(ripsEdges)
-    console.log(ripsFaces)
 }
 
 
@@ -536,7 +538,6 @@ function renderComplex(edges,faces) {
     //has selected
 
 
-    t=Date.now()
     complexFaces.selectAll('polygon').data(faces)
         .enter().append('polygon')
         .attr('class','face')
@@ -552,7 +553,6 @@ function renderComplex(edges,faces) {
         .on('mouseover',highlightFace)
         .on('mouseout', resetFace);
 
-    t = Date.now();
 
     complexEdges.selectAll('line').data(edges)
         .enter().append('line')
@@ -576,8 +576,6 @@ function renderComplex(edges,faces) {
         .on('mouseover', highlightEdge)
         .on('mouseout', resetEdge);
 
-    t1 = Date.now()-t;
-    console.log('edge rendering = ' + t1 + 'ms')
 
     //Make sure points stay on top
     pts = d3.select('#complexPoints').node();
@@ -690,7 +688,7 @@ function renderPoints() {
         .attr('id', function (d, i) {
             return 'data_Circle_' + i.toString();
         })
-        .attr('r', dataRadius * 2);
+        .attr('r', xScale(dataRadius + xScale.domain()[0]));
 
 
     // complexPoints.selectAll('text')
@@ -1030,19 +1028,20 @@ function dataLoader(file) {
 
 function perturbData() {
 
-    for (i=0; i<locationData.length; i++) {
-        var tmp = [];
-        var xmin = locationData[i].anchor.x - dataRadius;
-        var xmax = locationData[i].anchor.x + dataRadius;
-        var ymin = locationData[i].anchor.y - dataRadius;
-        var ymax = locationData[i].anchor.y + dataRadius;
+    var r, theta, xj, yj, tmp;
+
+    locationData.forEach( function (d) {
+        tmp = [];
         for (j=0; j<numPoints; j++) {
-            xj =  Math.floor(Math.random() * (xmax - xmin + 1)) + xmin;
-            yj=  Math.floor(Math.random() * (ymax - ymin + 1)) + ymin;
+            r = Math.random() * dataRadius;
+            theta = Math.random() * 2 * Math.PI;
+            xj = d.anchor.x + Math.floor( r * Math.cos(theta));
+            yj = d.anchor.y + Math.floor( r * Math.sin(theta));
             tmp.push( { x: xj, y: yj} )
         }
-        locationData[i].points = tmp;
-    }
+        d.points = tmp;
+    })
+
 }
 
 function changeComplex() {
