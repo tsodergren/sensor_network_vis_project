@@ -321,12 +321,9 @@ function highlightFace() {
 //reset to default view
 function resetFace() {
 
-    var id = this.id;
-    var prob = id.replace(/complex_Face_/, "");
-
     d3.select(this)
         .transition()
-        .style('fill', faceColorScale(parseFloat(prob)));
+        .style('fill', faceColorScale(arguments[0].Pface));
 
     resetEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt2);
     resetEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt3);
@@ -553,7 +550,7 @@ function renderComplex(edges,faces) {
             }
         )
         .attr('id', function (d, i) {
-            return 'complex_Face_'+d.Pface;
+            return 'complex_Face_'+d.Pt1+'_'+d.Pt2+'_'+d.Pt3;
         })
         .attr('fill', function(d){
             return faceColorScale(d.Pface);
