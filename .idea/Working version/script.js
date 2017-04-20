@@ -68,6 +68,8 @@ var gY = complexSVG.append('g')
     .attr('transform','translate('+padding+','+padding+')')
     .call(yAxis);
 
+var faceColorScale = d3.scaleLinear().range(["#99ff99", "#006600"]).domain([0.01, 1]);
+
 
 //
 // complexSVG.append("path")
@@ -319,9 +321,12 @@ function highlightFace() {
 //reset to default view
 function resetFace() {
 
+    var id = this.id;
+    var prob = id.replace(/complex_Face_/, "");
+
     d3.select(this)
         .transition()
-        .style('fill','#000');
+        .style('fill', faceColorScale(parseFloat(prob)));
 
     resetEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt2);
     resetEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt3);
@@ -548,7 +553,10 @@ function renderComplex(edges,faces) {
             }
         )
         .attr('id', function (d, i) {
-            return 'complex_Face_'+d.Pt1+'_'+d.Pt2+'_'+d.Pt3;
+            return 'complex_Face_'+d.Pface;
+        })
+        .attr('fill', function(d){
+            return faceColorScale(d.Pface);
         })
         .on('mouseover',highlightFace)
         .on('mouseout', resetFace);
@@ -625,7 +633,7 @@ function renderPoints() {
         .attr('id', function (d, i) {
             return 'complex_Point_' + i.toString();
         })
-        .attr('r', 5/newZscale)
+        .attr('r', 8/newZscale)
         .on('click', selectNode)
         .on('mouseover', highlightPoint)
         .on('mouseout', resetPoint)
