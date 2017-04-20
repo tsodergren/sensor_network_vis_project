@@ -1131,15 +1131,12 @@ function showCoverage(d) {
             .style('visibility','visible')
             .style('fill', fillColor)
             .style('fill-opacity', fillOpacity);
-        if (document.getElementById('nodeCheckbox').checked) {
-            complexCanvas.selectAll('circle')
-                .style('stroke','#000')
-                .style('stroke-opacity',0.2);
-            d3.select("#dataCircles").selectAll('circle')
-                .style('fill','#808080')
-                .style('fill-opacity', 0.2);
-
-        }
+        complexCanvas.selectAll('circle')
+            .style('stroke','#000')
+            .style('stroke-opacity',0.2);
+        d3.select("#dataCircles").selectAll('circle')
+            .style('fill','#808080')
+            .style('fill-opacity', 0.2);
     } else {
         d3.select('#complexCircles').selectAll('circle')
             .transition()
