@@ -69,7 +69,7 @@ var gY = complexSVG.append('g')
     .call(yAxis);
 
 var faceColorScale = d3.scaleLinear().range(["#99ff99", "#006600"]).domain([0.01, 1]);
-var edgeColorScale = d3.scaleLinear().range(["#7e7e7e", "#000"]).domain([0.01, 1]);
+var edgeColorScale = d3.scaleLinear().range(["#e6e6e6", "#000"]).domain([0.01, 1]);
 var edgeWidthScale = d3.scaleLinear().range([2, 6]).domain([0.01, 1]);
 
 
@@ -244,9 +244,7 @@ function highlightPoint() {
     d3.select('#complex_Circle_'+arguments[1])
         .transition()
         .style('fill', '#c33')
-        .style('fill-opacity', 0.25)
-        .style('stroke', '#c33')
-        .style('stroke-opacity', 1);
+        .style('fill-opacity', 0.25);
 }
 
 function resetPoint() {
@@ -258,7 +256,7 @@ function resetPoint() {
 
     if (document.getElementById('coverCheckbox').checked) {
         fillColor = 'mediumpurple';
-        fillOpacity = 0.1;
+        fillOpacity = 0.2;
     } else {
         fillColor = '#fff';
         fillOpacity = 0;
@@ -267,9 +265,7 @@ function resetPoint() {
     d3.select('#complex_Circle_'+arguments[1])
         .transition()
         .style('fill', fillColor)
-        .style('fill-opacity', fillOpacity)
-        .style('stroke', '#000')
-        .style('stroke-opacity', 0.15);
+        .style('fill-opacity', fillOpacity);
 }
 
 //highlight edge and corresponding points
@@ -610,9 +606,6 @@ function renderPoints() {
     var complexPoints = complexCanvas.append('g')
         .attr('class', 'point')
         .attr('id','complexPoints');
-    var dataCircles = complexCanvas.append('g')
-        .attr('class', 'circle')
-        .attr('id', 'dataCircles');
     var complexAndDataCircle = complexCanvas.append('g')
         .attr('class', 'circle')
         .attr('id', 'complexDataCircle');
@@ -641,7 +634,7 @@ function renderPoints() {
         .attr('id', function (d, i) {
             return 'complex_Point_' + i.toString();
         })
-        .attr('r', 8/newZscale)
+        .attr('r', xScale(dataRadius + xScale.domain()[0]))
         .on('click', selectNode)
         .on('mouseover', highlightPoint)
         .on('mouseout', resetPoint)
@@ -691,7 +684,9 @@ function renderPoints() {
         })
         .attr('r', xScale(complexRadius + xScale.domain()[0]));
 
-    dataCircles.selectAll('circle').data(locationData)
+
+
+    complexAndDataCircle.selectAll('circle').data(locationData)
         .enter()
         .append('circle')
         .attr('class', 'circle')
@@ -704,24 +699,9 @@ function renderPoints() {
         .attr('id', function (d, i) {
             return 'data_Circle_' + i.toString();
         })
-        .attr('r', xScale(dataRadius + xScale.domain()[0]));
-
-
-    // complexAndDataCircle.selectAll('circle').data(locationData)
-    //     .enter()
-    //     .append('circle')
-    //     .attr('class', 'circle')
-    //     .attr('cx', function (d) {
-    //         return xScale(d.anchor.x) + padding/newZscale;
-    //     })
-    //     .attr('cy', function (d) {
-    //         return yScale(d.anchor.y) + padding/newZscale;
-    //     })
-    //     .attr('id', function (d, i) {
-    //         return 'data_Circle_' + i.toString();
-    //     })
-    //     .attr('fill', 'none')
-    //     .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
+        .attr('fill', 'mediumpurple')
+        .attr('fill-opacity', 0.1)
+        .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
 
     // complexPoints.selectAll('text')
     //     .data(locationData)
@@ -1162,19 +1142,9 @@ function showCoverage(d) {
             .transition()
             .style('visibility','visible')
             .style('fill', fillColor)
-            .style('fill-opacity', fillOpacity);
-        complexCanvas.selectAll('circle')
-            .style('stroke','#000')
-            .style('stroke-opacity',0.2);
-        d3.select("#dataCircles").selectAll('circle')
-            .style('fill','#808080')
             .style('fill-opacity', 0.2);
     } else {
         d3.select('#complexCircles').selectAll('circle')
-            .transition()
-            .style('fill', 'none')
-            .style('stroke', 'none');
-        d3.select("#dataCircles").selectAll('circle')
             .transition()
             .style('fill', 'none');
     }
