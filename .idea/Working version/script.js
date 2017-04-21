@@ -69,6 +69,9 @@ var gY = complexSVG.append('g')
     .call(yAxis);
 
 var faceColorScale = d3.scaleLinear().range(["#99ff99", "#006600"]).domain([0.01, 1]);
+var edgeColorScale = d3.scaleLinear().range(["#7e7e7e", "#000"]).domain([0.01, 1]);
+var edgeWidthScale = d3.scaleLinear().range([2, 6]).domain([0.01, 1]);
+
 
 
 //
@@ -296,7 +299,7 @@ function resetEdge() {
         edge = d3.select(arguments[0])
     }
     edge.transition()
-        .style('stroke','#000');
+        .style('stroke', edgeColorScale(arguments[0].Pedge));
 
 }
 
@@ -562,7 +565,9 @@ function renderComplex(edges,faces) {
     complexEdges.selectAll('line').data(edges)
         .enter().append('line')
         .attr('class', 'edge')
-        .style('stroke-width', linew)
+        .style('stroke-width', function(d){
+            return edgeWidthScale(d.Pedge);
+        })
         .attr('x1', function (d) {
             return xScale(locationData[d.Pt1].anchor.x) + pad;
         })
@@ -577,6 +582,9 @@ function renderComplex(edges,faces) {
         })
         .attr('id', function (d) {
             return 'complex_Edge_'+d.Pt1+'_'+d.Pt2;
+        })
+        .attr('stroke', function (d) {
+            return edgeColorScale(d.Pedge);
         })
         .on('mouseover', highlightEdge)
         .on('mouseout', resetEdge);
@@ -605,6 +613,9 @@ function renderPoints() {
     var dataCircles = complexCanvas.append('g')
         .attr('class', 'circle')
         .attr('id', 'dataCircles');
+    var complexAndDataCircle = complexCanvas.append('g')
+        .attr('class', 'circle')
+        .attr('id', 'complexDataCircle');
 
     var pts = complexPoints.selectAll('circle').data(locationData)
         .enter()
@@ -695,6 +706,22 @@ function renderPoints() {
         })
         .attr('r', xScale(dataRadius + xScale.domain()[0]));
 
+
+    // complexAndDataCircle.selectAll('circle').data(locationData)
+    //     .enter()
+    //     .append('circle')
+    //     .attr('class', 'circle')
+    //     .attr('cx', function (d) {
+    //         return xScale(d.anchor.x) + padding/newZscale;
+    //     })
+    //     .attr('cy', function (d) {
+    //         return yScale(d.anchor.y) + padding/newZscale;
+    //     })
+    //     .attr('id', function (d, i) {
+    //         return 'data_Circle_' + i.toString();
+    //     })
+    //     .attr('fill', 'none')
+    //     .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
 
     // complexPoints.selectAll('text')
     //     .data(locationData)
