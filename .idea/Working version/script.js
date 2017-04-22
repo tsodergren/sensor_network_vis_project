@@ -291,11 +291,20 @@ function resetEdge() {
         edge = d3.select(this)
         resetPoint([], ripsEdges[arguments[1]].Pt1);
         resetPoint([], ripsEdges[arguments[1]].Pt2);
+        edge.transition()
+            .style('stroke', edgeColorScale(arguments[0].Pedge));
     } else {
-        edge = d3.select(arguments[0])
+        edge = d3.select(arguments[0]);
+        var points = arguments[0].replace(/#complex_Edge_/, '');
+        for (i = 0; i < ripsEdges.length; i++){
+            var possibleEdge = ripsEdges[i];
+            if(points == possibleEdge.Pt1 + "_" + possibleEdge.Pt2){
+                edge.transition()
+                    .style('stroke', edgeColorScale(possibleEdge.Pedge));
+                return;
+            }
+        }
     }
-    edge.transition()
-        .style('stroke', edgeColorScale(arguments[0].Pedge));
 
 }
 
