@@ -69,7 +69,7 @@ var gY = complexSVG.append('g')
     .call(yAxis);
 
 var faceColorScale = d3.scaleLinear().range(["#99ff99", "#006600"]).domain([0.01, 1]);
-var edgeColorScale = d3.scaleLinear().range(["#e6e6e6", "#000"]).domain([0.01, 1]);
+var edgeOpacityScale = d3.scaleLinear().range([0.2, 1]).domain([0.01, 1]);
 var edgeWidthScale = d3.scaleLinear().range([2, 6]).domain([0.01, 1]);
 
 
@@ -292,7 +292,8 @@ function resetEdge() {
         resetPoint([], ripsEdges[arguments[1]].Pt1);
         resetPoint([], ripsEdges[arguments[1]].Pt2);
         edge.transition()
-            .style('stroke', edgeColorScale(arguments[0].Pedge));
+            .style('stroke', "black")
+            .style('opacity', edgeOpacityScale(arguments[0].Pedge));
     } else {
         edge = d3.select(arguments[0]);
         var points = arguments[0].replace(/#complex_Edge_/, '');
@@ -300,7 +301,8 @@ function resetEdge() {
             var possibleEdge = ripsEdges[i];
             if(points == possibleEdge.Pt1 + "_" + possibleEdge.Pt2){
                 edge.transition()
-                    .style('stroke', edgeColorScale(possibleEdge.Pedge));
+                    .style('stroke', "black")
+                    .style('opacity', edgeOpacityScale(possibleEdge.Pedge));
                 return;
             }
         }
@@ -588,8 +590,9 @@ function renderComplex(edges,faces) {
         .attr('id', function (d) {
             return 'complex_Edge_'+d.Pt1+'_'+d.Pt2;
         })
-        .attr('stroke', function (d) {
-            return edgeColorScale(d.Pedge);
+        .attr('stroke', 'black')
+        .attr('opacity', function (d) {
+            return edgeOpacityScale(d.Pedge);
         })
         .on('mouseover', highlightEdge)
         .on('mouseout', resetEdge);
@@ -1152,8 +1155,16 @@ function showCoverage(d) {
             .style('visibility','visible')
             .style('fill', fillColor)
             .style('fill-opacity', 0.2);
+        d3.select('#complexDataCircle').selectAll('circle')
+            .transition()
+            .style('visibility','visible')
+            .style('fill', fillColor)
+            .style('fill-opacity', 0.1);
     } else {
         d3.select('#complexCircles').selectAll('circle')
+            .transition()
+            .style('fill', 'none');
+        d3.select('#complexDataCircle').selectAll('circle')
             .transition()
             .style('fill', 'none');
     }
