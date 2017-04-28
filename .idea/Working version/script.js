@@ -742,10 +742,10 @@ function renderComplex(edges,faces) {
 }
 
 function renderAllEdges(){
+    complexCanvas.selectAll('.allEdges').remove();
     var allEdgesGroup = complexCanvas.append('g')
         .attr('id','allEdges')
-        .attr('class', 'all_edges')
-        .style('visibility','hidden');
+        .attr('class', 'all_edges');
     allEdgesGroup.selectAll('line').data(allEdges)
         .enter().append('line')
         .attr('class', 'individual_edge')

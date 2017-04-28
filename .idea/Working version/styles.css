@@ -6,7 +6,7 @@ td {
 
 .individual_edge {
     stroke-width: 2px;
-    stroke-opacity: 0.5;
+    opacity: 0.5;
     fill: black;
 }
 
