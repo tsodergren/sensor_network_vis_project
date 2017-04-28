@@ -911,7 +911,7 @@ function renderView() {
     f = document.getElementById('edgeCheckbox');
     show(f.checked,'.edge');
     f = document.getElementById('allEdgeCheckbox');
-    show(f.checked,'.edge');
+    show(f.checked,'.individual_edge');
     f = document.getElementById('faceCheckbox');
     show(f.checked,'.face');
 }
