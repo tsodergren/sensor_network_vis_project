@@ -331,7 +331,7 @@ function resetPoint() {
 function highlightEdge() {
 
     if (arguments.length>1) {
-        edge = d3.select(this)
+        edge = d3.select(this);
         highlightPoint([], ripsEdges[arguments[1]].Pt1);
         highlightPoint([], ripsEdges[arguments[1]].Pt2);
     } else {
@@ -717,8 +717,41 @@ function renderComplex(edges,faces) {
     pts = d3.select('#complexPoints').node();
     pts.parentNode.appendChild(pts);
 
+    renderAllEdges();
     renderView();
 
+
+}
+
+function renderAllEdges(){
+    var allEdgesGroup = complexCanvas.append('g')
+        .attr('id','allEdges')
+        .attr('class', 'all_edges')
+        .style('visibility','hidden');
+    allEdgesGroup.selectAll('line').data(allEdges)
+        .enter().append('line')
+        .attr('class', 'individual_edge')
+        .attr('x1', function (d) {
+            return xScale(d.x1) + pad;
+        })
+        .attr('y1', function (d) {
+            return yScale(d.y1) + pad;
+        })
+        .attr('x2', function (d) {
+            return xScale(d.x2) + pad;
+        })
+        .attr('y2', function (d) {
+            return yScale(d.y2) + pad;
+        })
+        .attr('id', function (d) {
+            return 'complex_individual_Edge_'+d.x1+'_'+d.x2+d.y1+'_'+d.y2;
+        })
+        .attr('stroke', 'black')
+        .attr('opacity', function (d) {
+            return edgeOpacityScale(d.Pedge);
+        })
+        .on('mouseover', highlightEdge)
+        .on('mouseout', resetEdge);
 }
 
 function renderPoints() {
