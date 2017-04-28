@@ -18,8 +18,8 @@
 
 <table>
   <tr>
-    <td id="plotArea" width="600px" style="border: 1px solid black; background-color: white" rowspan="2"></td>
-    <td style="vertical-align: top; padding: 20px; border: 1px solid black">
+    <td id="plotArea" width="600px" style="border: 1px solid black; background-color: white" rowspan="3"></td>
+    <td style="vertical-align: top;">
       <!-- The control panel for data loading and saving as well as data manipulation-->
       <h3>Control Panel</h3>
       <p>
@@ -50,7 +50,7 @@
     </td>
   </tr>
   <tr>
-    <td style="padding: 20px; border: 1px solid black">
+    <td>
       <h3>View</h3>
       <p>
         Complex type:
@@ -65,6 +65,15 @@
       <label for="faceCheckbox">Faces</label>
       <input type="checkbox" id="coverCheckbox" class="viewCheckbox" disabled="disabled" onclick="showCoverage(this.checked)">
       <label for="coverCheckbox">Coverage</label>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <h3>Legend</h3>
+      <p>Probability of Face:</p>
+      <svg id="face_legend" width="350px" height="60px"></svg>
+      <p>Probability of Edge:</p>
+      <svg id="edge_legend" width="350px" height="60px"></svg>
     </td>
   </tr>
 </table>

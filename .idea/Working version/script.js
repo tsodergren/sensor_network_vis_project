@@ -69,7 +69,9 @@ var gY = complexSVG.append('g')
     .attr('transform','translate('+padding+','+padding+')')
     .call(yAxis);
 
-var faceColorScale = d3.scaleLinear().range(["#99ff99", "#006600"]).domain([0.01, 1]);
+var lightGreen = "#99ff99";
+var darkGreen = "#006600";
+var faceColorScale = d3.scaleLinear().range([lightGreen, darkGreen]).domain([0.01, 1]);
 var edgeOpacityScale = d3.scaleLinear().range([0.2, 1]).domain([0.01, 1]);
 var edgeWidthScale = d3.scaleLinear().range([2, 6]).domain([0.01, 1]);
 
@@ -139,6 +141,62 @@ window.addEventListener('keydown', function (event) {
 renderGrid();
 
 dataLoader('data/data.off')
+
+createLegends();
+
+function createLegends(){
+    createLengend(lightGreen, darkGreen, 1, 1);
+    createLengend("black", "black", 0.2, 1);
+}
+
+function createLengend(beginColor, endColor, opacity1, opacity2){
+    var translationY = 0;
+    var legendName = "#face_legend"
+    if(opacity1 != 1){
+        legendName = "#edge_legend"
+    }
+    var legend = d3.select(legendName).append('g');
+    legend.selectAll('*').remove();
+    var gradient = legend.append('defs')
+        .append('linearGradient')
+        .attr('id', 'gradient')
+        .attr('x1', '0%')
+        .attr('y1', '0%')
+        .attr('x2', '100%')
+        .attr('y2', '0%')
+        .attr('spreadMethod', 'pad');
+
+    gradient.append('stop')
+        .attr('offset', '0%')
+        .attr('stop-color', beginColor)
+        .attr('stop-opacity', opacity1);
+    gradient.append('stop')
+        .attr('offset', '100%')
+        .attr('stop-color', endColor)
+        .attr('stop-opacity', opacity2);
+
+    legend.append('rect')
+        .attr('x1', 0)
+        .attr('y1', 0)
+        .attr('width', '300px')
+        .attr('height', '40px')
+        .attr("transform", "translate(10," + translationY + ")")
+        .style('fill', 'url(#gradient)');
+
+    var legendScale = d3.scaleLinear()
+        .domain([0.01, 1])
+        .range([0, 300]);
+
+    var legendAxis = d3.axisBottom(legendScale)
+        .tickValues([0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1])
+        .tickFormat(d3.format(".2f"));;
+
+    legend.append("g")
+        .attr("class", "legend axis")
+        .attr("transform", "translate(10, " + (translationY + 40) + ")")
+        .call(legendAxis);
+}
+
 
 function renderGrid() {
 
