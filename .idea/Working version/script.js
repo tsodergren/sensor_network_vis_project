@@ -854,8 +854,12 @@ function renderView() {
     f = document.getElementById('coverCheckbox');
     showCoverage(f.checked);
     f = document.getElementById('nodeCheckbox');
+    show(f.checked,'.small_circle');
+    f = document.getElementById('nodeRadiusCheckbox');
     show(f.checked,'.point');
     f = document.getElementById('edgeCheckbox');
+    show(f.checked,'.edge');
+    f = document.getElementById('allEdgeCheckbox');
     show(f.checked,'.edge');
     f = document.getElementById('faceCheckbox');
     show(f.checked,'.face');
@@ -922,18 +926,25 @@ function importData() {
             renderGrid()
 
             //reset to default view and calculate complexes
-            c = document.getElementById('coverCheckbox');
-            c.disabled = false;
-            c.checked = true;
-            n = document.getElementById('nodeCheckbox');
-            n.disabled = false;
-            n.checked = true;
-            document.getElementById('edgeCheckbox').disabled = 0;
-            document.getElementById('faceCheckbox').disabled = 0;
+            resetCheckboxes();
             renderPoints();
             updateComplex(document.getElementById('complexInput').value);
         });
     }
+}
+
+function resetCheckboxes(){
+    c = document.getElementById('coverCheckbox');
+    c.disabled = false;
+    c.checked = true;
+    r = document.getElementById('nodeRadiusCheckbox');
+    r.disabled = false;
+    r.checked = true;
+    n = document.getElementById('nodeCheckbox');
+    n.disabled = false;
+    n.checked = true;
+    document.getElementById('edgeCheckbox').disabled = 0;
+    document.getElementById('faceCheckbox').disabled = 0;
 }
 
 function randomData() {
@@ -968,14 +979,7 @@ function randomData() {
         .attr('max', 0.5*dataRange)
         .attr('value', 0.2*dataRange);
 
-    c = document.getElementById('coverCheckbox');
-    c.disabled = false;
-    c.checked = true;
-    n = document.getElementById('nodeCheckbox');
-    n.disabled = false;
-    n.checked = true;
-    document.getElementById('edgeCheckbox').disabled = 0;
-    document.getElementById('faceCheckbox').disabled = 0;
+    resetCheckboxes();
 
     renderPoints();
     updateComplex(document.getElementById('complexInput').value);
@@ -1148,14 +1152,7 @@ function dataLoader(file) {
             .attr('max', rmax);
         d3.select('#complexRadius').attr('value',complexRadius)
 
-        c = document.getElementById('coverCheckbox');
-        c.disabled = false;
-        c.checked = true;
-        n = document.getElementById('nodeCheckbox');
-        n.disabled = false;
-        n.checked = true;
-        document.getElementById('edgeCheckbox').disabled = 0;
-        document.getElementById('faceCheckbox').disabled = 0;
+        resetCheckboxes();
 
         perturbData();
 
@@ -1215,14 +1212,7 @@ function updateNode(coords) {
     console.log("update radius:"+complexRadius)
 
     if (locationData.length==0) {
-        c = document.getElementById('coverCheckbox');
-        c.disabled = false;
-        c.checked = true;
-        n = document.getElementById('nodeCheckbox');
-        n.disabled = false;
-        n.checked = true;
-        document.getElementById('edgeCheckbox').disabled = 0;
-        document.getElementById('faceCheckbox').disabled = 0;
+       resetCheckboxes();
     };
 
     i = locationData.length;
