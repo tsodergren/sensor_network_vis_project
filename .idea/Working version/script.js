@@ -21,6 +21,7 @@ var cechFaces = [];
 var cechEdges = [];
 var ripsFaces = [];
 var ripsEdges = [];
+var allEdges = [];
 var dataMin = 0;
 var distances = [];
 
@@ -425,6 +426,7 @@ function constructEdges() {
     var tempEdges = [];
     var count, p, pFlag;
 
+
     for (i = 0; i < numSamples - 1; i++) {
         x1 = locationData[i].anchor.x;
         y1 = locationData[i].anchor.y;
@@ -464,7 +466,24 @@ function constructEdges() {
             }
         }
     }
-console.log(edgeProb)
+
+    //Put all individual edges into a single structure for easier access.
+    allEdges = [];
+    tempEdges.forEach( function(d) {
+        if (d.Pedge == 1) {
+            for (i=0; i<numPoints; i++) {
+                for (j=0; j<numPoints; j++) {
+                    x1 = locationData[d.Pt1].points[i].x;
+                    y1 = locationData[d.Pt1].points[i].y;
+                    x2 = locationData[d.Pt2].points[j].x;
+                    y2 = locationData[d.Pt2].points[j].y;
+                    allEdges.push({x1: x1, y1: y1, x2: x2, y2: y2})
+                }
+            }
+        }
+    })
+
+    console.log(allEdges)
     return {edges: tempEdges, edgeProb: edgeProb}
 
 }
