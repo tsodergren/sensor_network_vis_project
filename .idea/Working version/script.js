@@ -421,25 +421,27 @@ function constructEdges() {
     var sqDiameter = 4 * Math.pow(complexRadius, 2);
     var sqDiameterMin = 4 * Math.pow(complexRadius-dataRadius, 2);
     var sqDiameterMax = 4 * Math.pow(complexRadius+dataRadius, 2);
-    distances = [];
+    var edgeProb = [];
     var tempEdges = [];
-    var count, p;
+    var count, p, pFlag;
 
     for (i = 0; i < numSamples - 1; i++) {
         x1 = locationData[i].anchor.x;
         y1 = locationData[i].anchor.y;
-        distances.push([0]);
+        edgeProb.push([0]);
         for (j = i + 1; j < numSamples; j++) {
             x2 = locationData[j].anchor.x;
             y2 = locationData[j].anchor.y;
             d12 = sqEuclidDist([x1, y1], [x2, y2]);
             if (d12 <= sqDiameterMin) {
+                edgeProb[i].push({p: 1, edgeInd: tempEdges.length})
                 tempEdges.push({Pt1: i, Pt2: j, Pedge: 1})
-                distances[i].push(1)
             } else if (d12 > sqDiameterMax){
-                distances[i].push(0)
+                edgeProb[i].push({p: 0})
             } else {
                 count = 0;
+                pFlag = [];
+                iEdges = [];
                 for (m=0; m<numPoints; m++) {
                     x1 = locationData[i].points[m].x;
                     y1 = locationData[i].points[m].y;
@@ -449,62 +451,98 @@ function constructEdges() {
                         d12 = sqEuclidDist([x1, y1],[x2,y2]);
                         if (d12 <= sqDiameter) {
                             count++
+                            pFlag.push(true)
+                            iEdges.push({Pt1: m, Pt2: n})
+                        } else {
+                            pFlag.push(false)
                         }
                     }
                 }
                 p = count/(numPoints*numPoints);
-                tempEdges.push({Pt1: i, Pt2: j, Pedge: p})
-                distances[i].push(p)
+                edgeProb[i].push({p: p, pFlag: pFlag, edgeInd: tempEdges.length})
+                tempEdges.push({Pt1: i, Pt2: j, Pedge: p, iEdges: iEdges})
             }
         }
     }
-
-    return tempEdges
+console.log(edgeProb)
+    return {edges: tempEdges, edgeProb: edgeProb}
 
 }
 
 function constructRips() {
 
-    ripsEdges = constructEdges();
     ripsFaces = [];
+    var tmp = constructEdges();
+    ripsEdges = tmp.edges;
+    var edgeProb = tmp.edgeProb;
 
-    for (i = 0; i < numSamples - 2; i++) {
-        for (j = i; j < numSamples - 1; j++) {
-            if (distances[i][j - i] > 0) {
-                for (k = j; k < numSamples; k++) {
-                    if (distances[j][k - j] > 0 && distances[i][k-i] > 0) {
-                        ripsFaces.push({Pt1: i, Pt2: j, Pt3: k, Pface: 0})
-                    } else if (distances[j][k - j] == 1 && distances[i][k-i] == 1) {
+    console.log(ripsEdges)
+
+    for (i=0; i<numSamples-2; i++) {
+        for (j=i+1; j<numSamples-1; j++) {
+            if (edgeProb[i][j-i].p > 0) {
+                for (k=j+1; k<numSamples; k++) {
+                    if (edgeProb[j][k-j].p == 1 && edgeProb[i][k-i].p == 1 && edgeProb[i][j-i].p == 1){
                         ripsFaces.push({Pt1: i, Pt2: j, Pt3: k, Pface: 1})
+                    } else if (edgeProb[j][k-j].p > 0 && edgeProb[i][k-i].p > 0){
+                        ripsFaces.push({Pt1: i, Pt2: j, Pt3: k, p12: edgeProb[i][j-i], p13: edgeProb[i][k-i], p23: edgeProb[j][k-j],  Pface: 0})
                     }
                 }
             }
         }
     }
 
-    ripsFaces.forEach( function(d) {
+    ripsFaces.forEach( function (d) {
         if (d.Pface == 0) {
-            d.Pface = comparePoints(d.Pt1, d.Pt2, d.Pt3);
+            count = 0;
+            if (d.p12.p == 1 && d.p13.p == 1) {
+                d.Pface = d.p23.p;
+            } else if (d.p12.p == 1 && d.p23.p == 1) {
+                d.Pface = d.p13.p;
+            } else if (d.p13.p == 1 && d.p23.p == 1) {
+                d.Pface = d.p12.p;
+            } else {
+                for (i=0; i<numPoints; i++) {
+                    for (j=0; j<numPoints; j++) {
+                        for (k=0; k<numPoints; k++) {
+                            isEdge = [true, true, true];
+                            if (d.p12.p < 1) {
+                                isEdge[0] = d.p12.pFlag[i*numPoints+j] ? true:false;
+                            }
+                            if (d.p13.p < 1) {
+                                isEdge[1] = d.p13.pFlag[i*numPoints+k] ? true:false;
+                            }
+                            if (d.p23.p <1) {
+                                isEdge[2] = d.p23.pFlag[j*numPoints+k] ? true:false;
+                            }
+                            if (isEdge[0] && isEdge[1] && isEdge[2]) {
+                                count++
+                            }
+                        }
+                    }
+                }
+                d.Pface = count/Math.pow(numPoints,3);
+            }
         }
     })
 
 }
 
-function comparePoints(p1, p2, p3) {
+function comparePoints(pts) {
     var sqDiameter = 4 * Math.pow(complexRadius, 2);
     var count = 0;
     var x1, y1, x2, y2, x3, y3;
     for (i=0; i<numPoints; i++) {
-        x1 = locationData[p1].points[i].x;
-        y1 = locationData[p1].points[i].y;
+        x1 = locationData[pts[0]].points[i].x;
+        y1 = locationData[pts[0]].points[i].y;
         for (j=0; j<numPoints; j++) {
-            x2 = locationData[p2].points[j].x;
-            y2 = locationData[p2].points[j].y;
+            x2 = locationData[pts[1]].points[j].x;
+            y2 = locationData[pts[1]].points[j].y;
             d12 = sqEuclidDist([x1, y1], [x2, y2]);
             if (d12 <= sqDiameter) {
                 for (k=0; k<numPoints; k++) {
-                    x3 = locationData[p3].points[k].x;
-                    y3 = locationData[p3].points[k].y;
+                    x3 = locationData[pts[2]].points[k].x;
+                    y3 = locationData[pts[2]].points[k].y;
                     d23 = sqEuclidDist([x2, y2], [x3, y3]);
                     if (d23 <= sqDiameter) {
                         count++
@@ -573,7 +611,7 @@ function renderComplex(edges,faces) {
         .enter().append('line')
         .attr('class', 'edge')
         .style('stroke-width', function(d){
-            return edgeWidthScale(d.Pedge);
+            return edgeWidthScale(d.Pedge)/newZscale;
         })
         .attr('x1', function (d) {
             return xScale(locationData[d.Pt1].anchor.x) + pad;
