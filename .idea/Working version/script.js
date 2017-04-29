@@ -29,6 +29,7 @@ var numSamples = 0;      //Number of points to use
 var complexRadius = 20;          //epsilon ball radius
 var dataRadius = 10; //radius of uncertainty
 var numPoints = 8; //number of possible data locations per node
+var originalDataRadius = 10;
 
 //background grid information
 var cellSize = 50;
@@ -1205,29 +1206,41 @@ function dataLoader(file) {
 
         resetCheckboxes();
 
+        perturbData();
         addSampleSensors();
     });
 
 }
 
-function addSampleSensors(){
-    var numSamplesSensors = document.getElementById('numSampleSensors').value;
+function changeNumberSampleSensors(){
+    var numSamplesSensors = parseInt(document.getElementById('numSampleSensors').value);
     if(numPoints != numSamplesSensors) {
         numPoints = +numSamplesSensors;
     }
-    var dataRadiusNum = document.getElementById('complexDataRadius').value;
-    var dataRadiusSlide = document.getElementById('complexRadiusInput').value;
+    perturbData();
+    addSampleSensors();
+}
+
+function changeDataRadius(){
+    var dataRadiusNum = parseInt(document.getElementById('complexDataRadius').value);
+    var dataRadiusSlide = parseInt(document.getElementById('complexRadiusInput').value);
     if(dataRadius != dataRadiusNum) {
         dataRadius = +dataRadiusNum;
     }
-    if(dataRadius != dataRadiusSlide){
+    else if(dataRadius != dataRadiusSlide){
         document.getElementById('complexDataRadius').value = dataRadiusNum;
         dataRadius = +dataRadiusSlide;
     }
     d3.select('#complexRadiusInput').node().value =  dataRadius;
     d3.select('#complexDataRadius').node().value = dataRadius;
+    if(dataRadius < originalDataRadius) {
+        perturbData();
+        originalDataRadius = dataRadius;
+    }
+    addSampleSensors();
+}
 
-    perturbData();
+function addSampleSensors(){
 
     renderPoints();
 

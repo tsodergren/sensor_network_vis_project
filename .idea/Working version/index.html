@@ -48,13 +48,13 @@
         <input type="number" name="complexRadius" id="complexRadius" min="1" max="50" value="20"  onchange="updateComplex(this.value)" />
         <button type="button" onclick="setMax()">Max</button>
       <p>
-        <button type="button" name="numSamplesButton" id="numSamplesButton" class="inputfile" onclick="addSampleSensors()">Number of Sensor Samples</button>
+        <button type="button" name="numSamplesButton" id="numSamplesButton" class="inputfile" onclick="changeNumberSampleSensors()">Number of Sensor Samples</button>
         <label for="numSamplesButton">Sensor Samples </label>
         # sensors:
         <input type="number" name="numSampleSensors" id="numSampleSensors" value="8" min="1" max="1000">
       </p>
-      <p>Radius:<input type="range" id="complexRadiusInput" min="1" max="50" value="10" oninput="addSampleSensors()"/>
-        <input type="number" name="complexDataRadius" id="complexDataRadius" min="1" max="50" value="10"  onchange="addSampleSensors()" />
+      <p>Radius:<input type="range" id="complexRadiusInput" min="1" max="50" value="10" oninput="changeDataRadius()"/>
+        <input type="number" name="complexDataRadius" id="complexDataRadius" min="1" max="50" value="10"  onchange="changeDataRadius()" />
     </td>
   </tr>
   <tr>
