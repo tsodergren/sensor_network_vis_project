@@ -742,7 +742,7 @@ function renderComplex(edges,faces) {
 }
 
 function renderAllEdges(){
-    complexCanvas.selectAll('.allEdges').remove();
+    complexCanvas.selectAll('#allEdges').remove();
     var allEdgesGroup = complexCanvas.append('g')
         .attr('id','allEdges')
         .attr('class', 'all_edges');
@@ -1205,12 +1205,38 @@ function dataLoader(file) {
 
         resetCheckboxes();
 
-        perturbData();
-
-        renderPoints();
-        changeComplex();
+        addSampleSensors();
     });
 
+}
+
+function addSampleSensors(){
+    var numSamplesSensors = document.getElementById('numSampleSensors').value;
+    if(numPoints != numSamplesSensors) {
+        numPoints = +numSamplesSensors;
+    }
+    var dataRadiusNum = document.getElementById('complexDataRadius').value;
+    var dataRadiusSlide = document.getElementById('complexRadiusInput').value;
+    if(dataRadius != dataRadiusNum) {
+        dataRadius = +dataRadiusNum;
+    }
+    if(dataRadius != dataRadiusSlide){
+        document.getElementById('complexDataRadius').value = dataRadiusNum;
+        dataRadius = +dataRadiusSlide;
+    }
+    d3.select('#complexRadiusInput').node().value =  dataRadius;
+    d3.select('#complexDataRadius').node().value = dataRadius;
+
+    perturbData();
+
+    renderPoints();
+
+    if (complexType=='Cech') {
+        constructCech();
+    } else if (complexType=='Vietoris-Rips') {
+        constructRips();
+    }
+    changeComplex();
 }
 
 function perturbData() {
