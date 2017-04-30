@@ -287,7 +287,8 @@ function updateComplex(newValue) {
     d3.select('#complexInput').node().value = complexRadius;
     xMin = xScale.domain()[0];
     screenRadius = xScale(complexRadius+xMin);
-    d3.select('#complexCircles').selectAll('circle').attr('r',screenRadius)
+    d3.select('#complexCircles').selectAll('circle').attr('r',screenRadius);
+    d3.select('#complexDataCircle').selectAll('circle').attr('r',screenRadius + dataRadius);
     constructRips();
     changeComplex();
 }
@@ -734,7 +735,6 @@ function renderComplex(edges,faces) {
     pts.parentNode.appendChild(pts);
 
     renderAllEdges();
-    renderDataRadius();
     renderView();
 
 
@@ -1226,23 +1226,16 @@ function changeNumberSampleSensors(){
     addSampleSensors();
 }
 
-function changeDataRadius(){
-    var dataRadiusNum = parseInt(document.getElementById('complexDataRadius').value);
-    var dataRadiusSlide = parseInt(document.getElementById('complexRadiusInput').value);
-    if(dataRadius != dataRadiusNum) {
-        dataRadius = +dataRadiusNum;
-    }
-    else if(dataRadius != dataRadiusSlide){
-        document.getElementById('complexDataRadius').value = dataRadiusNum;
-        dataRadius = +dataRadiusSlide;
-    }
+function changeDataRadius(val){
+    dataRadius = parseInt(val);
     d3.select('#complexRadiusInput').node().value =  dataRadius;
     d3.select('#complexDataRadius').node().value = dataRadius;
     if(dataRadius < originalDataRadius) {
         perturbData();
         originalDataRadius = dataRadius;
     }
-    addSampleSensors();
+    d3.select('#complexDataCircle').selectAll('circle')
+        .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
 }
 
 function addSampleSensors(){

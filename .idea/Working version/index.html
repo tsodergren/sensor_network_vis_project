@@ -53,8 +53,8 @@
         # potential locations per sensor:
         <input type="number" name="numSampleSensors" id="numSampleSensors" value="8" min="1" max="1000">
       </p>
-      <p>Radius of uncertainty:<input type="range" id="complexRadiusInput" min="1" max="50" value="10" oninput="changeDataRadius()"/>
-        <input type="number" name="complexDataRadius" id="complexDataRadius" min="1" max="50" value="10"  onchange="changeDataRadius()" />
+      <p>Radius of uncertainty:<input type="range" id="complexRadiusInput" min="1" max="50" value="10" oninput="changeDataRadius(this.value)"/>
+        <input type="number" name="complexDataRadius" id="complexDataRadius" min="1" max="50" value="10"  onchange="changeDataRadius(this.value)" />
     </td>
   </tr>
 
