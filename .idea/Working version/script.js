@@ -1115,9 +1115,9 @@ function dataLoader(file) {
         complexRadius = +str[1];
 
         str = txt.replace(/#[^\n]*\n/g, []);
-        str = str.replace(/OFF\r\n/i, []);
+        str = str.replace(/OFF\r?\n/i, []);
 
-        re = /([^\r\n]*)\r\n/;
+        re = /([^\r?\n]*)\r?\n/;
         line1 = str.match(re);
         line1 = line1[1];
         line1 = line1.match(/(\d*)\w/g);
