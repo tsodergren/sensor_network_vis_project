@@ -734,6 +734,7 @@ function renderComplex(edges,faces) {
     pts.parentNode.appendChild(pts);
 
     renderAllEdges();
+    renderDataRadius();
     renderView();
 
 
@@ -768,6 +769,27 @@ function renderAllEdges(){
         })
         .on('mouseover', highlightEdge)
         .on('mouseout', resetEdge);
+}
+
+function renderDataRadius(){
+    var complexAndDataCircle = complexCanvas.select('#complexDataCircle');
+    complexAndDataCircle.selectAll('circle').remove();
+    complexAndDataCircle.selectAll('circle').data(locationData)
+        .enter()
+        .append('circle')
+        .attr('class', 'circle')
+        .attr('cx', function (d) {
+            return xScale(d.anchor.x) + padding/newZscale;
+        })
+        .attr('cy', function (d) {
+            return yScale(d.anchor.y) + padding/newZscale;
+        })
+        .attr('id', function (d, i) {
+            return 'data_Circle_' + i.toString();
+        })
+        .attr('fill', 'mediumpurple')
+        .attr('fill-opacity', 0.1)
+        .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
 }
 
 function renderPoints() {
@@ -860,24 +882,7 @@ function renderPoints() {
         })
         .attr('r', xScale(complexRadius + xScale.domain()[0]));
 
-
-
-    complexAndDataCircle.selectAll('circle').data(locationData)
-        .enter()
-        .append('circle')
-        .attr('class', 'circle')
-        .attr('cx', function (d) {
-            return xScale(d.anchor.x) + padding/newZscale;
-        })
-        .attr('cy', function (d) {
-            return yScale(d.anchor.y) + padding/newZscale;
-        })
-        .attr('id', function (d, i) {
-            return 'data_Circle_' + i.toString();
-        })
-        .attr('fill', 'mediumpurple')
-        .attr('fill-opacity', 0.1)
-        .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
+    renderDataRadius();
 
     r = xScale(dataRadius + xScale.domain()[0])+5;
     textOffset = -r * Math.cos( 3*Math.PI/4 );
