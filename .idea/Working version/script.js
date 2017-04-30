@@ -304,6 +304,7 @@ function highlightPoint() {
         .transition()
         .style('fill', '#c33')
         .style('fill-opacity', 0.25);
+
 }
 
 function resetPoint() {
@@ -469,8 +470,6 @@ function constructCech() {
         }
     })
 
-    cechFaces.sort( function (a, b) { return a.Pface - b.Pface})
-
 
 }
 
@@ -482,6 +481,10 @@ function constructEdges() {
     var edgeProb = [];
     var tempEdges = [];
     var count, p, pFlag;
+
+    locationData.forEach( function (d) {
+        d.star = [];
+    })
 
 
     for (i = 0; i < numSamples - 1; i++) {
@@ -526,7 +529,6 @@ function constructEdges() {
         }
     }
 
-    tempEdges.sort( function (a, b) { return a.Pedge - b.Pedge } )
 
 
     //Put all individual edges into a single structure for easier access.
@@ -614,13 +616,6 @@ function constructRips() {
 
     })
 
-    ripsFaces.sort( function (a, b) { return a.Pface - b.Pface } )
-
-    console.log(ripsFaces.length)
-    // ripsFaces.forEach( function (d) {
-    //     console.log([d.Pface, d.Pt1, d.Pt2, d.Pt3])
-    // })
-
     constructCech();
 
 }
@@ -664,6 +659,8 @@ function renderComplex(edges,faces) {
             faces = ripsFaces;
         }
     };
+    ripsFaces.sort( function (a, b) { return a.Pface - b.Pface } )
+    cechFaces.sort( function (a, b) { return a.Pface - b.Pface } )
 
     //remove existing canvas elements
     complexCanvas.selectAll('.face').remove();
@@ -820,7 +817,7 @@ function renderPoints() {
         .call(d3.drag()
             .on('drag', dragNode)
             .on('end', dragEnd))
-        .each(function(d){
+        .each(function(d, j){
             complexPoints.selectAll('small_circle').data(d.points)
                 .enter()
                 .append('circle')
@@ -841,8 +838,8 @@ function renderPoints() {
                         return yScale(d.y) + padding / newZscale;
                     }
                 })
-                .attr('id', function (d, i) {
-                    return 'complex_small_Point_' + i.toString();
+                .attr('id', function (d, i) {5
+                    return 'complex_small_Point_' + j.toString() + '_' + i.toString();
                 })
                 .attr('r', 2/newZscale);
         });
@@ -882,6 +879,9 @@ function renderPoints() {
         .attr('fill-opacity', 0.1)
         .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
 
+    r = xScale(dataRadius + xScale.domain()[0])+5;
+    textOffset = -r * Math.cos( 3*Math.PI/4 );
+
     complexPoints.selectAll('text')
         .data(locationData)
         .enter().append('text')
@@ -894,8 +894,8 @@ function renderPoints() {
         .attr('y', function (d) {
             return yScale(d.anchor.y) + padding/newZscale;
         })
-        .attr('dx','10px')
-        .attr('dy','10px');
+        .attr('dx',textOffset)
+        .attr('dy',textOffset);
 
     renderView()
 
@@ -1302,7 +1302,7 @@ function updateNode(coords) {
     console.log("update radius:"+complexRadius)
 
     if (locationData.length==0) {
-       resetCheckboxes();
+        resetCheckboxes();
     };
 
     i = locationData.length;
@@ -1375,6 +1375,25 @@ function dragNode() {
     coords = d3.mouse(this)
     i = this.id.match(/\d+/g);
     str = '#complex_Circle_'+i;
+
+    dx = locationData[i].anchor.x - coords[0];
+    dy = locationData[i].anchor.y - coords[1];
+
+
+    d3.selectAll(".small_circle").filter( function () {
+            var re = new RegExp('complex_small_Point_'+i+'_\d*');
+            return re.test(this.id)
+        })
+        .attr('cx', function(d) {
+            return d.x - dx
+        })
+        .attr('cy', function(d) {
+            return d.y - dy
+        })
+
+
+
+
     d3.select(str)
         .attr('cx', coords[0])
         .attr('cy', coords[1]);
@@ -1398,8 +1417,17 @@ function dragEnd() {
             y = yScale.invert(coords[1] - padding);
         };
 
+
+        dx = locationData[i].anchor.x - x;
+        dy = locationData[i].anchor.y - y;
+
         locationData[i].anchor.x = x;
         locationData[i].anchor.y = y;
+
+        locationData[i].points.forEach( function (d) {
+            d.x = d.x - dx;
+            d.y = d.y - dy;
+        })
 
         renderPoints();
         updateComplex(document.getElementById('complexInput').value);

@@ -1,7 +1,11 @@
 
 td {
-    padding: 20px;
+    padding: 10px;
     border: 1px solid black;
+}
+
+h3 {
+    margin-top: 0px;
 }
 
 .individual_edge {

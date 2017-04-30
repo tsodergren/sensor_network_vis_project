@@ -18,8 +18,8 @@
 
 <table>
   <tr>
-    <td id="plotArea" width="600px" style="border: 1px solid black; background-color: white" rowspan="3"></td>
-    <td style="vertical-align: top;">
+    <td id="plotArea" width="600px" style="border: 1px solid black; background-color: white" rowspan="2"></td>
+    <td id="controlPanel" style="vertical-align: top;">
       <!-- The control panel for data loading and saving as well as data manipulation-->
       <h3>Control Panel</h3>
       <p>
@@ -44,47 +44,22 @@
         <button type="button" name="addButton" id="addButton" class="inputfile" onclick="addNode()">Add nodes</button>
         <label for="addButton">Add nodes</label>
       </p>
-      <p>Radius:<input type="range" id="complexInput" min="1" max="50" value="20" oninput="updateComplex(this.value)" />
+      <p>Coverage radius:<input type="range" id="complexInput" min="1" max="50" value="20" oninput="updateComplex(this.value)" />
         <input type="number" name="complexRadius" id="complexRadius" min="1" max="50" value="20"  onchange="updateComplex(this.value)" />
         <button type="button" onclick="setMax()">Max</button>
       <p>
         <button type="button" name="numSamplesButton" id="numSamplesButton" class="inputfile" onclick="changeNumberSampleSensors()">Number of Sensor Samples</button>
-        <label for="numSamplesButton">Sensor Samples </label>
-        # sensors:
+        <label for="numSamplesButton">Update </label>
+        # potential locations per sensor:
         <input type="number" name="numSampleSensors" id="numSampleSensors" value="8" min="1" max="1000">
       </p>
-      <p>Radius:<input type="range" id="complexRadiusInput" min="1" max="50" value="10" oninput="changeDataRadius()"/>
+      <p>Radius of uncertainty:<input type="range" id="complexRadiusInput" min="1" max="50" value="10" oninput="changeDataRadius()"/>
         <input type="number" name="complexDataRadius" id="complexDataRadius" min="1" max="50" value="10"  onchange="changeDataRadius()" />
     </td>
   </tr>
+
   <tr>
-    <td>
-      <h3>View</h3>
-      <p>
-        Complex type:
-        <input type="radio" name="complexType" value="cech" onchange="changeComplex()">&#268;ech
-        <input type="radio" name="complexType" value="rips" onchange="changeComplex()" checked>Rips-Vietoris
-      </p>
-      <p>
-        <input type="checkbox" id="nodeCheckbox" class="viewCheckbox" disabled="disabled" onclick="show(this.checked, '.small_circle')">
-        <label for="nodeCheckbox">Nodes</label>
-        <input type="checkbox" id="nodeRadiusCheckbox" class="viewCheckbox" onclick="show(this.checked, '.point')">
-        <label for="nodeCheckbox">Coverage Radius</label>
-      </p>
-      <p>
-        <input type="checkbox" id="edgeCheckbox" class="viewCheckbox" disabled="disabled" onclick="show(this.checked, '.edge')">
-        <label for="edgeCheckbox">Edges</label>
-        <input type="checkbox" id="allEdgeCheckbox" class="viewCheckbox"  onclick="show(this.checked, '.individual_edge')">
-        <label for="edgeCheckbox">All Edges</label>
-      </p>
-      <input type="checkbox" id="faceCheckbox" class="viewCheckbox" disabled="disabled" onclick="show(this.checked, '.face')">
-      <label for="faceCheckbox">Faces</label>
-      <input type="checkbox" id="coverCheckbox" class="viewCheckbox" disabled="disabled" onclick="showCoverage(this.checked)">
-      <label for="coverCheckbox">Coverage</label>
-    </td>
-  </tr>
-  <tr>
-    <td>
+    <td id="legend" rowspan="2">
       <h3>Legend</h3>
       <p>Probability of Face:</p>
       <svg id="face_legend" width="350px" height="60px"></svg>
@@ -92,6 +67,30 @@
       <svg id="edge_legend" width="350px" height="60px"></svg>
     </td>
   </tr>
+  <tr>
+  <td id="viewPanel">
+    <h3>View</h3>
+    <p>
+      Complex type:
+      <input type="radio" name="complexType" value="cech" onchange="changeComplex()">&#268;ech
+      <input type="radio" name="complexType" value="rips" onchange="changeComplex()" checked>Rips-Vietoris
+    </p>
+      <p>
+      <input type="checkbox" id="nodeRadiusCheckbox" class="viewCheckbox" onclick="show(this.checked, '.point')">
+      <label for="nodeCheckbox">Nodes</label>
+      <input type="checkbox" id="nodeCheckbox" class="viewCheckbox" disabled="disabled" onclick="show(this.checked, '.small_circle')">
+      <label for="nodeCheckbox">Potential nodes</label>
+      <input type="checkbox" id="coverCheckbox" class="viewCheckbox" disabled="disabled" onclick="showCoverage(this.checked)">
+      <label for="coverCheckbox">Node coverage</label>
+      <input type="checkbox" id="edgeCheckbox" class="viewCheckbox" disabled="disabled" onclick="show(this.checked, '.edge')">
+      <label for="edgeCheckbox">Edges</label>
+      <input type="checkbox" id="allEdgeCheckbox" class="viewCheckbox"  onclick="show(this.checked, '.individual_edge')">
+      <label for="edgeCheckbox">Potential edges</label>
+    <input type="checkbox" id="faceCheckbox" class="viewCheckbox" disabled="disabled" onclick="show(this.checked, '.face')">
+    <label for="faceCheckbox">Faces</label>
+    </p>
+  </td>
+</tr>
 </table>
 
 <!--this button is for testing components, keep hidden when not in use-->
