@@ -146,17 +146,53 @@ dataLoader('data/data.off')
 createLegends();
 
 function createLegends(){
-    createLengend(lightGreen, darkGreen, 1, 1);
-    createLengend("black", "black", 0.2, 1);
+    createFaceLengend();
+    createEdgeLegend();
 }
 
-function createLengend(beginColor, endColor, opacity1, opacity2){
+function createEdgeLegend(){
+    var edgeLegend = d3.select('#edge_legend');
+    edgeLegend.append("g")
+        .attr("class", "legendSizeLine")
+        .attr("transform", "translate(0, 20)");
+
+    var legendSizeLine = d3.legendSize()
+        .scale(edgeWidthScale)
+        .shape("line")
+        .orient("horizontal").labels(["0.01",
+            "0.25", "0.50", "0.75", "1.00"])
+        .labelWrap(30)
+        .shapeWidth(40)
+        .labelAlign("start")
+        .shapePadding(10);
+
+    edgeLegend.select(".legendSizeLine")
+        .call(legendSizeLine);
+
+    var lines = edgeLegend.selectAll("line");
+    lines.attr('stroke', "black")
+        .attr('opacity', function (d, i) {
+            if(i == 0){
+                return edgeOpacityScale(0.01);
+            }
+            if(i == 1){
+                return edgeOpacityScale(0.25);
+            }
+            if(i == 2){
+                return edgeOpacityScale(0.5);
+            }
+            if(i == 3){
+                return edgeOpacityScale(0.75);
+            }
+            if(i == 4){
+                return edgeOpacityScale(1);
+            }
+        });
+}
+
+function createFaceLengend(){
     var translationY = 0;
-    var legendName = "#face_legend"
-    if(opacity1 != 1){
-        legendName = "#edge_legend"
-    }
-    var legend = d3.select(legendName).append('g');
+    var legend = d3.select("#face_legend").append('g');
     legend.selectAll('*').remove();
     var gradient = legend.append('defs')
         .append('linearGradient')
@@ -169,19 +205,19 @@ function createLengend(beginColor, endColor, opacity1, opacity2){
 
     gradient.append('stop')
         .attr('offset', '0%')
-        .attr('stop-color', beginColor)
-        .attr('stop-opacity', opacity1);
+        .attr('stop-color', lightGreen)
+        .attr('stop-opacity', 1);
     gradient.append('stop')
         .attr('offset', '100%')
-        .attr('stop-color', endColor)
-        .attr('stop-opacity', opacity2);
+        .attr('stop-color', darkGreen)
+        .attr('stop-opacity', 1);
 
     legend.append('rect')
         .attr('x1', 0)
         .attr('y1', 0)
         .attr('width', '300px')
         .attr('height', '40px')
-        .attr("transform", "translate(10," + translationY + ")")
+        .attr("transform", "translate(10,0)")
         .style('fill', 'url(#gradient)');
 
     var legendScale = d3.scaleLinear()
