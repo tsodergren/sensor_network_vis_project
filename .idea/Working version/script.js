@@ -146,53 +146,17 @@ dataLoader('data/data.off')
 createLegends();
 
 function createLegends(){
-    createFaceLengend();
-    createEdgeLegend();
+    createLengend(lightGreen, darkGreen, 1, 1);
+    createLengend("black", "black", 0.2, 1);
 }
 
-function createEdgeLegend(){
-    var edgeLegend = d3.select('#edge_legend');
-    edgeLegend.append("g")
-        .attr("class", "legendSizeLine")
-        .attr("transform", "translate(0, 20)");
-
-    var legendSizeLine = d3.legendSize()
-        .scale(edgeWidthScale)
-        .shape("line")
-        .orient("horizontal").labels(["0.01",
-            "0.25", "0.50", "0.75", "1.00"])
-        .labelWrap(30)
-        .shapeWidth(40)
-        .labelAlign("start")
-        .shapePadding(10);
-
-    edgeLegend.select(".legendSizeLine")
-        .call(legendSizeLine);
-
-    var lines = edgeLegend.selectAll("line");
-    lines.attr('stroke', "black")
-        .attr('opacity', function (d, i) {
-            if(i == 0){
-                return edgeOpacityScale(0.01);
-            }
-            if(i == 1){
-                return edgeOpacityScale(0.25);
-            }
-            if(i == 2){
-                return edgeOpacityScale(0.5);
-            }
-            if(i == 3){
-                return edgeOpacityScale(0.75);
-            }
-            if(i == 4){
-                return edgeOpacityScale(1);
-            }
-        });
-}
-
-function createFaceLengend(){
+function createLengend(beginColor, endColor, opacity1, opacity2){
     var translationY = 0;
-    var legend = d3.select("#face_legend").append('g');
+    var legendName = "#face_legend"
+    if(opacity1 != 1){
+        legendName = "#edge_legend"
+    }
+    var legend = d3.select(legendName).append('g');
     legend.selectAll('*').remove();
     var gradient = legend.append('defs')
         .append('linearGradient')
@@ -205,19 +169,19 @@ function createFaceLengend(){
 
     gradient.append('stop')
         .attr('offset', '0%')
-        .attr('stop-color', lightGreen)
-        .attr('stop-opacity', 1);
+        .attr('stop-color', beginColor)
+        .attr('stop-opacity', opacity1);
     gradient.append('stop')
         .attr('offset', '100%')
-        .attr('stop-color', darkGreen)
-        .attr('stop-opacity', 1);
+        .attr('stop-color', endColor)
+        .attr('stop-opacity', opacity2);
 
     legend.append('rect')
         .attr('x1', 0)
         .attr('y1', 0)
         .attr('width', '300px')
         .attr('height', '40px')
-        .attr("transform", "translate(10,0)")
+        .attr("transform", "translate(10," + translationY + ")")
         .style('fill', 'url(#gradient)');
 
     var legendScale = d3.scaleLinear()
@@ -323,8 +287,7 @@ function updateComplex(newValue) {
     d3.select('#complexInput').node().value = complexRadius;
     xMin = xScale.domain()[0];
     screenRadius = xScale(complexRadius+xMin);
-    d3.select('#complexCircles').selectAll('circle').attr('r',screenRadius);
-    d3.select('#complexDataCircle').selectAll('circle').attr('r',screenRadius + dataRadius);
+    d3.select('#complexCircles').selectAll('circle').attr('r',screenRadius)
     constructRips();
     changeComplex();
 }
@@ -332,51 +295,120 @@ function updateComplex(newValue) {
 //graphical highlighting
 function highlightPoint() {
 
-    d3.select('#complex_Point_'+arguments[1])
-        .transition()
-        .style('fill','#c33');
+    if ( arguments.length == 3 ) {
+        d3.select('#complex_Point_' + arguments[1])
+            .transition()
+            .style('fill', '#c33');
 
-    //highlight the corresponding coverage circle
-    d3.select('#complex_Circle_'+arguments[1])
-        .transition()
-        .style('fill', '#c33')
-        .style('fill-opacity', 0.25);
+        //highlight the corresponding coverage circle
+        d3.select('#complex_Circle_' + arguments[1])
+            .transition()
+            .style('fill', '#c33')
+            .style('fill-opacity', 0.25);
+
+        // highlight the star of the vertex
+        edges = complexType == 'Cech' ? cechEdges : ripsEdges;
+        faces = complexType == 'Cech' ? cechFaces : ripsFaces;
+
+        arguments[0].star.edges.forEach(function (d) {
+            highlightEdge('#complex_Edge_' + edges[d].Pt1 + '_' + edges[d].Pt2);
+        })
+
+        arguments[0].star.faces.forEach(function (d) {
+            highlightFace(d,'star');
+        })
+
+        arguments[0].link.points.forEach(function (d) {
+            highlightPoint(d,'link');
+        })
+
+        arguments[0].link.edges.forEach(function (d) {
+            highlightEdge('#complex_Edge_'+d[0]+'_'+d[1], 'link')
+        })
+
+    } else if (arguments.length == 2 && arguments[1]=='star' ) {
+        d3.select('#complex_Point_' + arguments[0])
+            .transition()
+            .style('fill', '#c33');
+    } else {
+        d3.select('#complex_Point_' + arguments[0])
+            .transition()
+            .style('fill', '#00c');
+    }
 
 }
 
 function resetPoint() {
 
-    //return point and coverage circle to default view
-    d3.select('#complex_Point_'+arguments[1])
-        .transition()
-        .style('fill','mediumpurple');
+    if ( arguments.length == 3 ) { //return point and coverage circle to default view
+        d3.select('#complex_Point_' + arguments[1])
+            .transition()
+            .style('fill', '#9370db');
 
-    if (document.getElementById('coverCheckbox').checked) {
-        fillColor = 'mediumpurple';
-        fillOpacity = 0.2;
+        if (document.getElementById('coverCheckbox').checked) {
+            fillColor = '#9370db';
+            fillOpacity = 0.2;
+        } else {
+            fillColor = '#fff';
+            fillOpacity = 0;
+        }
+
+        d3.select('#complex_Circle_' + arguments[1])
+            .transition()
+            .style('fill', fillColor)
+            .style('fill-opacity', fillOpacity);
+
+        arguments[0].star.edges.forEach(function (d) {
+            resetEdge('#complex_Edge_' + edges[d].Pt1 + '_' + edges[d].Pt2);
+        })
+
+        arguments[0].star.faces.forEach(function (d) {
+            resetFace(d);
+        })
+
+        arguments[0].link.points.forEach(function (d) {
+            resetPoint(d);
+        })
+
+        arguments[0].link.edges.forEach(function (d) {
+            resetEdge('#complex_Edge_'+d[0]+'_'+d[1])
+        })
+
     } else {
-        fillColor = '#fff';
-        fillOpacity = 0;
-    };
+        d3.select('#complex_Point_' + arguments[0])
+            .transition()
+            .style('fill', '#9370db');
 
-    d3.select('#complex_Circle_'+arguments[1])
-        .transition()
-        .style('fill', fillColor)
-        .style('fill-opacity', fillOpacity);
+    }
 }
 
 //highlight edge and corresponding points
 function highlightEdge() {
 
-    if (arguments.length>1) {
-        edge = d3.select(this);
-        highlightPoint([], ripsEdges[arguments[1]].Pt1);
-        highlightPoint([], ripsEdges[arguments[1]].Pt2);
+    var data;
+
+    if (arguments.length == 3) {
+        data = arguments[0]
+        d3.select(this)
+            .transition()
+            .style('stroke','#c33');
+        highlightPoint(data.Pt1, 'star');
+        highlightPoint(data.Pt2, 'star');
+        data.star.faces.forEach(function (d) {
+            highlightFace(d)
+        })
+        data.link.faces.forEach(function (d) {
+            highlightFace(d, 'link')
+        })
+    } else if (arguments.length == 2) {
+        d3.select(arguments[0])
+            .transition()
+            .style('stroke','#00c');
     } else {
-        edge = d3.select(arguments[0]);
+        d3.select(arguments[0])
+            .transition()
+            .style('stroke','#c33');
     }
-    edge.transition()
-        .style('stroke','#c33');
 
 
 }
@@ -384,10 +416,19 @@ function highlightEdge() {
 //restore default view
 function resetEdge() {
 
-    if (arguments.length>1) {
+    var data;
+
+    if (arguments.length == 3) {
         edge = d3.select(this)
-        resetPoint([], ripsEdges[arguments[1]].Pt1);
-        resetPoint([], ripsEdges[arguments[1]].Pt2);
+        data = arguments[0]
+        resetPoint(data.Pt1);
+        resetPoint(data.Pt2);
+        data.star.faces.forEach(function (d) {
+            resetFace(d)
+        })
+        data.link.faces.forEach(function (d) {
+            resetFace(d)
+        })
         edge.transition()
             .style('stroke', "black")
             .style('opacity', edgeOpacityScale(arguments[0].Pedge));
@@ -403,6 +444,8 @@ function resetEdge() {
                 return;
             }
         }
+
+
     }
 
 }
@@ -410,35 +453,77 @@ function resetEdge() {
 //highlight faces
 function highlightFace() {
 
-    d3.select(this).transition()
-        .style('fill','#c33');
 
-//highlight corresponding edges
-    highlightEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt2);
-    highlightEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt3);
-    highlightEdge('#complex_Edge_'+arguments[0].Pt2+'_'+arguments[0].Pt3);
+    if ( arguments.length == 3) {
+        d3.select(this)
+            .transition()
+            .style('fill','#c33');
 
-    //highlight corresponding points
-    highlightPoint([], arguments[0].Pt1);
-    highlightPoint([], arguments[0].Pt2);
-    highlightPoint([], arguments[0].Pt3);
+        //highlight corresponding edges
+        highlightEdge('#complex_Edge_' + arguments[0].Pt1 + '_' + arguments[0].Pt2);
+        highlightEdge('#complex_Edge_' + arguments[0].Pt1 + '_' + arguments[0].Pt3);
+        highlightEdge('#complex_Edge_' + arguments[0].Pt2 + '_' + arguments[0].Pt3);
+
+        //highlight corresponding points
+        highlightPoint([], arguments[0].Pt1);
+        highlightPoint([], arguments[0].Pt2);
+        highlightPoint([], arguments[0].Pt3);
+    } else {
+        faces = complexType == 'Cech' ? cechFaces : ripsFaces;
+
+
+        d3.selection.prototype.moveToFront = function() {
+            return this.each(function(){
+                this.parentNode.appendChild(this);
+            });
+        };
+
+        faceColor = arguments[1] == 'link' ? '#00c' : '#fcc'
+
+        d3.select('#complex_Face_'+faces[arguments[0]].Pt1+'_'+faces[arguments[0]].Pt2+'_'+faces[arguments[0]].Pt3)
+            .transition()
+            .style('fill', faceColor)
+
+        d3.select('#complex_Face_'+faces[arguments[0]].Pt1+'_'+faces[arguments[0]].Pt2+'_'+faces[arguments[0]].Pt3)
+            .moveToFront();
+
+    }
+
 
 }
+
+d3.selection.prototype.moveToFront = function() {
+    return this.each(function(){
+        this.parentNode.appendChild(this);
+    });
+};
 
 //reset to default view
 function resetFace() {
 
-    d3.select(this)
-        .transition()
-        .style('fill', faceColorScale(arguments[0].Pface));
+    if ( arguments.length > 1) {
+        d3.select(this)
+            .transition()
+            .style('fill', faceColorScale(arguments[0].Pface));
 
-    resetEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt2);
-    resetEdge('#complex_Edge_'+arguments[0].Pt1+'_'+arguments[0].Pt3);
-    resetEdge('#complex_Edge_'+arguments[0].Pt2+'_'+arguments[0].Pt3);
+        resetEdge('#complex_Edge_' + arguments[0].Pt1 + '_' + arguments[0].Pt2);
+        resetEdge('#complex_Edge_' + arguments[0].Pt1 + '_' + arguments[0].Pt3);
+        resetEdge('#complex_Edge_' + arguments[0].Pt2 + '_' + arguments[0].Pt3);
 
-    resetPoint([], arguments[0].Pt1);
-    resetPoint([], arguments[0].Pt2);
-    resetPoint([], arguments[0].Pt3);
+        resetPoint([], arguments[0].Pt1);
+        resetPoint([], arguments[0].Pt2);
+        resetPoint([], arguments[0].Pt3);
+    } else {
+        faces = complexType == 'Cech' ? cechFaces : ripsFaces;
+        d3.select('#complex_Face_'+faces[arguments[0]].Pt1+'_'+faces[arguments[0]].Pt2+'_'+faces[arguments[0]].Pt3)
+            .transition()
+            .style('fill', faceColorScale(faces[arguments[0]].Pface));
+
+        faces.forEach( function (d) {
+            d3.select('#complex_Face_'+d.Pt1+'_'+d.Pt2+'_'+d.Pt3)
+                .moveToFront()
+        })
+    }
 
 }
 
@@ -520,7 +605,8 @@ function constructEdges() {
     var count, p, pFlag;
 
     locationData.forEach( function (d) {
-        d.star = [];
+        d.star = {edges: [], faces: []};
+        d.link = {points: [], edges: []}
     })
 
 
@@ -534,6 +620,10 @@ function constructEdges() {
             d12 = sqEuclidDist([x1, y1], [x2, y2]);
             if (d12 <= sqDiameterMin) {
                 edgeProb[i].push({p: 1, edgeInd: tempEdges.length})
+                locationData[i].star.edges.push(tempEdges.length)
+                locationData[i].link.points.push([j])
+                locationData[j].star.edges.push(tempEdges.length)
+                locationData[j].link.points.push([i])
                 tempEdges.push({Pt1: i, Pt2: j, Pedge: 1})
             } else if (d12 > sqDiameterMax){
                 edgeProb[i].push({p: 0})
@@ -560,6 +650,10 @@ function constructEdges() {
                 p = count/(numPoints*numPoints);
                 edgeProb[i].push({p: p, pFlag: pFlag, edgeInd: tempEdges.length})
                 if (p>0) {
+                    locationData[i].star.edges.push(tempEdges.length)
+                    locationData[i].link.points.push([j])
+                    locationData[j].star.edges.push(tempEdges.length)
+                    locationData[j].link.points.push([i])
                     tempEdges.push({Pt1: i, Pt2: j, Pedge: p, iEdges: iEdges})
                 }
             }
@@ -657,32 +751,6 @@ function constructRips() {
 
 }
 
-function comparePoints(pts) {
-    var sqDiameter = 4 * Math.pow(complexRadius, 2);
-    var count = 0;
-    var x1, y1, x2, y2, x3, y3;
-    for (i=0; i<numPoints; i++) {
-        x1 = locationData[pts[0]].points[i].x;
-        y1 = locationData[pts[0]].points[i].y;
-        for (j=0; j<numPoints; j++) {
-            x2 = locationData[pts[1]].points[j].x;
-            y2 = locationData[pts[1]].points[j].y;
-            d12 = sqEuclidDist([x1, y1], [x2, y2]);
-            if (d12 <= sqDiameter) {
-                for (k=0; k<numPoints; k++) {
-                    x3 = locationData[pts[2]].points[k].x;
-                    y3 = locationData[pts[2]].points[k].y;
-                    d23 = sqEuclidDist([x2, y2], [x3, y3]);
-                    if (d23 <= sqDiameter) {
-                        count++
-                    }
-                }
-            }
-        }
-    }
-    return count/Math.pow(numPoints,3)
-}
-
 
 function renderComplex(edges,faces) {
 
@@ -696,8 +764,35 @@ function renderComplex(edges,faces) {
             faces = ripsFaces;
         }
     };
-    ripsFaces.sort( function (a, b) { return a.Pface - b.Pface } )
-    cechFaces.sort( function (a, b) { return a.Pface - b.Pface } )
+    faces.sort( function (a, b) { return a.Pface - b.Pface } )
+    faces.forEach( function (d, i) {
+        locationData[d.Pt1].link.edges.push([d.Pt2, d.Pt3])
+        locationData[d.Pt1].star.faces.push(i)
+        locationData[d.Pt2].link.edges.push([d.Pt1, d.Pt3])
+        locationData[d.Pt2].star.faces.push(i)
+        locationData[d.Pt3].link.edges.push([d.Pt1, d.Pt2])
+        locationData[d.Pt3].star.faces.push(i)
+    })
+
+    edges.forEach( function (d,i) {
+        d.star = {points: [], faces: []};
+        d.link = {points: [], edges: [], faces: []}
+        locationData[d.Pt1].star.faces.forEach( function (e) {
+            var testArray = [faces[e].Pt1, faces[e].Pt2, faces[e].Pt3];
+            if (testArray.indexOf(d.Pt2) != -1) {
+                d.star.faces.push(e)
+            } else {
+                d.link.faces.push(e)
+            }
+        })
+        locationData[d.Pt2].star.faces.forEach( function (e) {
+            if (d.star.faces.indexOf(e) != -1 && d.link.faces.indexOf(e) != -1) {
+                d.link.faces.push(e)
+                console.log('here')
+            }
+        })
+    })
+
 
     //remove existing canvas elements
     complexCanvas.selectAll('.face').remove();
@@ -807,27 +902,6 @@ function renderAllEdges(){
         .on('mouseout', resetEdge);
 }
 
-function renderDataRadius(){
-    var complexAndDataCircle = complexCanvas.select('#complexDataCircle');
-    complexAndDataCircle.selectAll('circle').remove();
-    complexAndDataCircle.selectAll('circle').data(locationData)
-        .enter()
-        .append('circle')
-        .attr('class', 'circle')
-        .attr('cx', function (d) {
-            return xScale(d.anchor.x) + padding/newZscale;
-        })
-        .attr('cy', function (d) {
-            return yScale(d.anchor.y) + padding/newZscale;
-        })
-        .attr('id', function (d, i) {
-            return 'data_Circle_' + i.toString();
-        })
-        .attr('fill', 'mediumpurple')
-        .attr('fill-opacity', 0.1)
-        .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
-}
-
 function renderPoints() {
 
     //render each point and coverage circle. The id simply corresponds to its index within locationData
@@ -918,7 +992,24 @@ function renderPoints() {
         })
         .attr('r', xScale(complexRadius + xScale.domain()[0]));
 
-    renderDataRadius();
+
+
+    complexAndDataCircle.selectAll('circle').data(locationData)
+        .enter()
+        .append('circle')
+        .attr('class', 'circle')
+        .attr('cx', function (d) {
+            return xScale(d.anchor.x) + padding/newZscale;
+        })
+        .attr('cy', function (d) {
+            return yScale(d.anchor.y) + padding/newZscale;
+        })
+        .attr('id', function (d, i) {
+            return 'data_Circle_' + i.toString();
+        })
+        .attr('fill', '#9370db')
+        .attr('fill-opacity', 0.1)
+        .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
 
     r = xScale(dataRadius + xScale.domain()[0])+5;
     textOffset = -r * Math.cos( 3*Math.PI/4 );
@@ -1156,9 +1247,9 @@ function dataLoader(file) {
         complexRadius = +str[1];
 
         str = txt.replace(/#[^\n]*\n/g, []);
-        str = str.replace(/OFF\r?\n/i, []);
+        str = str.replace(/OFF\r\n/i, []);
 
-        re = /([^\r?\n]*)\r?\n/;
+        re = /([^\r\n]*)\r\n/;
         line1 = str.match(re);
         line1 = line1[1];
         line1 = line1.match(/(\d*)\w/g);
@@ -1262,16 +1353,23 @@ function changeNumberSampleSensors(){
     addSampleSensors();
 }
 
-function changeDataRadius(val){
-    dataRadius = parseInt(val);
+function changeDataRadius(){
+    var dataRadiusNum = parseInt(document.getElementById('complexDataRadius').value);
+    var dataRadiusSlide = parseInt(document.getElementById('complexRadiusInput').value);
+    if(dataRadius != dataRadiusNum) {
+        dataRadius = +dataRadiusNum;
+    }
+    else if(dataRadius != dataRadiusSlide){
+        document.getElementById('complexDataRadius').value = dataRadiusNum;
+        dataRadius = +dataRadiusSlide;
+    }
     d3.select('#complexRadiusInput').node().value =  dataRadius;
     d3.select('#complexDataRadius').node().value = dataRadius;
     if(dataRadius < originalDataRadius) {
         perturbData();
         originalDataRadius = dataRadius;
     }
-    d3.select('#complexDataCircle').selectAll('circle')
-        .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
+    addSampleSensors();
 }
 
 function addSampleSensors(){
@@ -1377,7 +1475,7 @@ function myMap() {
 
 function showCoverage(d) {
     if (d) {
-        fillColor = 'mediumpurple';
+        fillColor = '#9370db';
         fillOpacity = '0.1';
         d3.select('#complexCircles').selectAll('circle')
             .transition()
@@ -1415,9 +1513,9 @@ function dragNode() {
 
 
     d3.selectAll(".small_circle").filter( function () {
-            var re = new RegExp('complex_small_Point_'+i+'_\d*');
-            return re.test(this.id)
-        })
+        var re = new RegExp('complex_small_Point_'+i+'_\d*');
+        return re.test(this.id)
+    })
         .attr('cx', function(d) {
             return d.x - dx
         })
