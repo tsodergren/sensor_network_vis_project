@@ -1413,7 +1413,7 @@ function changeDataRadius(val){
     if (dataRadius < originalDataRadius) {
         perturbData();
         originalDataRadius = dataRadius;
-        renderPoints();
+        addSampleSensors();
     } else {
         d3.select('#complexDataCircle').selectAll('circle')
             .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
