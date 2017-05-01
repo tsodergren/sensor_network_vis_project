@@ -145,18 +145,53 @@ dataLoader('data/data.off')
 
 createLegends();
 
-function createLegends(){
-    createLengend(lightGreen, darkGreen, 1, 1);
-    createLengend("black", "black", 0.2, 1);
+function createLegends() {
+    createFaceLengend();
+    createEdgeLegend();
 }
 
-function createLengend(beginColor, endColor, opacity1, opacity2){
-    var translationY = 0;
-    var legendName = "#face_legend"
-    if(opacity1 != 1){
-        legendName = "#edge_legend"
-    }
-    var legend = d3.select(legendName).append('g');
+function createEdgeLegend() {
+    var edgeLegend = d3.select('#edge_legend');
+    edgeLegend.append("g")
+        .attr("class", "legendSizeLine")
+        .attr("transform", "translate(0, 20)");
+
+    var legendSizeLine = d3.legendSize()
+        .scale(edgeWidthScale)
+        .shape("line")
+        .orient("horizontal").labels(["0.01",
+            "0.25", "0.50", "0.75", "1.00"])
+        .labelWrap(30)
+        .shapeWidth(40)
+        .labelAlign("start")
+        .shapePadding(10);
+
+    edgeLegend.select(".legendSizeLine")
+        .call(legendSizeLine);
+
+    var lines = edgeLegend.selectAll("line");
+    lines.attr('stroke', "black")
+        .attr('opacity', function (d, i) {
+            if (i == 0) {
+                return edgeOpacityScale(0.01);
+            }
+            if (i == 1) {
+                return edgeOpacityScale(0.25);
+            }
+            if (i == 2) {
+                return edgeOpacityScale(0.5);
+            }
+            if (i == 3) {
+                return edgeOpacityScale(0.75);
+            }
+            if (i == 4) {
+                return edgeOpacityScale(1);
+            }
+        });
+}
+
+function createFaceLengend() {
+    var legend = d3.select("#face_legend").append('g');
     legend.selectAll('*').remove();
     var gradient = legend.append('defs')
         .append('linearGradient')
@@ -169,19 +204,19 @@ function createLengend(beginColor, endColor, opacity1, opacity2){
 
     gradient.append('stop')
         .attr('offset', '0%')
-        .attr('stop-color', beginColor)
-        .attr('stop-opacity', opacity1);
+        .attr('stop-color', lightGreen)
+        .attr('stop-opacity', 1);
     gradient.append('stop')
         .attr('offset', '100%')
-        .attr('stop-color', endColor)
-        .attr('stop-opacity', opacity2);
+        .attr('stop-color', darkGreen)
+        .attr('stop-opacity', 1);
 
     legend.append('rect')
         .attr('x1', 0)
         .attr('y1', 0)
         .attr('width', '300px')
         .attr('height', '40px')
-        .attr("transform", "translate(10," + translationY + ")")
+        .attr("transform", "translate(10,0)")
         .style('fill', 'url(#gradient)');
 
     var legendScale = d3.scaleLinear()
@@ -194,7 +229,7 @@ function createLengend(beginColor, endColor, opacity1, opacity2){
 
     legend.append("g")
         .attr("class", "legend axis")
-        .attr("transform", "translate(10, " + (translationY + 40) + ")")
+        .attr("transform", "translate(10, 40)")
         .call(legendAxis);
 }
 
@@ -286,8 +321,9 @@ function updateComplex(newValue) {
     d3.select('#complexRadius').node().value =  complexRadius;
     d3.select('#complexInput').node().value = complexRadius;
     xMin = xScale.domain()[0];
-    screenRadius = xScale(complexRadius+xMin);
-    d3.select('#complexCircles').selectAll('circle').attr('r',screenRadius)
+    screenRadius = xScale(complexRadius + xMin);
+    d3.select('#complexCircles').selectAll('circle').attr('r',screenRadius);
+    d3.select('#complexDataCircle').selectAll('circle').attr('r',screenRadius + dataRadius);
     constructRips();
     changeComplex();
 }
@@ -1252,9 +1288,9 @@ function dataLoader(file) {
         complexRadius = +str[1];
 
         str = txt.replace(/#[^\n]*\n/g, []);
-        str = str.replace(/OFF\r\n/i, []);
+        str = str.replace(/OFF\r?\n/i, []);
 
-        re = /([^\r\n]*)\r\n/;
+        re = /([^\r?\n]*)\r?\n/;
         line1 = str.match(re);
         line1 = line1[1];
         line1 = line1.match(/(\d*)\w/g);
@@ -1358,23 +1394,21 @@ function changeNumberSampleSensors(){
     addSampleSensors();
 }
 
-function changeDataRadius(){
-    var dataRadiusNum = parseInt(document.getElementById('complexDataRadius').value);
-    var dataRadiusSlide = parseInt(document.getElementById('complexRadiusInput').value);
-    if(dataRadius != dataRadiusNum) {
-        dataRadius = +dataRadiusNum;
-    }
-    else if(dataRadius != dataRadiusSlide){
-        document.getElementById('complexDataRadius').value = dataRadiusNum;
-        dataRadius = +dataRadiusSlide;
-    }
+function changeDataRadius(val){
+    dataRadius = parseInt(val);
     d3.select('#complexRadiusInput').node().value =  dataRadius;
     d3.select('#complexDataRadius').node().value = dataRadius;
     if(dataRadius < originalDataRadius) {
         perturbData();
         originalDataRadius = dataRadius;
+        addSampleSensors();
+    } else {
+        d3.select('#complexDataCircle').selectAll('circle')
+            .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
+        d3.select('#complexPoints').selectAll('.point')
+            .attr('r', xScale(dataRadius + xScale.domain()[0]));
+
     }
-    addSampleSensors();
 }
 
 function addSampleSensors(){
