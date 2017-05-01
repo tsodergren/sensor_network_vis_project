@@ -430,12 +430,6 @@ function highlightEdge() {
             .style('stroke','#c33');
         highlightPoint(data.Pt1, 'star');
         highlightPoint(data.Pt2, 'star');
-        data.star.faces.forEach(function (d) {
-            highlightFace(d)
-        })
-        data.link.faces.forEach(function (d) {
-            highlightFace(d, 'link')
-        })
     } else if (arguments.length == 2) {
         d3.select(arguments[0])
             .transition()
@@ -459,12 +453,6 @@ function resetEdge() {
         data = arguments[0]
         resetPoint(data.Pt1);
         resetPoint(data.Pt2);
-        data.star.faces.forEach(function (d) {
-            resetFace(d)
-        })
-        data.link.faces.forEach(function (d) {
-            resetFace(d)
-        })
         edge.transition()
             .style('stroke', "black")
             .style('opacity', edgeOpacityScale(arguments[0].Pedge));
@@ -800,6 +788,7 @@ function renderComplex(edges,faces) {
             faces = ripsFaces;
         }
     };
+
     faces.sort( function (a, b) { return a.Pface - b.Pface } )
     faces.forEach( function (d, i) {
         locationData[d.Pt1].link.edges.push([d.Pt2, d.Pt3])
@@ -810,29 +799,25 @@ function renderComplex(edges,faces) {
         locationData[d.Pt3].star.faces.push(i)
     })
 
-    edges.forEach( function (d,i) {
-        d.star = {points: [], faces: []};
-        d.link = {points: [], edges: [], faces: []}
-        t = locationData[d.Pt1].star.faces.forEach( function (e) {
-            var testArray = [faces[e].Pt1, faces[e].Pt2, faces[e].Pt3];
-            if (testArray.indexOf(d.Pt2) != -1) {
-                d.star.faces.push(e)
-            } else {
-                d.link.faces.push(e)
-            }
-            return
-        })
-
-        locationData[d.Pt2].star.faces.forEach( function (e) {
-            console.log(e)
-            console.log(d.star.faces)
-            console.log(d.link.faces)
-            if (d.star.faces.indexOf(e) == -1 && d.link.faces.indexOf(e) == -1) {
-                d.link.faces.push(e)
-                console.log('here')
-            }
-        })
-    })
+    // edges.forEach( function (d,i) {
+    //     d.star = {points: [], faces: []};
+    //     d.link = {points: [], edges: [], faces: []}
+    //     t = locationData[d.Pt1].star.faces.forEach( function (e) {
+    //         var testArray = [faces[e].Pt1, faces[e].Pt2, faces[e].Pt3];
+    //         if (testArray.indexOf(d.Pt2) != -1) {
+    //             d.star.faces.push(e)
+    //         } else {
+    //             d.link.faces.push(e)
+    //         }
+    //         return
+    //     })
+    //
+    //     locationData[d.Pt2].star.faces.forEach( function (e) {
+    //         if (d.star.faces.indexOf(e) == -1 && d.link.faces.indexOf(e) == -1) {
+    //             d.link.faces.push(e)
+    //         }
+    //     })
+    // })
 
 
     //remove existing canvas elements
@@ -1445,6 +1430,7 @@ function changeComplex() {
 
     d = document.getElementsByName('complexType');
     if (d[0].checked) {
+        console.log('here')
         complexType = 'Cech'
         renderComplex(cechEdges, cechFaces);
     } else {
