@@ -1412,6 +1412,7 @@ function perturbData() {
 
     var r, theta, xj, yj, tmp;
 
+    if (arguments.length == 0) {
     locationData.forEach( function (d) {
         tmp = [];
         for (j=0; j<numPoints; j++) {
@@ -1422,7 +1423,18 @@ function perturbData() {
             tmp.push( { x: xj, y: yj} )
         }
         d.points = tmp;
-    })
+    })} else {
+        data = arguments[0]
+        tmp = [];
+        for (j=0; j<numPoints; j++){
+            r = Math.random() * dataRadius;
+            theta = Math.random() * 2 * Math.PI;
+            xj = data.anchor.x + Math.floor(r * Math.cos(theta));
+            yj = data.anchor.y + Math.floor(r * Math.sin(theta));
+            tmp.push( { x: xj, y: yj} )
+        }
+        data.points = tmp;
+    }
 
 }
 
@@ -1472,7 +1484,9 @@ function updateNode(coords) {
         y = yScale.invert(coords[1] - padding);
     };
 
-    var newPoint = {LocationID: i, xf: x, yf: y};
+
+    var newPoint = {anchor: {x: x, y: y}};
+    newpoint = perturbData(newPoint)
     locationData.push(newPoint);
     numSamples++;
     renderPoints();
