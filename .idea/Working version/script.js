@@ -73,6 +73,7 @@ var gY = complexSVG.append('g')
 var lightGreen = "#99ff99";
 var darkGreen = "#006600";
 var faceColorScale = d3.scaleLinear().range([lightGreen, darkGreen]).domain([0.01, 1]);
+var faceOpacityScale = d3.scaleLinear().range([0.2, 1]).domain([0.1, 0.75]);
 var edgeOpacityScale = d3.scaleLinear().range([0.2, 1]).domain([0.01, 1]);
 var edgeWidthScale = d3.scaleLinear().range([2, 6]).domain([0.01, 1]);
 
@@ -528,6 +529,7 @@ function resetFace() {
     if ( arguments.length > 1) {
         d3.select(this)
             .transition()
+            .attr('opacity', faceOpacityScale(arguments[0].Pface))
             .style('fill', faceColorScale(arguments[0].Pface));
 
         resetEdge('#complex_Edge_' + arguments[0].Pt1 + '_' + arguments[0].Pt2);
@@ -541,6 +543,7 @@ function resetFace() {
         faces = complexType == 'Cech' ? cechFaces : ripsFaces;
         d3.select('#complex_Face_'+faces[arguments[0]].Pt1+'_'+faces[arguments[0]].Pt2+'_'+faces[arguments[0]].Pt3)
             .transition()
+            .attr('opacity', faceOpacityScale(faces[arguments[0]].Pface))
             .style('fill', faceColorScale(faces[arguments[0]].Pface));
 
         faces.forEach( function (d) {
@@ -851,7 +854,10 @@ function renderComplex(edges,faces) {
         .attr('id', function (d, i) {
             return 'complex_Face_'+d.Pt1+'_'+d.Pt2+'_'+d.Pt3;
         })
-        .attr('fill', function(d){
+        .attr('opacity', function(d){
+            return faceOpacityScale(d.Pface);
+        })
+        .attr('fill', function (d) {
             return faceColorScale(d.Pface);
         })
         .on('mouseover',highlightFace)
