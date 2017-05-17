@@ -73,7 +73,7 @@ var gY = complexSVG.append('g')
 var lightGreen = "#99ff99";
 var darkGreen = "#006600";
 var faceColorScale = d3.scaleLinear().range([lightGreen, darkGreen]).domain([0.01, 1]);
-var faceOpacityScale = d3.scaleLinear().range([0.2, 1]).domain([0.1, 0.75]);
+var faceOpacityScale = d3.scaleLinear().range([0.3, 0.75]).domain([0.01, 1]);
 var edgeOpacityScale = d3.scaleLinear().range([0.2, 1]).domain([0.01, 1]);
 var edgeWidthScale = d3.scaleLinear().range([2, 6]).domain([0.01, 1]);
 
@@ -508,6 +508,7 @@ function highlightFace() {
         d3.select('#complex_Face_'+faces[arguments[0]].Pt1+'_'+faces[arguments[0]].Pt2+'_'+faces[arguments[0]].Pt3)
             .transition()
             .style('fill', faceColor)
+            .attr('opacity', 1);
 
         d3.select('#complex_Face_'+faces[arguments[0]].Pt1+'_'+faces[arguments[0]].Pt2+'_'+faces[arguments[0]].Pt3)
             .moveToFront();
