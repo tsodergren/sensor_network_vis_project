@@ -79,19 +79,15 @@ var yellow = "#ff0";
 var white = "#fff";
 var gray = "#595959";
 var tan = "#ffffbf";
-var rainbowStart = "hsl(0,80%,50%)";
-var rainbowEnd = "hsl(360,80%,50%)";
+var start = lightGreen;
+var end = darkGreen;
 
 var faceGreenScale = d3.scaleLinear().range([lightGreen, darkGreen]).domain([0.01, 1]);
 var faceRedScale = d3.scaleLinear().range([lightRed, red]).domain([0.01, 1]);
 var faceBlueYellowScale = d3.scaleLinear().range([blue, yellow]).domain([0.01, 1]);
 var faceRedBlueScale = d3.scaleLinear().range([red, tan, blue])
-    .domain([0.01, 0.5, 1])
-    .interpolate(d3.interpolateHcl);
+    .domain([0.01, 0.5, 1]);
 var faceGrayScale = d3.scaleLinear().range([white, gray]).domain([0.01, 1]);
-var faceRainbowScale = d3.scaleLinear().range([rainbowStart, rainbowEnd])
-    .domain([0.01, 1])
-    .interpolate(d3.interpolateString);
 
 var faceColorScale = faceGreenScale;
 var faceOpacityScale = d3.scaleLinear().range([0.3, 0.75]).domain([0.01, 1]);
@@ -207,13 +203,20 @@ function createFaceLengend() {
         .attr('y2', '0%')
         .attr('spreadMethod', 'pad');
 
+
     gradient.append('stop')
         .attr('offset', '0%')
-        .attr('stop-color', lightGreen)
+        .attr('stop-color', start)
         .attr('stop-opacity', 1);
+    if(faceColorScale == faceRedBlueScale){
+        gradient.append('stop')
+            .attr('offset', '50%')
+            .attr('stop-color', tan)
+            .attr('stop-opacity', 1);
+    }
     gradient.append('stop')
         .attr('offset', '100%')
-        .attr('stop-color', darkGreen)
+        .attr('stop-color', end)
         .attr('stop-opacity', 1);
 
     legend.append('rect')
@@ -242,24 +245,32 @@ function changeColorScale(selected){
     switch (selected){
         case "red" :
             faceColorScale = faceRedScale;
+            start = lightRed;
+            end = red;
             break;
         case "green" :
             faceColorScale = faceGreenScale;
+            start = lightGreen;
+            end = darkGreen;
             break;
         case "gray" :
             faceColorScale = faceGrayScale;
+            start = white;
+            end = gray;
             break;
         case "blueYellow" :
             faceColorScale = faceBlueYellowScale;
+            start = blue;
+            end = yellow;
             break;
         case "redBlue" :
             faceColorScale = faceRedBlueScale;
-            break;
-        case "rainbow" :
-            faceColorScale = faceRainbowScale;
+            start = red;
+            end = blue;
             break;
     }
     renderFaces();
+    createFaceLengend();
 }
 
 
