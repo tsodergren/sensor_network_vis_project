@@ -2,8 +2,8 @@
  * Created by Tim on 11/10/2016.
  */
 <!-- Common variables and functions used by all of the example plots -->
-var width = 600;          //Width of each plot
-var height = 600;         //Height of each plot
+var width = document.getElementById('plotArea').offsetWidth;          //Width of each plot
+var height = document.getElementById('plotArea').offsetHeight;         //Height of each plot
 var padding = 30;          //Buffer space to ensure points are adequately
 
 
@@ -61,7 +61,7 @@ var gX = complexSVG.append('g')
 
 var yScale = d3.scaleLinear()
     .domain([0,100])
-    .range([0, width]);
+    .range([0, height]);
 
 var yAxis = d3.axisLeft()
     .scale(yScale);
@@ -285,7 +285,7 @@ function renderGrid() {
         .attr('y1', function (d) { return d })
         .attr('x1', padding)
         .attr('y2', function (d) { return d })
-        .attr('x2', height+padding);
+        .attr('x2', width+padding);
 }
 
 function zoomed() {
