@@ -860,6 +860,7 @@ function renderComplex(edges,faces) {
         .attr('class', 'edge')
         .style('visibility','hidden');
 
+    complexCanvas.select('#complexFaces').remove();
     complexCanvas.append('g')
         .attr('id','complexFaces');
     renderFaces();
