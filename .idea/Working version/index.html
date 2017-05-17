@@ -101,6 +101,15 @@
         <tr>
           <td>
             <p>Probability of Face:</p>
+            <select onchange="changeColorScale(this.value)"> Color Scale
+              <option value="green">Green</option>
+              <option value="red">Red</option>
+              <option value="gray">Gray</option>
+              <option value="blueYellow">Blue to Yellow</option>
+              <option value="redBlue">Red to Blue</option>
+              <option value="rainbow">Rainbow</option>
+            </select>
+            <br>
             <svg id="face_legend" width="350px" height="60px"></svg>
           </td>
           <td>

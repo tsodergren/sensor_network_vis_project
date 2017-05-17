@@ -72,22 +72,32 @@ var gY = complexSVG.append('g')
 
 var lightGreen = "#99ff99";
 var darkGreen = "#006600";
-var faceColorScale = d3.scaleLinear().range([lightGreen, darkGreen]).domain([0.01, 1]);
+var red = "#ff0000";
+var lightRed = "#ffb2b2";
+var blue = "#00f";
+var yellow = "#ff0";
+var white = "#fff";
+var gray = "#595959";
+var tan = "#ffffbf";
+var rainbowStart = "hsl(0,80%,50%)";
+var rainbowEnd = "hsl(360,80%,50%)";
+
+var faceGreenScale = d3.scaleLinear().range([lightGreen, darkGreen]).domain([0.01, 1]);
+var faceRedScale = d3.scaleLinear().range([lightRed, red]).domain([0.01, 1]);
+var faceBlueYellowScale = d3.scaleLinear().range([blue, yellow]).domain([0.01, 1]);
+var faceRedBlueScale = d3.scaleLinear().range([red, tan, blue])
+    .domain([0.01, 0.5, 1])
+    .interpolate(d3.interpolateHcl);
+var faceGrayScale = d3.scaleLinear().range([white, gray]).domain([0.01, 1]);
+var faceRainbowScale = d3.scaleLinear().range([rainbowStart, rainbowEnd])
+    .domain([0.01, 1])
+    .interpolate(d3.interpolateString);
+
+var faceColorScale = faceGreenScale;
 var faceOpacityScale = d3.scaleLinear().range([0.3, 0.75]).domain([0.01, 1]);
 var edgeOpacityScale = d3.scaleLinear().range([0.2, 1]).domain([0.01, 1]);
 var edgeWidthScale = d3.scaleLinear().range([2, 6]).domain([0.01, 1]);
 
-
-
-//
-// complexSVG.append("path")
-//     .attr("class", "grid")
-//     .attr("d", d3.range(cellSize, width+padding*2, cellSize)
-//             .map(function(x) { return "M" + Math.round(x) + ",0V" + height+padding; })
-//             .join("")
-//         + d3.range(cellSize, height+padding*2, cellSize)
-//             .map(function(y) { return "M0," + Math.round(y) + "H" + width+padding; })
-//             .join(""));
 
 var complexCanvas = complexSVG.append('g')
     .attr('class','cech')
@@ -101,12 +111,6 @@ complexSVG.append('rect')
     .style('fill','none')
     .style('stroke','#000')
     .style('stroke-opacity',1);
-
-// complexSVG.attr('cursor','crosshair')
-//     .on('click',function () {
-//         coords = d3.mouse(this);
-//         console.log(coords)
-//     });
 
 var zoom = d3.zoom()
     .scaleExtent([0.1, 10])
@@ -232,6 +236,30 @@ function createFaceLengend() {
         .attr("class", "legend axis")
         .attr("transform", "translate(10, 40)")
         .call(legendAxis);
+}
+
+function changeColorScale(selected){
+    switch (selected){
+        case "red" :
+            faceColorScale = faceRedScale;
+            break;
+        case "green" :
+            faceColorScale = faceGreenScale;
+            break;
+        case "gray" :
+            faceColorScale = faceGrayScale;
+            break;
+        case "blueYellow" :
+            faceColorScale = faceBlueYellowScale;
+            break;
+        case "redBlue" :
+            faceColorScale = faceRedBlueScale;
+            break;
+        case "rainbow" :
+            faceColorScale = faceRainbowScale;
+            break;
+    }
+    renderFaces();
 }
 
 
@@ -793,16 +821,6 @@ function renderComplex(edges,faces) {
         }
     };
 
-    faces.sort( function (a, b) { return a.Pface - b.Pface } )
-    faces.forEach( function (d, i) {
-        locationData[d.Pt1].link.edges.push([d.Pt2, d.Pt3])
-        locationData[d.Pt1].star.faces.push(i)
-        locationData[d.Pt2].link.edges.push([d.Pt1, d.Pt3])
-        locationData[d.Pt2].star.faces.push(i)
-        locationData[d.Pt3].link.edges.push([d.Pt1, d.Pt2])
-        locationData[d.Pt3].star.faces.push(i)
-    })
-
     // edges.forEach( function (d,i) {
     //     d.star = {points: [], faces: []};
     //     d.link = {points: [], edges: [], faces: []}
@@ -823,15 +841,11 @@ function renderComplex(edges,faces) {
     //     })
     // })
 
+    renderFaces();
+
 
     //remove existing canvas elements
-    complexCanvas.selectAll('.face').remove();
     complexCanvas.selectAll('.edge').remove();
-    //add group for each layer, this makes it easier to toggle each component on and off
-    var complexFaces = complexCanvas.append('g')
-        .attr('id','complexFaces')
-        .attr('class', 'face')
-        .style('visibility','hidden');
     var complexEdges = complexCanvas.append('g')
         .attr('id','complexEdges')
         .attr('class', 'edge')
@@ -843,26 +857,7 @@ function renderComplex(edges,faces) {
     //has selected
 
 
-    complexFaces.selectAll('polygon').data(faces)
-        .enter().append('polygon')
-        .attr('class','face')
-        .attr('points',function (d, i) {
-                return  (xScale(locationData[d.Pt1].anchor.x)+padding/newZscale)+','+(yScale(locationData[d.Pt1].anchor.y)+padding/newZscale)+
-                    ' '+(xScale(locationData[d.Pt2].anchor.x)+padding/newZscale)+','+(yScale(locationData[d.Pt2].anchor.y)+padding/newZscale)+
-                    ' '+(xScale(locationData[d.Pt3].anchor.x)+padding/newZscale)+','+(yScale(locationData[d.Pt3].anchor.y)+padding/newZscale);
-            }
-        )
-        .attr('id', function (d, i) {
-            return 'complex_Face_'+d.Pt1+'_'+d.Pt2+'_'+d.Pt3;
-        })
-        .attr('opacity', function(d){
-            return faceOpacityScale(d.Pface);
-        })
-        .attr('fill', function (d) {
-            return faceColorScale(d.Pface);
-        })
-        .on('mouseover',highlightFace)
-        .on('mouseout', resetFace);
+
 
 
     complexEdges.selectAll('line').data(edges)
@@ -902,6 +897,49 @@ function renderComplex(edges,faces) {
     renderView();
 
 
+}
+
+function renderFaces(){
+    var faces;
+    if (complexType=='Cech') {
+        faces = cechFaces;
+    } else if (complexType=='Vietoris-Rips') {
+        faces = ripsFaces;
+    }
+    faces.sort( function (a, b) { return a.Pface - b.Pface } )
+    faces.forEach( function (d, i) {
+        locationData[d.Pt1].link.edges.push([d.Pt2, d.Pt3])
+        locationData[d.Pt1].star.faces.push(i)
+        locationData[d.Pt2].link.edges.push([d.Pt1, d.Pt3])
+        locationData[d.Pt2].star.faces.push(i)
+        locationData[d.Pt3].link.edges.push([d.Pt1, d.Pt2])
+        locationData[d.Pt3].star.faces.push(i)
+    })
+
+    complexCanvas.selectAll('.face').remove();
+    var complexFaces = complexCanvas.append('g')
+        .attr('id','complexFaces')
+        .attr('class', 'face');
+    complexFaces.selectAll('polygon').data(faces)
+        .enter().append('polygon')
+        .attr('class','face')
+        .attr('points',function (d, i) {
+                return  (xScale(locationData[d.Pt1].anchor.x)+padding/newZscale)+','+(yScale(locationData[d.Pt1].anchor.y)+padding/newZscale)+
+                    ' '+(xScale(locationData[d.Pt2].anchor.x)+padding/newZscale)+','+(yScale(locationData[d.Pt2].anchor.y)+padding/newZscale)+
+                    ' '+(xScale(locationData[d.Pt3].anchor.x)+padding/newZscale)+','+(yScale(locationData[d.Pt3].anchor.y)+padding/newZscale);
+            }
+        )
+        .attr('id', function (d, i) {
+            return 'complex_Face_'+d.Pt1+'_'+d.Pt2+'_'+d.Pt3;
+        })
+        .attr('opacity', function(d){
+            return faceOpacityScale(d.Pface);
+        })
+        .attr('fill', function (d) {
+            return faceColorScale(d.Pface);
+        })
+        .on('mouseover',highlightFace)
+        .on('mouseout', resetFace);
 }
 
 function renderAllEdges(){
