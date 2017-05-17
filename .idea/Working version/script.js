@@ -841,8 +841,6 @@ function renderComplex(edges,faces) {
     //     })
     // })
 
-    renderFaces();
-
 
     //remove existing canvas elements
     complexCanvas.selectAll('.edge').remove();
@@ -851,14 +849,14 @@ function renderComplex(edges,faces) {
         .attr('class', 'edge')
         .style('visibility','hidden');
 
+    complexCanvas.append('g')
+        .attr('id','complexFaces');
+    renderFaces();
+
 
 //render faces, give each an id with corresponding vertex indices. This makes it easier to find and highlight the corresponding
     //points and edges, do the same for each edge. Start with everything hidden then render view according to what the user
     //has selected
-
-
-
-
 
     complexEdges.selectAll('line').data(edges)
         .enter().append('line')
@@ -917,9 +915,7 @@ function renderFaces(){
     })
 
     complexCanvas.selectAll('.face').remove();
-    var complexFaces = complexCanvas.append('g')
-        .attr('id','complexFaces')
-        .attr('class', 'face');
+    var complexFaces = complexCanvas.select('g#complexFaces');
     complexFaces.selectAll('polygon').data(faces)
         .enter().append('polygon')
         .attr('class','face')
