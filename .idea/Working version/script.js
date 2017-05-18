@@ -72,20 +72,20 @@ var gY = complexSVG.append('g')
 
 var lightGreen = "#99ff99";
 var darkGreen = "#006600";
-var red = "#ff0000";
-var lightRed = "#ffb2b2";
+var orange = "#ff9400";
+var lightOrange = "#ffd8a3";
 var blue = "#00f";
 var yellow = "#ff0";
-var white = "#fff";
+var white = "#aaa";
 var gray = "#595959";
 var tan = "#ffffbf";
 var start = lightGreen;
 var end = darkGreen;
 
 var faceGreenScale = d3.scaleLinear().range([lightGreen, darkGreen]).domain([0.01, 1]);
-var faceRedScale = d3.scaleLinear().range([lightRed, red]).domain([0.01, 1]);
+var faceOrangeScale = d3.scaleLinear().range([lightOrange, orange]).domain([0.01, 1]);
 var faceBlueYellowScale = d3.scaleLinear().range([blue, yellow]).domain([0.01, 1]);
-var faceRedBlueScale = d3.scaleLinear().range([red, tan, blue])
+var faceOrangeBlueScale = d3.scaleLinear().range([orange, tan, blue])
     .domain([0.01, 0.5, 1]);
 var faceGrayScale = d3.scaleLinear().range([white, gray]).domain([0.01, 1]);
 
@@ -208,7 +208,7 @@ function createFaceLengend() {
         .attr('offset', '0%')
         .attr('stop-color', start)
         .attr('stop-opacity', 1);
-    if(faceColorScale == faceRedBlueScale){
+    if(faceColorScale == faceOrangeBlueScale){
         gradient.append('stop')
             .attr('offset', '50%')
             .attr('stop-color', tan)
@@ -243,10 +243,10 @@ function createFaceLengend() {
 
 function changeColorScale(selected){
     switch (selected){
-        case "red" :
-            faceColorScale = faceRedScale;
-            start = lightRed;
-            end = red;
+        case "orange" :
+            faceColorScale = faceOrangeScale;
+            start = lightOrange;
+            end = orange;
             break;
         case "green" :
             faceColorScale = faceGreenScale;
@@ -263,9 +263,9 @@ function changeColorScale(selected){
             start = blue;
             end = yellow;
             break;
-        case "redBlue" :
-            faceColorScale = faceRedBlueScale;
-            start = red;
+        case "orangeBlue" :
+            faceColorScale = faceOrangeBlueScale;
+            start = orange;
             end = blue;
             break;
     }
