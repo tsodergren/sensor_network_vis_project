@@ -76,7 +76,7 @@ var orange = "#ff9400";
 var lightOrange = "#ffd8a3";
 var blue = "#00f";
 var yellow = "#ff0";
-var white = "#aaa";
+var lightGray = "#aaa";
 var gray = "#595959";
 var tan = "#ffffbf";
 var start = lightGreen;
@@ -87,7 +87,7 @@ var faceOrangeScale = d3.scaleLinear().range([lightOrange, orange]).domain([0.01
 var faceBlueYellowScale = d3.scaleLinear().range([blue, yellow]).domain([0.01, 1]);
 var faceOrangeBlueScale = d3.scaleLinear().range([orange, tan, blue])
     .domain([0.01, 0.5, 1]);
-var faceGrayScale = d3.scaleLinear().range([white, gray]).domain([0.01, 1]);
+var faceGrayScale = d3.scaleLinear().range([lightGray, gray]).domain([0.01, 1]);
 
 var faceColorScale = faceGreenScale;
 var faceOpacityScale = d3.scaleLinear().range([0.3, 0.75]).domain([0.01, 1]);
@@ -255,7 +255,7 @@ function changeColorScale(selected){
             break;
         case "gray" :
             faceColorScale = faceGrayScale;
-            start = white;
+            start = lightGray;
             end = gray;
             break;
         case "blueYellow" :
@@ -862,7 +862,8 @@ function renderComplex(edges,faces) {
 
     complexCanvas.select('#complexFaces').remove();
     complexCanvas.append('g')
-        .attr('id','complexFaces');
+        .attr('id','complexFaces')
+        .style('visibility','hidden');
     renderFaces();
 
 
