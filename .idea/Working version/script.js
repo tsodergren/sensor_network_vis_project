@@ -270,6 +270,7 @@ function changeColorScale(selected){
             break;
     }
     renderFaces();
+    renderView();
     createFaceLengend();
 }
 
