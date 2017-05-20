@@ -101,7 +101,10 @@
         <tr>
           <td>
             <p>Probability of Face:</p>
-            <select onchange="changeColorScale(this.value)"> Color Scale
+            <input type="color" id="startColor" onchange="updateStartValue(this.value)">
+            <input type="color" id="endColor" onchange="updateEndValue(this.value)">
+            <br>
+            <select id="colorScale" onchange="changeColorScale(this.value)"> Color Scale
               <option value="green">Green</option>
               <option value="orange">Orange</option>
               <option value="gray">Gray</option>

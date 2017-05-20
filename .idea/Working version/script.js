@@ -33,8 +33,8 @@ var originalDataRadius = 10;
 
 //background grid information
 var cellSize = 50;
-var gridWidth = Math.ceil( (width+padding*2) / cellSize);
-var gridHeight = Math.ceil( (height+padding*2) / cellSize);
+var gridWidth = Math.ceil((width + padding * 2) / cellSize);
+var gridHeight = Math.ceil((height + padding * 2) / cellSize);
 var grid = new Array(gridWidth * gridHeight);
 var wasDragged = false;
 var zoomOn = false;
@@ -43,40 +43,40 @@ var zoomOn = false;
 var complexSVG = d3.select("#plotArea").append('svg')
     .attr("class", "cech")
     .attr("id", "complexSVG")
-    .attr("width", width+padding*2)
-    .attr("height", height+padding*2)
+    .attr("width", width + padding * 2)
+    .attr("height", height + padding * 2)
     .style("margin", "auto")
     .style("border", "1px solid black");
 
 var xScale = d3.scaleLinear()
-    .domain([0,100])
+    .domain([0, 100])
     .range([0, width]);
 
 var xAxis = d3.axisTop()
     .scale(xScale);
 
 var gX = complexSVG.append('g')
-    .attr('transform','translate('+padding+','+padding+')')
+    .attr('transform', 'translate(' + padding + ',' + padding + ')')
     .call(xAxis);
 
 var yScale = d3.scaleLinear()
-    .domain([0,100])
+    .domain([0, 100])
     .range([0, height]);
 
 var yAxis = d3.axisLeft()
     .scale(yScale);
 
 var gY = complexSVG.append('g')
-    .attr('transform','translate('+padding+','+padding+')')
+    .attr('transform', 'translate(' + padding + ',' + padding + ')')
     .call(yAxis);
 
 var lightGreen = "#99ff99";
 var darkGreen = "#006600";
 var orange = "#ff9400";
 var lightOrange = "#ffd8a3";
-var blue = "#00f";
-var yellow = "#ff0";
-var lightGray = "#aaa";
+var blue = "#0000ff";
+var yellow = "#ffff00";
+var lightGray = "#aaaaaa";
 var gray = "#595959";
 var tan = "#ffffbf";
 var start = lightGreen;
@@ -94,46 +94,48 @@ var faceOpacityScale = d3.scaleLinear().range([0.3, 0.75]).domain([0.01, 1]);
 var edgeOpacityScale = d3.scaleLinear().range([0.2, 1]).domain([0.01, 1]);
 var edgeWidthScale = d3.scaleLinear().range([2, 6]).domain([0.01, 1]);
 
+document.getElementById("startColor").value = lightGreen;
+document.getElementById("endColor").value = darkGreen;
 
 var complexCanvas = complexSVG.append('g')
-    .attr('class','cech')
-    .attr('id','complexCanvas');
+    .attr('class', 'cech')
+    .attr('id', 'complexCanvas');
 
 complexSVG.append('rect')
     .attr('x', padding)
     .attr('y', padding)
     .attr('width', width)
     .attr('height', height)
-    .style('fill','none')
-    .style('stroke','#000')
-    .style('stroke-opacity',1);
+    .style('fill', 'none')
+    .style('stroke', '#000')
+    .style('stroke-opacity', 1);
 
 var zoom = d3.zoom()
     .scaleExtent([0.1, 10])
     .on('zoom', zoomed);
 
 var zoombox = complexSVG.append("rect")
-    .attr("width", width+padding*2)
-    .attr("height", height+padding*2)
-    .attr('id','zoomBox')
+    .attr("width", width + padding * 2)
+    .attr("height", height + padding * 2)
+    .attr('id', 'zoomBox')
     .style("fill", "none")
     .style("pointer-events", "none")
-    .style('visibility','off')
+    .style('visibility', 'off')
     .call(zoom);
 
 window.addEventListener('keydown', function (event) {
-    if (event.key=='z') {
+    if (event.key == 'z') {
         if (zoomOn) {
             d3.select('#zoomBox')
-                .attr('cursor','auto')
-                .style('pointer-events','none')
-                .style('visibility','off');
+                .attr('cursor', 'auto')
+                .style('pointer-events', 'none')
+                .style('visibility', 'off');
             zoomOn = false;
         } else {
             d3.select('#zoomBox')
-                .attr('cursor','move')
-                .style('pointer-events','all')
-                .style('visibilty','on')
+                .attr('cursor', 'move')
+                .style('pointer-events', 'all')
+                .style('visibilty', 'on')
             zoomOn = true;
         }
 
@@ -208,7 +210,7 @@ function createFaceLengend() {
         .attr('offset', '0%')
         .attr('stop-color', start)
         .attr('stop-opacity', 1);
-    if(faceColorScale == faceOrangeBlueScale){
+    if (faceColorScale == faceOrangeBlueScale) {
         gradient.append('stop')
             .attr('offset', '50%')
             .attr('stop-color', tan)
@@ -233,7 +235,8 @@ function createFaceLengend() {
 
     var legendAxis = d3.axisBottom(legendScale)
         .tickValues([0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1])
-        .tickFormat(d3.format(".2f"));;
+        .tickFormat(d3.format(".2f"));
+    ;
 
     legend.append("g")
         .attr("class", "legend axis")
@@ -241,32 +244,52 @@ function createFaceLengend() {
         .call(legendAxis);
 }
 
-function changeColorScale(selected){
-    switch (selected){
+function updateStartValue(value) {
+    document.getElementById("colorScale").value = "Custom";
+    start = document.getElementById("startColor").value;
+    faceColorScale = d3.scaleLinear().range([start, end]).domain([0.01, 1]);
+    renderFaces();
+    renderView();
+    createFaceLengend();
+}
+
+function updateEndValue(value) {
+    document.getElementById("colorScale").value = "Custom";
+    end = document.getElementById("endColor").value;
+    faceColorScale = d3.scaleLinear().range([start, end]).domain([0.01, 1]);
+    renderFaces();
+    renderView();
+    createFaceLengend();
+}
+
+function setScaleStartEnd(startColor, endColor) {
+    start = startColor;
+    document.getElementById("startColor").value = startColor;
+    end = endColor;
+    document.getElementById("endColor").value = endColor;
+}
+
+function changeColorScale(selected) {
+    switch (selected) {
         case "orange" :
             faceColorScale = faceOrangeScale;
-            start = lightOrange;
-            end = orange;
+            setScaleStartEnd(lightOrange, orange);
             break;
         case "green" :
             faceColorScale = faceGreenScale;
-            start = lightGreen;
-            end = darkGreen;
+            setScaleStartEnd(lightGreen, darkGreen);
             break;
         case "gray" :
             faceColorScale = faceGrayScale;
-            start = lightGray;
-            end = gray;
+            setScaleStartEnd(lightGray, gray);
             break;
         case "blueYellow" :
             faceColorScale = faceBlueYellowScale;
-            start = blue;
-            end = yellow;
+            setScaleStartEnd(blue, yellow);
             break;
         case "orangeBlue" :
             faceColorScale = faceOrangeBlueScale;
-            start = orange;
-            end = blue;
+            setScaleStartEnd(orange, blue);
             break;
     }
     renderFaces();
@@ -283,50 +306,58 @@ function renderGrid() {
     var xt = xAxis.scale().ticks();
 
     var xticks = (newxScale) ?
-        xt.map( function (d) {
+        xt.map(function (d) {
             return newxScale(d) + padding;
         }) :
-        xt.map( function (d) {
+        xt.map(function (d) {
             return xScale(d) + padding;
         });
 
     var xlines = complexSVG.append('g')
-        .attr('class','grid')
-        .attr('id','xlines');
+        .attr('class', 'grid')
+        .attr('id', 'xlines');
 
 
     xlines.selectAll('line').data(xticks)
         .enter().append('line')
-        .attr('id','xline')
-        .attr('class','grid')
-        .attr('x1', function (d) { return d })
+        .attr('id', 'xline')
+        .attr('class', 'grid')
+        .attr('x1', function (d) {
+            return d
+        })
         .attr('y1', padding)
-        .attr('x2', function (d) { return d })
-        .attr('y2', height+padding);
+        .attr('x2', function (d) {
+            return d
+        })
+        .attr('y2', height + padding);
 
     var yt = yAxis.scale().ticks();
 
     var yticks = (newyScale) ?
-        yt.map( function (d) {
+        yt.map(function (d) {
             return newyScale(d) + padding;
         }) :
-        yt.map( function (d) {
+        yt.map(function (d) {
             return yScale(d) + padding;
         });
 
     var ylines = complexSVG.append('g')
-        .attr('class','grid')
-        .attr('id','ylines');
+        .attr('class', 'grid')
+        .attr('id', 'ylines');
 
 
     ylines.selectAll('line').data(yticks)
         .enter().append('line')
-        .attr('id','yline')
-        .attr('class','grid')
-        .attr('y1', function (d) { return d })
+        .attr('id', 'yline')
+        .attr('class', 'grid')
+        .attr('y1', function (d) {
+            return d
+        })
         .attr('x1', padding)
-        .attr('y2', function (d) { return d })
-        .attr('x2', width+padding);
+        .attr('y2', function (d) {
+            return d
+        })
+        .attr('x2', width + padding);
 }
 
 function zoomed() {
@@ -335,8 +366,8 @@ function zoomed() {
     newyScale = d3.event.transform.rescaleY(yScale);
     newZscale = d3.event.transform.k;
 
-    linew = 4/newZscale;
-    pad = padding/newZscale;
+    linew = 4 / newZscale;
+    pad = padding / newZscale;
 
     gX.call(xAxis.scale(newxScale));
     gY.call(yAxis.scale(newyScale));
@@ -358,13 +389,13 @@ function zoomed() {
 //this function is called whenever the data are changed.
 
 function updateComplex(newValue) {
-    complexRadius=+newValue;
-    d3.select('#complexRadius').node().value =  complexRadius;
+    complexRadius = +newValue;
+    d3.select('#complexRadius').node().value = complexRadius;
     d3.select('#complexInput').node().value = complexRadius;
     xMin = xScale.domain()[0];
     screenRadius = xScale(complexRadius + xMin);
-    d3.select('#complexCircles').selectAll('circle').attr('r',screenRadius);
-    d3.select('#complexDataCircle').selectAll('circle').attr('r',screenRadius + dataRadius);
+    d3.select('#complexCircles').selectAll('circle').attr('r', screenRadius);
+    d3.select('#complexDataCircle').selectAll('circle').attr('r', screenRadius + dataRadius);
     constructRips();
     changeComplex();
 }
@@ -372,7 +403,7 @@ function updateComplex(newValue) {
 //graphical highlighting
 function highlightPoint() {
 
-    if ( arguments.length == 3 ) {
+    if (arguments.length == 3) {
         d3.select('#complex_Point_' + arguments[1])
             .transition()
             .style('fill', '#c33');
@@ -392,18 +423,18 @@ function highlightPoint() {
         })
 
         arguments[0].star.faces.forEach(function (d) {
-            highlightFace(d,'star');
+            highlightFace(d, 'star');
         })
 
         arguments[0].link.points.forEach(function (d) {
-            highlightPoint(d,'link');
+            highlightPoint(d, 'link');
         })
 
         arguments[0].link.edges.forEach(function (d) {
-            highlightEdge('#complex_Edge_'+d[0]+'_'+d[1], 'link')
+            highlightEdge('#complex_Edge_' + d[0] + '_' + d[1], 'link')
         })
 
-    } else if (arguments.length == 2 && arguments[1]=='star' ) {
+    } else if (arguments.length == 2 && arguments[1] == 'star') {
         d3.select('#complex_Point_' + arguments[0])
             .transition()
             .style('fill', '#c33');
@@ -417,7 +448,7 @@ function highlightPoint() {
 
 function resetPoint() {
 
-    if ( arguments.length == 3 ) { //return point and coverage circle to default view
+    if (arguments.length == 3) { //return point and coverage circle to default view
         d3.select('#complex_Point_' + arguments[1])
             .transition()
             .style('fill', '#9370db');
@@ -448,7 +479,7 @@ function resetPoint() {
         })
 
         arguments[0].link.edges.forEach(function (d) {
-            resetEdge('#complex_Edge_'+d[0]+'_'+d[1])
+            resetEdge('#complex_Edge_' + d[0] + '_' + d[1])
         })
 
     } else {
@@ -468,17 +499,17 @@ function highlightEdge() {
         data = arguments[0]
         d3.select(this)
             .transition()
-            .style('stroke','#c33');
+            .style('stroke', '#c33');
         highlightPoint(data.Pt1, 'star');
         highlightPoint(data.Pt2, 'star');
     } else if (arguments.length == 2) {
         d3.select(arguments[0])
             .transition()
-            .style('stroke','#00c');
+            .style('stroke', '#00c');
     } else {
         d3.select(arguments[0])
             .transition()
-            .style('stroke','#c33');
+            .style('stroke', '#c33');
     }
 
 
@@ -500,9 +531,9 @@ function resetEdge() {
     } else {
         edge = d3.select(arguments[0]);
         var points = arguments[0].replace(/#complex_Edge_/, '');
-        for (i = 0; i < ripsEdges.length; i++){
+        for (i = 0; i < ripsEdges.length; i++) {
             var possibleEdge = ripsEdges[i];
-            if(points == possibleEdge.Pt1 + "_" + possibleEdge.Pt2){
+            if (points == possibleEdge.Pt1 + "_" + possibleEdge.Pt2) {
                 edge.transition()
                     .style('stroke', "black")
                     .style('opacity', edgeOpacityScale(possibleEdge.Pedge));
@@ -519,10 +550,10 @@ function resetEdge() {
 function highlightFace() {
 
 
-    if ( arguments.length == 3) {
+    if (arguments.length == 3) {
         d3.select(this)
             .transition()
-            .style('fill','#c33');
+            .style('fill', '#c33');
 
         //highlight corresponding edges
         highlightEdge('#complex_Edge_' + arguments[0].Pt1 + '_' + arguments[0].Pt2);
@@ -537,20 +568,20 @@ function highlightFace() {
         faces = complexType == 'Cech' ? cechFaces : ripsFaces;
 
 
-        d3.selection.prototype.moveToFront = function() {
-            return this.each(function(){
+        d3.selection.prototype.moveToFront = function () {
+            return this.each(function () {
                 this.parentNode.appendChild(this);
             });
         };
 
         faceColor = arguments[1] == 'link' ? '#00c' : '#fcc'
 
-        d3.select('#complex_Face_'+faces[arguments[0]].Pt1+'_'+faces[arguments[0]].Pt2+'_'+faces[arguments[0]].Pt3)
+        d3.select('#complex_Face_' + faces[arguments[0]].Pt1 + '_' + faces[arguments[0]].Pt2 + '_' + faces[arguments[0]].Pt3)
             .transition()
             .style('fill', faceColor)
             .attr('opacity', 1);
 
-        d3.select('#complex_Face_'+faces[arguments[0]].Pt1+'_'+faces[arguments[0]].Pt2+'_'+faces[arguments[0]].Pt3)
+        d3.select('#complex_Face_' + faces[arguments[0]].Pt1 + '_' + faces[arguments[0]].Pt2 + '_' + faces[arguments[0]].Pt3)
             .moveToFront();
 
     }
@@ -558,8 +589,8 @@ function highlightFace() {
 
 }
 
-d3.selection.prototype.moveToFront = function() {
-    return this.each(function(){
+d3.selection.prototype.moveToFront = function () {
+    return this.each(function () {
         this.parentNode.appendChild(this);
     });
 };
@@ -567,7 +598,7 @@ d3.selection.prototype.moveToFront = function() {
 //reset to default view
 function resetFace() {
 
-    if ( arguments.length > 1) {
+    if (arguments.length > 1) {
         d3.select(this)
             .transition()
             .attr('opacity', faceOpacityScale(arguments[0].Pface))
@@ -582,13 +613,13 @@ function resetFace() {
         resetPoint([], arguments[0].Pt3);
     } else {
         faces = complexType == 'Cech' ? cechFaces : ripsFaces;
-        d3.select('#complex_Face_'+faces[arguments[0]].Pt1+'_'+faces[arguments[0]].Pt2+'_'+faces[arguments[0]].Pt3)
+        d3.select('#complex_Face_' + faces[arguments[0]].Pt1 + '_' + faces[arguments[0]].Pt2 + '_' + faces[arguments[0]].Pt3)
             .transition()
             .attr('opacity', faceOpacityScale(faces[arguments[0]].Pface))
             .style('fill', faceColorScale(faces[arguments[0]].Pface));
 
-        faces.forEach( function (d) {
-            d3.select('#complex_Face_'+d.Pt1+'_'+d.Pt2+'_'+d.Pt3)
+        faces.forEach(function (d) {
+            d3.select('#complex_Face_' + d.Pt1 + '_' + d.Pt2 + '_' + d.Pt3)
                 .moveToFront()
         })
     }
@@ -607,10 +638,10 @@ function constructCech() {
     //of each pair so save computation.
     sqDiameter = 4 * Math.pow(complexRadius, 2);
 
-    tempFaces.forEach( function(d, i) {
+    tempFaces.forEach(function (d, i) {
         d.Pface = 0;
         count = 0;
-        for (j=0; j<d.allFaces.length; j++) {
+        for (j = 0; j < d.allFaces.length; j++) {
             x1 = locationData[d.Pt1].points[d.allFaces[j][0]].x;
             y1 = locationData[d.Pt1].points[d.allFaces[j][0]].y;
             x2 = locationData[d.Pt2].points[d.allFaces[j][1]].x;
@@ -653,7 +684,7 @@ function constructCech() {
                 }
             }
         }
-        p = count/Math.pow(numPoints,3);
+        p = count / Math.pow(numPoints, 3);
         if (p > 0) {
             d.Pface = p;
             cechFaces.push(d)
@@ -666,13 +697,13 @@ function constructCech() {
 function constructEdges() {
 
     var sqDiameter = 4 * Math.pow(complexRadius, 2);
-    var sqDiameterMin = 4 * Math.pow(complexRadius-dataRadius, 2);
-    var sqDiameterMax = 4 * Math.pow(complexRadius+dataRadius, 2);
+    var sqDiameterMin = 4 * Math.pow(complexRadius - dataRadius, 2);
+    var sqDiameterMax = 4 * Math.pow(complexRadius + dataRadius, 2);
     var edgeProb = [];
     var tempEdges = [];
     var count, p, pFlag;
 
-    locationData.forEach( function (d) {
+    locationData.forEach(function (d) {
         d.star = {edges: [], faces: []};
         d.link = {points: [], edges: []}
     })
@@ -693,19 +724,19 @@ function constructEdges() {
                 locationData[j].star.edges.push(tempEdges.length)
                 locationData[j].link.points.push([i])
                 tempEdges.push({Pt1: i, Pt2: j, Pedge: 1})
-            } else if (d12 > sqDiameterMax){
+            } else if (d12 > sqDiameterMax) {
                 edgeProb[i].push({p: 0})
             } else {
                 count = 0;
                 pFlag = [];
                 iEdges = [];
-                for (m=0; m<numPoints; m++) {
+                for (m = 0; m < numPoints; m++) {
                     x1 = locationData[i].points[m].x;
                     y1 = locationData[i].points[m].y;
-                    for (n=0; n<numPoints; n++) {
+                    for (n = 0; n < numPoints; n++) {
                         x2 = locationData[j].points[n].x;
                         y2 = locationData[j].points[n].y;
-                        d12 = sqEuclidDist([x1, y1],[x2,y2]);
+                        d12 = sqEuclidDist([x1, y1], [x2, y2]);
                         if (d12 <= sqDiameter) {
                             count++
                             pFlag.push(true)
@@ -715,9 +746,9 @@ function constructEdges() {
                         }
                     }
                 }
-                p = count/(numPoints*numPoints);
+                p = count / (numPoints * numPoints);
                 edgeProb[i].push({p: p, pFlag: pFlag, edgeInd: tempEdges.length})
-                if (p>0) {
+                if (p > 0) {
                     locationData[i].star.edges.push(tempEdges.length)
                     locationData[i].link.points.push([j])
                     locationData[j].star.edges.push(tempEdges.length)
@@ -729,13 +760,12 @@ function constructEdges() {
     }
 
 
-
     //Put all individual edges into a single structure for easier access.
     allEdges = [];
-    tempEdges.forEach( function(d) {
+    tempEdges.forEach(function (d) {
         if (d.Pedge == 1) {
-            for (i=0; i<numPoints; i++) {
-                for (j=0; j<numPoints; j++) {
+            for (i = 0; i < numPoints; i++) {
+                for (j = 0; j < numPoints; j++) {
                     x1 = locationData[d.Pt1].points[i].x;
                     y1 = locationData[d.Pt1].points[i].y;
                     x2 = locationData[d.Pt2].points[j].x;
@@ -744,7 +774,7 @@ function constructEdges() {
                 }
             }
         } else {
-            for (i=0; i<d.iEdges.length; i++) {
+            for (i = 0; i < d.iEdges.length; i++) {
                 x1 = locationData[d.Pt1].points[d.iEdges[i].Pt1].x;
                 y1 = locationData[d.Pt1].points[d.iEdges[i].Pt1].y;
                 x2 = locationData[d.Pt2].points[d.iEdges[i].Pt2].x;
@@ -767,26 +797,34 @@ function constructRips() {
     var edgeProb = tmp.edgeProb.slice();
 
 
-    for (i=0; i<numSamples-2; i++) {
-        for (j=i+1; j<numSamples-1; j++) {
-            if (edgeProb[i][j-i].p > 0) {
-                for (k=j+1; k<numSamples; k++) {
-                    if (edgeProb[j][k-j].p == 1 && edgeProb[i][k-i].p == 1 && edgeProb[i][j-i].p == 1){
+    for (i = 0; i < numSamples - 2; i++) {
+        for (j = i + 1; j < numSamples - 1; j++) {
+            if (edgeProb[i][j - i].p > 0) {
+                for (k = j + 1; k < numSamples; k++) {
+                    if (edgeProb[j][k - j].p == 1 && edgeProb[i][k - i].p == 1 && edgeProb[i][j - i].p == 1) {
                         tempFaces.push({Pt1: i, Pt2: j, Pt3: k, Pface: 1})
-                    } else if (edgeProb[j][k-j].p > 0 && edgeProb[i][k-i].p > 0){
-                        tempFaces.push({Pt1: i, Pt2: j, Pt3: k, p12: edgeProb[i][j-i], p13: edgeProb[i][k-i], p23: edgeProb[j][k-j],  Pface: 0})
+                    } else if (edgeProb[j][k - j].p > 0 && edgeProb[i][k - i].p > 0) {
+                        tempFaces.push({
+                            Pt1: i,
+                            Pt2: j,
+                            Pt3: k,
+                            p12: edgeProb[i][j - i],
+                            p13: edgeProb[i][k - i],
+                            p23: edgeProb[j][k - j],
+                            Pface: 0
+                        })
                     }
                 }
             }
         }
     }
 
-    tempFaces.forEach( function (d) {
+    tempFaces.forEach(function (d) {
         count = 0;
         allFaces = [];
-        for (i=0; i<numPoints; i++) {
-            for (j=0; j<numPoints; j++) {
-                for (k=0; k<numPoints; k++) {
+        for (i = 0; i < numPoints; i++) {
+            for (j = 0; j < numPoints; j++) {
+                for (k = 0; k < numPoints; k++) {
                     isEdge = [true, true, true];
                     if (d.Pface == 0) {
                         if (d.p12.p < 1) {
@@ -806,8 +844,8 @@ function constructRips() {
                 }
             }
         }
-        p = count/Math.pow(numPoints,3);
-        if (p>0) {
+        p = count / Math.pow(numPoints, 3);
+        if (p > 0) {
             d.Pface = p;
             d.allFaces = allFaces;
             ripsFaces.push(d)
@@ -820,18 +858,19 @@ function constructRips() {
 }
 
 
-function renderComplex(edges,faces) {
+function renderComplex(edges, faces) {
 
-    if (edges.length==0) {
+    if (edges.length == 0) {
         constructRips()
-        if (complexType=='Cech') {
+        if (complexType == 'Cech') {
             edges = cechEdges
             faces = cechFaces
-        } else if (complexType=='Vietoris-Rips') {
+        } else if (complexType == 'Vietoris-Rips') {
             edges = ripsEdges;
             faces = ripsFaces;
         }
-    };
+    }
+    ;
 
     // edges.forEach( function (d,i) {
     //     d.star = {points: [], faces: []};
@@ -857,14 +896,14 @@ function renderComplex(edges,faces) {
     //remove existing canvas elements
     complexCanvas.selectAll('.edge').remove();
     var complexEdges = complexCanvas.append('g')
-        .attr('id','complexEdges')
+        .attr('id', 'complexEdges')
         .attr('class', 'edge')
-        .style('visibility','hidden');
+        .style('visibility', 'hidden');
 
     complexCanvas.select('#complexFaces').remove();
     complexCanvas.append('g')
-        .attr('id','complexFaces')
-        .style('visibility','hidden');
+        .attr('id', 'complexFaces')
+        .style('visibility', 'hidden');
     renderFaces();
 
 
@@ -875,8 +914,8 @@ function renderComplex(edges,faces) {
     complexEdges.selectAll('line').data(edges)
         .enter().append('line')
         .attr('class', 'edge')
-        .style('stroke-width', function(d){
-            return edgeWidthScale(d.Pedge)/newZscale;
+        .style('stroke-width', function (d) {
+            return edgeWidthScale(d.Pedge) / newZscale;
         })
         .attr('x1', function (d) {
             return xScale(locationData[d.Pt1].anchor.x) + pad;
@@ -891,7 +930,7 @@ function renderComplex(edges,faces) {
             return yScale(locationData[d.Pt2].anchor.y) + pad;
         })
         .attr('id', function (d) {
-            return 'complex_Edge_'+d.Pt1+'_'+d.Pt2;
+            return 'complex_Edge_' + d.Pt1 + '_' + d.Pt2;
         })
         .attr('stroke', 'black')
         .attr('opacity', function (d) {
@@ -911,15 +950,17 @@ function renderComplex(edges,faces) {
 
 }
 
-function renderFaces(){
+function renderFaces() {
     var faces;
-    if (complexType=='Cech') {
+    if (complexType == 'Cech') {
         faces = cechFaces;
-    } else if (complexType=='Vietoris-Rips') {
+    } else if (complexType == 'Vietoris-Rips') {
         faces = ripsFaces;
     }
-    faces.sort( function (a, b) { return a.Pface - b.Pface } )
-    faces.forEach( function (d, i) {
+    faces.sort(function (a, b) {
+        return a.Pface - b.Pface
+    })
+    faces.forEach(function (d, i) {
         locationData[d.Pt1].link.edges.push([d.Pt2, d.Pt3])
         locationData[d.Pt1].star.faces.push(i)
         locationData[d.Pt2].link.edges.push([d.Pt1, d.Pt3])
@@ -932,30 +973,30 @@ function renderFaces(){
     var complexFaces = complexCanvas.select('g#complexFaces');
     complexFaces.selectAll('polygon').data(faces)
         .enter().append('polygon')
-        .attr('class','face')
-        .attr('points',function (d, i) {
-                return  (xScale(locationData[d.Pt1].anchor.x)+padding/newZscale)+','+(yScale(locationData[d.Pt1].anchor.y)+padding/newZscale)+
-                    ' '+(xScale(locationData[d.Pt2].anchor.x)+padding/newZscale)+','+(yScale(locationData[d.Pt2].anchor.y)+padding/newZscale)+
-                    ' '+(xScale(locationData[d.Pt3].anchor.x)+padding/newZscale)+','+(yScale(locationData[d.Pt3].anchor.y)+padding/newZscale);
+        .attr('class', 'face')
+        .attr('points', function (d, i) {
+                return (xScale(locationData[d.Pt1].anchor.x) + padding / newZscale) + ',' + (yScale(locationData[d.Pt1].anchor.y) + padding / newZscale) +
+                    ' ' + (xScale(locationData[d.Pt2].anchor.x) + padding / newZscale) + ',' + (yScale(locationData[d.Pt2].anchor.y) + padding / newZscale) +
+                    ' ' + (xScale(locationData[d.Pt3].anchor.x) + padding / newZscale) + ',' + (yScale(locationData[d.Pt3].anchor.y) + padding / newZscale);
             }
         )
         .attr('id', function (d, i) {
-            return 'complex_Face_'+d.Pt1+'_'+d.Pt2+'_'+d.Pt3;
+            return 'complex_Face_' + d.Pt1 + '_' + d.Pt2 + '_' + d.Pt3;
         })
-        .attr('opacity', function(d){
+        .attr('opacity', function (d) {
             return faceOpacityScale(d.Pface);
         })
         .attr('fill', function (d) {
             return faceColorScale(d.Pface);
         })
-        .on('mouseover',highlightFace)
+        .on('mouseover', highlightFace)
         .on('mouseout', resetFace);
 }
 
-function renderAllEdges(){
+function renderAllEdges() {
     complexCanvas.selectAll('#allEdges').remove();
     var allEdgesGroup = complexCanvas.append('g')
-        .attr('id','allEdges')
+        .attr('id', 'allEdges')
         .attr('class', 'all_edges');
     allEdgesGroup.selectAll('line').data(allEdges)
         .enter().append('line')
@@ -973,7 +1014,7 @@ function renderAllEdges(){
             return yScale(d.y2) + pad;
         })
         .attr('id', function (d) {
-            return 'complex_individual_Edge_'+d.x1+'_'+d.x2+d.y1+'_'+d.y2;
+            return 'complex_individual_Edge_' + d.x1 + '_' + d.x2 + d.y1 + '_' + d.y2;
         })
         .attr('stroke', 'black')
         .attr('opacity', function (d) {
@@ -990,11 +1031,11 @@ function renderPoints() {
     complexCanvas.selectAll('.circle').remove();
     complexCanvas.selectAll('.point').remove();
     var complexCircles = complexCanvas.append('g')
-        .attr('class','circle')
-        .attr('id','complexCircles')
+        .attr('class', 'circle')
+        .attr('id', 'complexCircles')
     var complexPoints = complexCanvas.append('g')
         .attr('class', 'point')
-        .attr('id','complexPoints');
+        .attr('id', 'complexPoints');
     var complexAndDataCircle = complexCanvas.append('g')
         .attr('class', 'circle')
         .attr('id', 'complexDataCircle');
@@ -1002,11 +1043,11 @@ function renderPoints() {
     var pts = complexPoints.selectAll('circle').data(locationData)
         .enter()
         .append('circle')
-        .style('visibility','hidden')
+        .style('visibility', 'hidden')
         .attr('class', 'point')
         .attr('cx', function (d) {
             if (newxScale && newyScale) {
-                return xScale(d.anchor.x) + padding/newZscale;
+                return xScale(d.anchor.x) + padding / newZscale;
             }
             else {
                 return xScale(d.anchor.x) + padding;
@@ -1014,7 +1055,7 @@ function renderPoints() {
         })
         .attr('cy', function (d) {
             if (newxScale && newyScale) {
-                return yScale(d.anchor.y) + padding/newZscale;
+                return yScale(d.anchor.y) + padding / newZscale;
             }
             else {
                 return yScale(d.anchor.y) + padding / newZscale;
@@ -1030,14 +1071,14 @@ function renderPoints() {
         .call(d3.drag()
             .on('drag', dragNode)
             .on('end', dragEnd))
-        .each(function(d, j){
+        .each(function (d, j) {
             complexPoints.selectAll('small_circle').data(d.points)
                 .enter()
                 .append('circle')
                 .attr('class', 'small_circle')
                 .attr('cx', function (d) {
                     if (newxScale && newyScale) {
-                        return xScale(d.x) + padding/newZscale;
+                        return xScale(d.x) + padding / newZscale;
                     }
                     else {
                         return xScale(d.x) + padding;
@@ -1045,28 +1086,29 @@ function renderPoints() {
                 })
                 .attr('cy', function (d) {
                     if (newxScale && newyScale) {
-                        return yScale(d.y) + padding/newZscale;
+                        return yScale(d.y) + padding / newZscale;
                     }
                     else {
                         return yScale(d.y) + padding / newZscale;
                     }
                 })
-                .attr('id', function (d, i) {5
+                .attr('id', function (d, i) {
+                    5
                     return 'complex_small_Point_' + j.toString() + '_' + i.toString();
                 })
-                .attr('r', 2/newZscale);
+                .attr('r', 2 / newZscale);
         });
 
     complexCircles.selectAll('circle').data(locationData)
         .enter()
         .append('circle')
-        .style('visibility','hidden')
+        .style('visibility', 'hidden')
         .attr('class', 'circle')
         .attr('cx', function (d) {
-            return xScale(d.anchor.x) + padding/newZscale;
+            return xScale(d.anchor.x) + padding / newZscale;
         })
         .attr('cy', function (d) {
-            return yScale(d.anchor.y) + padding/newZscale;
+            return yScale(d.anchor.y) + padding / newZscale;
         })
         .attr('id', function (d, i) {
             return 'complex_Circle_' + i.toString();
@@ -1074,16 +1116,15 @@ function renderPoints() {
         .attr('r', xScale(complexRadius + xScale.domain()[0]));
 
 
-
     complexAndDataCircle.selectAll('circle').data(locationData)
         .enter()
         .append('circle')
         .attr('class', 'circle')
         .attr('cx', function (d) {
-            return xScale(d.anchor.x) + padding/newZscale;
+            return xScale(d.anchor.x) + padding / newZscale;
         })
         .attr('cy', function (d) {
-            return yScale(d.anchor.y) + padding/newZscale;
+            return yScale(d.anchor.y) + padding / newZscale;
         })
         .attr('id', function (d, i) {
             return 'data_Circle_' + i.toString();
@@ -1092,23 +1133,23 @@ function renderPoints() {
         .attr('fill-opacity', 0.1)
         .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
 
-    r = xScale(dataRadius + xScale.domain()[0])+5;
-    textOffset = -r * Math.cos( 3*Math.PI/4 );
+    r = xScale(dataRadius + xScale.domain()[0]) + 5;
+    textOffset = -r * Math.cos(3 * Math.PI / 4);
 
     complexPoints.selectAll('text')
         .data(locationData)
         .enter().append('text')
-        .text( function (d, i) {
+        .text(function (d, i) {
             return i.toString();
         })
         .attr('x', function (d) {
-            return xScale(d.anchor.x) + padding/newZscale;
+            return xScale(d.anchor.x) + padding / newZscale;
         })
         .attr('y', function (d) {
-            return yScale(d.anchor.y) + padding/newZscale;
+            return yScale(d.anchor.y) + padding / newZscale;
         })
-        .attr('dx',textOffset)
-        .attr('dy',textOffset);
+        .attr('dx', textOffset)
+        .attr('dy', textOffset);
 
     renderView()
 
@@ -1119,33 +1160,33 @@ function renderView() {
     f = document.getElementById('coverCheckbox');
     showCoverage(f.checked);
     f = document.getElementById('nodeCheckbox');
-    show(f.checked,'.small_circle');
+    show(f.checked, '.small_circle');
     f = document.getElementById('nodeRadiusCheckbox');
-    show(f.checked,'.point');
+    show(f.checked, '.point');
     f = document.getElementById('edgeCheckbox');
-    show(f.checked,'.edge');
+    show(f.checked, '.edge');
     f = document.getElementById('allEdgeCheckbox');
-    show(f.checked,'.individual_edge');
+    show(f.checked, '.individual_edge');
     f = document.getElementById('faceCheckbox');
-    show(f.checked,'.face');
+    show(f.checked, '.face');
 }
 
-function updateScales(xMin, yMin, dataRange){
+function updateScales(xMin, yMin, dataRange) {
     var aspectMin = Math.min(width, height);
     var aspect, yScaleMax, xScaleMax;
-    var dataPadding = 0.1*dataRange;
-    if(aspectMin == height){
+    var dataPadding = 0.1 * dataRange;
+    if (aspectMin == height) {
         aspect = width / height;
-        yScaleMax = yMin+dataRange;
+        yScaleMax = yMin + dataRange;
         xScaleMax = yScaleMax * aspect;
-        xScale.domain([xMin-dataPadding, xScaleMax + dataPadding]);
-        yScale.domain([yMin-dataPadding, yScaleMax + dataPadding]);
+        xScale.domain([xMin - dataPadding, xScaleMax + dataPadding]);
+        yScale.domain([yMin - dataPadding, yScaleMax + dataPadding]);
     } else {
         aspect = height / width;
-        xScaleMax = xMin+dataRange;
+        xScaleMax = xMin + dataRange;
         yScaleMax = xScaleMax * aspect;
-        xScale.domain([xMin-dataPadding, xScaleMax + dataPadding]);
-        yScale.domain([yMin-dataPadding, yScaleMax + dataPadding]);
+        xScale.domain([xMin - dataPadding, xScaleMax + dataPadding]);
+        yScale.domain([yMin - dataPadding, yScaleMax + dataPadding]);
     }
 
 }
@@ -1156,7 +1197,7 @@ function importData() {
     var selectedFile = document.getElementById('fileSelector');
     var fReader = new FileReader();
     fReader.readAsDataURL(selectedFile.files[0]);
-    fReader.onloadend = function(event) {
+    fReader.onloadend = function (event) {
 
         d3.csv(event.target.result, function (csv) {
 
@@ -1165,36 +1206,35 @@ function importData() {
             csv.forEach(function (d) {
 
                 // Convert numeric values to 'numbers'
-                locationData.push({anchor: {x: +d.xf, y: +d.yf} });
+                locationData.push({anchor: {x: +d.xf, y: +d.yf}});
             });
             numSamples = locationData.length;
             perturbData();
 
             //set data scale
-            xMin = d3.min(locationData.map( function (d) {
+            xMin = d3.min(locationData.map(function (d) {
                 return d.anchor.x;
             }));
-            xMax = d3.max(locationData.map( function (d) {
+            xMax = d3.max(locationData.map(function (d) {
                 return d.anchor.x;
             }));
-            xRange = xMax-xMin;
-            yMin = d3.min(locationData.map( function (d) {
+            xRange = xMax - xMin;
+            yMin = d3.min(locationData.map(function (d) {
                 return d.anchor.y;
             }));
-            yMax = d3.max(locationData.map( function (d) {
+            yMax = d3.max(locationData.map(function (d) {
                 return d.anchor.y;
             }));
-            yRange = yMax-yMin;
+            yRange = yMax - yMin;
 
             dataRange = d3.max([xRange, yRange]);
             // dataMin = d3.min([xMin, yMin]);
             updateScales(xMin, yMin, dataRange);
 
             d3.select('#complexInput')
-                .attr('min', 0.05*dataRange)
-                .attr('max', 0.5*dataRange)
-                .attr('value', 0.2*dataRange);
-
+                .attr('min', 0.05 * dataRange)
+                .attr('max', 0.5 * dataRange)
+                .attr('value', 0.2 * dataRange);
 
 
             complexCanvas.attr("transform", d3.zoomIdentity)
@@ -1214,7 +1254,7 @@ function importData() {
     }
 }
 
-function resetCheckboxes(){
+function resetCheckboxes() {
     c = document.getElementById('coverCheckbox');
     c.disabled = false;
     c.checked = true;
@@ -1232,33 +1272,34 @@ function randomData() {
 //generate uniform random data points
 
     var xd = (newxScale) ? newxScale.domain() : xScale.domain();
-    var xmin = xd[0] + 0.1*(xd[1]-xd[0]);
-    var xmax = xd[1] - 0.1*(xd[1]-xd[0]);
+    var xmin = xd[0] + 0.1 * (xd[1] - xd[0]);
+    var xmax = xd[1] - 0.1 * (xd[1] - xd[0]);
 
     var yd = (newyScale) ? newyScale.domain() : yScale.domain();
-    var ymin = yd[0] + 0.1*(yd[1]-yd[0]);
-    var ymax = yd[1] - 0.1*(yd[1]-yd[0]);
+    var ymin = yd[0] + 0.1 * (yd[1] - yd[0]);
+    var ymax = yd[1] - 0.1 * (yd[1] - yd[0]);
 
 
     numSamples = +document.getElementById('numSensors').value;
 
     locationData = [];
 
-    for (i=0; i<numSamples; i++) {
-        var xi = Math.random() * (xmax - xmin + 1)  + xmin;
-        var yi = Math.random() * (ymax - ymin + 1)  + ymin;
-        locationData.push({ anchor: {x: xi, y: yi}});
-    };
+    for (i = 0; i < numSamples; i++) {
+        var xi = Math.random() * (xmax - xmin + 1) + xmin;
+        var yi = Math.random() * (ymax - ymin + 1) + ymin;
+        locationData.push({anchor: {x: xi, y: yi}});
+    }
+    ;
 
     perturbData();
 
-    dataRange = d3.max([xd[1]-xd[0], yd[1]-yd[0]]);
-    dataPadding = 0.1*dataRange;
+    dataRange = d3.max([xd[1] - xd[0], yd[1] - yd[0]]);
+    dataPadding = 0.1 * dataRange;
 
     d3.select('#complexInput')
-        .attr('min', 0.05*dataRange)
-        .attr('max', 0.5*dataRange)
-        .attr('value', 0.2*dataRange);
+        .attr('min', 0.05 * dataRange)
+        .attr('max', 0.5 * dataRange)
+        .attr('value', 0.2 * dataRange);
 
     resetCheckboxes();
 
@@ -1270,30 +1311,31 @@ function saveData() {
 
     //save nodes
 
-    var header = 'OFF\n'+
-        '#\n'+
-        '# Simplicial complex of 2-D location data\n'+
-        '# Generated on '+Date()+'\n'+
-        '# Complex type: '+complexType+'\n'+
-        '# Coverage radius: '+complexRadius+'\n'+
-        '#\n'+
-        numSamples+' ' + (cechFaces.length + cechEdges.length) + ' 0';
+    var header = 'OFF\n' +
+        '#\n' +
+        '# Simplicial complex of 2-D location data\n' +
+        '# Generated on ' + Date() + '\n' +
+        '# Complex type: ' + complexType + '\n' +
+        '# Coverage radius: ' + complexRadius + '\n' +
+        '#\n' +
+        numSamples + ' ' + (cechFaces.length + cechEdges.length) + ' 0';
 
 
     var tempData = JSON.parse(JSON.stringify(locationData));
-    tempData.forEach( function(d) {
+    tempData.forEach(function (d) {
         d.z = 0;
     });
     var verticesStr = d3.dsvFormat(' ').format(tempData, ['xf', 'yf', 'z']);
     verticesStr = verticesStr.replace('xf yf z', []);
 
-    if (complexType=='Cech') {
+    if (complexType == 'Cech') {
         faces = cechFaces;
         edges = cechEdges;
     } else {
         faces = ripsFaces;
         edges = ripsEdges;
-    };
+    }
+    ;
 
     var edgesStr = d3.dsvFormat(' ').format(edges, ['Pt1', 'Pt2']);
     edgesStr = edgesStr.replace(/\n/g, '\n2 ')
@@ -1302,10 +1344,10 @@ function saveData() {
     facesStr = facesStr.replace(/\n/g, '\n3 ')
     facesStr = facesStr.replace('Pt1 Pt2 Pt3', []);
 
-    dsvContent = header+verticesStr+edgesStr+facesStr;
-    dsvContent = dsvContent.replace(/\n/g,'\r\n');
+    dsvContent = header + verticesStr + edgesStr + facesStr;
+    dsvContent = dsvContent.replace(/\n/g, '\r\n');
 
-    var blob = new Blob([dsvContent], { type: 'text/csv;charset=utf-8;' });
+    var blob = new Blob([dsvContent], {type: 'text/csv;charset=utf-8;'});
     if (navigator.msSaveBlob) { // IE 10+
         navigator.msSaveBlob(blob, filename);
     } else {
@@ -1329,7 +1371,7 @@ function loadData() {
     var selectedFile = document.getElementById('openButton');
     var fReader = new FileReader();
     fReader.readAsDataURL(selectedFile.files[0]);
-    fReader.onloadend = function(event) {
+    fReader.onloadend = function (event) {
         dataLoader(event.target.result)
     }
 
@@ -1354,33 +1396,34 @@ function dataLoader(file) {
         numFaces = +line1[1];
         numEdges = +line1[2];
 
-        str = str.replace(re,[]);
+        str = str.replace(re, []);
 
         var edges = [];
         var faces = [];
         locationData = [];
 
-        d3.dsvFormat(' ').parseRows(str, function (d,i) {
-            if (i<numSamples) {
-                locationData.push({anchor: {x: +d[0], y: +d[1]} });
+        d3.dsvFormat(' ').parseRows(str, function (d, i) {
+            if (i < numSamples) {
+                locationData.push({anchor: {x: +d[0], y: +d[1]}});
             } else {
-                if (d[0]==3) {
-                    faces.push( { Pt1: +d[1], Pt2: +d[2], Pt3: +d[3] } );
-                } else if (d[0]==2) {
-                    edges.push( { Pt1: +d[1], Pt2: +d[2] } );
+                if (d[0] == 3) {
+                    faces.push({Pt1: +d[1], Pt2: +d[2], Pt3: +d[3]});
+                } else if (d[0] == 2) {
+                    edges.push({Pt1: +d[1], Pt2: +d[2]});
                 }
 
-            };
+            }
+            ;
         });
 
         complexSelector = document.getElementsByName('complexType');
-        if (complexType=='Cech') {
+        if (complexType == 'Cech') {
             cechFaces = faces;
             cechEdges = edges;
             ripsFaces = [];
             ripsEdges = [];
             complexSelector[0].checked = true;
-        } else if (complexType=='Vietoris-Rips') {
+        } else if (complexType == 'Vietoris-Rips') {
             ripsFaces = faces;
             ripsEdges = edges;
             cechFaces = [];
@@ -1389,26 +1432,24 @@ function dataLoader(file) {
         }
 
 
-
-
         //set data scale
-        var xMin = d3.min(locationData.map( function (d) {
+        var xMin = d3.min(locationData.map(function (d) {
             return d.anchor.x;
         }));
-        var xMax = d3.max(locationData.map( function (d) {
+        var xMax = d3.max(locationData.map(function (d) {
             return d.anchor.x;
         }));
-        var xRange = xMax-xMin;
-        var yMin = d3.min(locationData.map( function (d) {
+        var xRange = xMax - xMin;
+        var yMin = d3.min(locationData.map(function (d) {
             return d.anchor.y;
         }));
-        var yMax = d3.max(locationData.map( function (d) {
+        var yMax = d3.max(locationData.map(function (d) {
             return d.anchor.y;
         }));
-        var yRange = yMax-yMin;
+        var yRange = yMax - yMin;
 
         var dataRange = d3.max([xRange, yRange]);
-        var rmax = d3.max([complexRadius, Math.ceil(0.5*dataRange)]);
+        var rmax = d3.max([complexRadius, Math.ceil(0.5 * dataRange)]);
 
         updateScales(xMin, yMin, dataRange);
 
@@ -1429,7 +1470,7 @@ function dataLoader(file) {
         d3.select('#complexRadius')
             .attr('min', 1)
             .attr('max', rmax);
-        d3.select('#complexRadius').attr('value',complexRadius)
+        d3.select('#complexRadius').attr('value', complexRadius)
 
         resetCheckboxes();
 
@@ -1439,20 +1480,20 @@ function dataLoader(file) {
 
 }
 
-function changeNumberSampleSensors(){
+function changeNumberSampleSensors() {
     var numSamplesSensors = parseInt(document.getElementById('numSampleSensors').value);
-    if(numPoints != numSamplesSensors) {
+    if (numPoints != numSamplesSensors) {
         numPoints = +numSamplesSensors;
     }
     perturbData();
     addSampleSensors();
 }
 
-function changeDataRadius(val){
+function changeDataRadius(val) {
     dataRadius = parseInt(val);
-    d3.select('#complexRadiusInput').node().value =  dataRadius;
+    d3.select('#complexRadiusInput').node().value = dataRadius;
     d3.select('#complexDataRadius').node().value = dataRadius;
-    if(dataRadius < originalDataRadius) {
+    if (dataRadius < originalDataRadius) {
         perturbData();
         originalDataRadius = dataRadius;
         addSampleSensors();
@@ -1465,13 +1506,13 @@ function changeDataRadius(val){
     }
 }
 
-function addSampleSensors(){
+function addSampleSensors() {
 
     renderPoints();
 
-    if (complexType=='Cech') {
+    if (complexType == 'Cech') {
         constructCech();
-    } else if (complexType=='Vietoris-Rips') {
+    } else if (complexType == 'Vietoris-Rips') {
         constructRips();
     }
     changeComplex();
@@ -1482,25 +1523,26 @@ function perturbData() {
     var r, theta, xj, yj, tmp;
 
     if (arguments.length == 0) {
-    locationData.forEach( function (d) {
-        tmp = [];
-        for (j=0; j<numPoints; j++) {
-            r = Math.random() * dataRadius;
-            theta = Math.random() * 2 * Math.PI;
-            xj = d.anchor.x + Math.floor( r * Math.cos(theta));
-            yj = d.anchor.y + Math.floor( r * Math.sin(theta));
-            tmp.push( { x: xj, y: yj} )
-        }
-        d.points = tmp;
-    })} else {
+        locationData.forEach(function (d) {
+            tmp = [];
+            for (j = 0; j < numPoints; j++) {
+                r = Math.random() * dataRadius;
+                theta = Math.random() * 2 * Math.PI;
+                xj = d.anchor.x + Math.floor(r * Math.cos(theta));
+                yj = d.anchor.y + Math.floor(r * Math.sin(theta));
+                tmp.push({x: xj, y: yj})
+            }
+            d.points = tmp;
+        })
+    } else {
         data = arguments[0]
         tmp = [];
-        for (j=0; j<numPoints; j++){
+        for (j = 0; j < numPoints; j++) {
             r = Math.random() * dataRadius;
             theta = Math.random() * 2 * Math.PI;
             xj = data.anchor.x + Math.floor(r * Math.cos(theta));
             yj = data.anchor.y + Math.floor(r * Math.sin(theta));
-            tmp.push( { x: xj, y: yj} )
+            tmp.push({x: xj, y: yj})
         }
         data.points = tmp;
     }
@@ -1522,14 +1564,14 @@ function changeComplex() {
 
 function addNode() {
 
-    complexSVG.attr('cursor','crosshair')
-        .on('click',function () {
+    complexSVG.attr('cursor', 'crosshair')
+        .on('click', function () {
             coords = d3.mouse(d3.select('#complexSVG').node());
             updateNode(coords);
         });
 
-    window.addEventListener('keydown', function(event) {
-        if (event.code=='Escape') {
+    window.addEventListener('keydown', function (event) {
+        if (event.code == 'Escape') {
             complexSVG.attr('cursor', null)
                 .on('click', null);
         }
@@ -1537,21 +1579,23 @@ function addNode() {
 }
 
 function updateNode(coords) {
-    console.log("update radius:"+complexRadius)
+    console.log("update radius:" + complexRadius)
 
-    if (locationData.length==0) {
+    if (locationData.length == 0) {
         resetCheckboxes();
-    };
+    }
+    ;
 
     i = locationData.length;
-    var x,y;
+    var x, y;
     if (newxScale && newyScale) {
         x = newxScale.invert(coords[0] - padding);
         y = newyScale.invert(coords[1] - padding);
     } else {
         x = xScale.invert(coords[0] - padding);
         y = yScale.invert(coords[1] - padding);
-    };
+    }
+    ;
 
 
     var newPoint = {anchor: {x: x, y: y}};
@@ -1575,7 +1619,7 @@ function updateNode(coords) {
 function myMap() {
     var mapCanvas = document.getElementById('map');
     var mapOptions = {
-        center: new google.maps.LatLng(40.762,-111.839),
+        center: new google.maps.LatLng(40.762, -111.839),
         zoom: 16
     };
     var map = new google.maps.Map(mapCanvas, mapOptions);
@@ -1587,12 +1631,12 @@ function showCoverage(d) {
         fillOpacity = '0.1';
         d3.select('#complexCircles').selectAll('circle')
             .transition()
-            .style('visibility','visible')
+            .style('visibility', 'visible')
             .style('fill', fillColor)
             .style('fill-opacity', 0.2);
         d3.select('#complexDataCircle').selectAll('circle')
             .transition()
-            .style('visibility','visible')
+            .style('visibility', 'visible')
             .style('fill', fillColor)
             .style('fill-opacity', 0.1);
     } else {
@@ -1606,7 +1650,12 @@ function showCoverage(d) {
 }
 
 function show(state, type) {
-    if (state) {str='visible'} else {str='hidden'};
+    if (state) {
+        str = 'visible'
+    } else {
+        str = 'hidden'
+    }
+    ;
     complexCanvas.selectAll(type)
         .style('visibility', str);
 }
@@ -1614,24 +1663,22 @@ function show(state, type) {
 function dragNode() {
     coords = d3.mouse(this)
     i = this.id.match(/\d+/g);
-    str = '#complex_Circle_'+i;
+    str = '#complex_Circle_' + i;
 
     dx = locationData[i].anchor.x - coords[0];
     dy = locationData[i].anchor.y - coords[1];
 
 
-    d3.selectAll(".small_circle").filter( function () {
-        var re = new RegExp('complex_small_Point_'+i+'_\d*');
+    d3.selectAll(".small_circle").filter(function () {
+        var re = new RegExp('complex_small_Point_' + i + '_\d*');
         return re.test(this.id)
     })
-        .attr('cx', function(d) {
+        .attr('cx', function (d) {
             return d.x - dx
         })
-        .attr('cy', function(d) {
+        .attr('cy', function (d) {
             return d.y - dy
         })
-
-
 
 
     d3.select(str)
@@ -1648,14 +1695,15 @@ function dragEnd() {
     if (wasDragged) {
         coords = d3.mouse(d3.select('#complexSVG').node());
         i = this.id.match(/\d+/g);
-        var x,y;
+        var x, y;
         if (newxScale && newyScale) {
             x = newxScale.invert(coords[0] - padding);
             y = newyScale.invert(coords[1] - padding);
         } else {
             x = xScale.invert(coords[0] - padding);
             y = yScale.invert(coords[1] - padding);
-        };
+        }
+        ;
 
 
         dx = locationData[i].anchor.x - x;
@@ -1664,7 +1712,7 @@ function dragEnd() {
         locationData[i].anchor.x = x;
         locationData[i].anchor.y = y;
 
-        locationData[i].points.forEach( function (d) {
+        locationData[i].points.forEach(function (d) {
             d.x = d.x - dx;
             d.y = d.y - dy;
         })
@@ -1673,8 +1721,8 @@ function dragEnd() {
         updateComplex(document.getElementById('complexInput').value);
     }
     wasDragged = false;
-    for (i=0; i<selectedNodes.length; i++) {
-        highlightPoint([],selectedNodes[i])
+    for (i = 0; i < selectedNodes.length; i++) {
+        highlightPoint([], selectedNodes[i])
     }
 }
 
@@ -1685,28 +1733,30 @@ function selectNode() {
     i = +this.id.match(/\d+/g);
 
     selectedNodes.push(i);
-    highlightPoint([],i);
+    highlightPoint([], i);
 
-    d3.select('#complex_Point_'+i)
-        .on('mouseover',null)
-        .on('mouseout',null)
-        .on('click',null);
+    d3.select('#complex_Point_' + i)
+        .on('mouseover', null)
+        .on('mouseout', null)
+        .on('click', null);
 
 
-    highlightPoint([],i);
+    highlightPoint([], i);
 
-    if (selectedNodes.length==1) {
+    if (selectedNodes.length == 1) {
         window.addEventListener('keydown', nodeSelector);
     }
 }
 
 function nodeSelector() {
-    if (event.code=='Delete' || event.code=='Backspace') {
+    if (event.code == 'Delete' || event.code == 'Backspace') {
         console.log(event.code)
         window.removeEventListener('keydown', nodeSelector)
-        selectedNodes = selectedNodes.sort(function(a, b){return a-b});
+        selectedNodes = selectedNodes.sort(function (a, b) {
+            return a - b
+        });
         for (j = 0; j < selectedNodes.length; j++) {
-            locationData.splice(selectedNodes[j]-j, 1);
+            locationData.splice(selectedNodes[j] - j, 1);
         }
         numSamples = locationData.length;
         selectedNodes = [];
@@ -1722,7 +1772,7 @@ function nodeSelector() {
 }
 
 function sqEuclidDist(pt1, pt2) {
-    return Math.pow(pt2[0]-pt1[0],2) + Math.pow(pt2[1]-pt1[1],2);
+    return Math.pow(pt2[0] - pt1[0], 2) + Math.pow(pt2[1] - pt1[1], 2);
 }
 
 function clearScreen() {
@@ -1733,7 +1783,7 @@ function clearScreen() {
     locationData = [];
     selectedNodes = [];
     newZscale = 1;
-    updateScales(0,0,0);
+    updateScales(0, 0, 0);
 
     gX.call(xAxis.scale(xScale));
     gY.call(yAxis.scale(yScale));
@@ -1754,7 +1804,7 @@ function clearScreen() {
 function setMax() {
 
     var rmax = d3.select('#complexInput').node().max.toString();
-    var maxval = prompt('Enter maximum radius value',rmax)
+    var maxval = prompt('Enter maximum radius value', rmax)
     d3.select('#complexInput').attr('max', maxval);
     d3.select('#complexRadius').attr('max', maxval);
 }
