@@ -13,9 +13,6 @@
   <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
-<h1 id="site-title">Network Coverage</h1>
-
-<a href="help.html" class="helplink" target="blank5">Help</a>
 
 <table>
   <tr>
@@ -103,7 +100,7 @@
             <p>Probability of Face:</p>
             <input type="color" id="startColor" onchange="updateStartValue(this.value)">
             <input type="color" id="endColor" onchange="updateEndValue(this.value)">
-            <br>
+            <br><br>
             <select id="colorScale" onchange="changeColorScale(this.value)"> Color Scale
               <option value="green">Green</option>
               <option value="orange">Orange</option>
@@ -127,6 +124,8 @@
 
 <!--this button is for testing components, keep hidden when not in use-->
 <button type="button" onclick="clearScreen()">Clear</button>
+<br><br>
+<a href="help.html" class="helplink" target="blank5">Help</a>
 <br><br><br>
 
 By Tim Sodergren, 2016. Special thanks to Dan Maljovec for providing the original code this interface was adapted from.
