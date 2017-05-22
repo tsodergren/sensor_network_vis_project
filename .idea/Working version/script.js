@@ -8,7 +8,7 @@ var padding = 30;          //Buffer space to ensure points are adequately
 
 
 //Initialize the data
-var filename = 'data.off';
+var filename = 'data.json';
 var locationData = [];
 var complexType;
 var selectedNodes = [];
@@ -142,7 +142,7 @@ window.addEventListener('keydown', function (event) {
 
 renderGrid();
 
-dataLoader('data/data.off')
+dataLoader('data/data.json')
 
 createLegends();
 
@@ -1252,44 +1252,12 @@ function randomData() {
 
 function saveData() {
 
-    //save nodes
-
-    var header = 'OFF\n'+
-        '#\n'+
-        '# Simplicial complex of 2-D location data\n'+
-        '# Generated on '+Date()+'\n'+
-        '# Complex type: '+complexType+'\n'+
-        '# Coverage radius: '+complexRadius+'\n'+
-        '#\n'+
-        numSamples+' ' + (cechFaces.length + cechEdges.length) + ' 0';
+    var data = {n: numSamples, k: numPoints, r: complexRadius, eps: dataRadius, sensors: locationData,
+                cechComplex: [cechEdges, cechFaces], ripsComplex: [ripsEdges, ripsFaces]};
+    var tempData = JSON.stringify(data, null, 2);
 
 
-    var tempData = JSON.parse(JSON.stringify(locationData));
-    tempData.forEach( function(d) {
-        d.z = 0;
-    });
-    var verticesStr = d3.dsvFormat(' ').format(tempData, ['xf', 'yf', 'z']);
-    verticesStr = verticesStr.replace('xf yf z', []);
-
-    if (complexType=='Cech') {
-        faces = cechFaces;
-        edges = cechEdges;
-    } else {
-        faces = ripsFaces;
-        edges = ripsEdges;
-    };
-
-    var edgesStr = d3.dsvFormat(' ').format(edges, ['Pt1', 'Pt2']);
-    edgesStr = edgesStr.replace(/\n/g, '\n2 ')
-    edgesStr = edgesStr.replace('Pt1 Pt2', []);
-    var facesStr = d3.dsvFormat(' ').format(faces, ['Pt1', 'Pt2', 'Pt3']);
-    facesStr = facesStr.replace(/\n/g, '\n3 ')
-    facesStr = facesStr.replace('Pt1 Pt2 Pt3', []);
-
-    dsvContent = header+verticesStr+edgesStr+facesStr;
-    dsvContent = dsvContent.replace(/\n/g,'\r\n');
-
-    var blob = new Blob([dsvContent], { type: 'text/csv;charset=utf-8;' });
+    var blob = new Blob([tempData], { type: 'text/plain;charset=utf-8;' });
     if (navigator.msSaveBlob) { // IE 10+
         navigator.msSaveBlob(blob, filename);
     } else {
@@ -1307,6 +1275,7 @@ function saveData() {
     }
 }
 
+
 function loadData() {
 
     //allow user to select file
@@ -1319,60 +1288,19 @@ function loadData() {
 
 }
 
-function dataLoader(file) {
-    d3.text(file, function (txt) {
-
-        str = txt.match(/Complex type: (\w*)/);
-        complexType = str[1];
-        str = txt.match(/Coverage radius: (\w*)/);
-        complexRadius = +str[1];
-
-        str = txt.replace(/#[^\n]*\n/g, []);
-        str = str.replace(/OFF\r?\n/i, []);
-
-        re = /([^\r?\n]*)\r?\n/;
-        line1 = str.match(re);
-        line1 = line1[1];
-        line1 = line1.match(/(\d*)\w/g);
-        numSamples = +line1[0];
-        numFaces = +line1[1];
-        numEdges = +line1[2];
-
-        str = str.replace(re,[]);
-
-        var edges = [];
-        var faces = [];
-        locationData = [];
-
-        d3.dsvFormat(' ').parseRows(str, function (d,i) {
-            if (i<numSamples) {
-                locationData.push({anchor: {x: +d[0], y: +d[1]} });
-            } else {
-                if (d[0]==3) {
-                    faces.push( { Pt1: +d[1], Pt2: +d[2], Pt3: +d[3] } );
-                } else if (d[0]==2) {
-                    edges.push( { Pt1: +d[1], Pt2: +d[2] } );
-                }
-
-            };
-        });
-
-        complexSelector = document.getElementsByName('complexType');
-        if (complexType=='Cech') {
-            cechFaces = faces;
-            cechEdges = edges;
-            ripsFaces = [];
-            ripsEdges = [];
-            complexSelector[0].checked = true;
-        } else if (complexType=='Vietoris-Rips') {
-            ripsFaces = faces;
-            ripsEdges = edges;
-            cechFaces = [];
-            cechEdges = [];
-            complexSelector[1].checked = true;
-        }
+function dataLoader(file){
+    d3.json(file, function(data) {
 
 
+        dataRadius = data.eps;
+        numPoints = data.k;
+        numSamples = data.n;
+        complexRadius = data.r;
+        locationData = data.sensors;
+        ripsEdges = data.ripsComplex[0];
+        ripsFaces = data.ripsComplex[1];
+        cechEdges = data.cechComplex[0];
+        cechFaces = data.cechComplex[1];
 
 
         //set data scale
@@ -1419,9 +1347,9 @@ function dataLoader(file) {
 
         resetCheckboxes();
 
-        perturbData();
         addSampleSensors();
-    });
+
+    })
 
 }
 
