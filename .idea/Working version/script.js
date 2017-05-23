@@ -74,9 +74,9 @@ var lightGreen = "#99ff99";
 var darkGreen = "#006600";
 var orange = "#ff9400";
 var lightOrange = "#ffd8a3";
-var blue = "#00f";
-var yellow = "#ff0";
-var lightGray = "#aaa";
+var blue = "#0000ff";
+var yellow = "#ffff00";
+var lightGray = "#aaaaaa";
 var gray = "#595959";
 var tan = "#ffffbf";
 var start = lightGreen;
@@ -93,6 +93,9 @@ var faceColorScale = faceGreenScale;
 var faceOpacityScale = d3.scaleLinear().range([0.3, 0.75]).domain([0.01, 1]);
 var edgeOpacityScale = d3.scaleLinear().range([0.2, 1]).domain([0.01, 1]);
 var edgeWidthScale = d3.scaleLinear().range([2, 6]).domain([0.01, 1]);
+
+document.getElementById("startColor").value = lightGreen;
+document.getElementById("endColor").value = darkGreen;
 
 
 var complexCanvas = complexSVG.append('g')
@@ -241,32 +244,52 @@ function createFaceLengend() {
         .call(legendAxis);
 }
 
-function changeColorScale(selected){
-    switch (selected){
+function updateStartValue(value) {
+    document.getElementById("colorScale").value = "Custom";
+    start = document.getElementById("startColor").value;
+    faceColorScale = d3.scaleLinear().range([start, end]).domain([0.01, 1]);
+    renderFaces();
+    renderView();
+    createFaceLengend();
+}
+
+function updateEndValue(value) {
+    document.getElementById("colorScale").value = "Custom";
+    end = document.getElementById("endColor").value;
+    faceColorScale = d3.scaleLinear().range([start, end]).domain([0.01, 1]);
+    renderFaces();
+    renderView();
+    createFaceLengend();
+}
+
+function setScaleStartEnd(startColor, endColor) {
+    start = startColor;
+    document.getElementById("startColor").value = startColor;
+    end = endColor;
+    document.getElementById("endColor").value = endColor;
+}
+
+function changeColorScale(selected) {
+    switch (selected) {
         case "orange" :
             faceColorScale = faceOrangeScale;
-            start = lightOrange;
-            end = orange;
+            setScaleStartEnd(lightOrange, orange);
             break;
         case "green" :
             faceColorScale = faceGreenScale;
-            start = lightGreen;
-            end = darkGreen;
+            setScaleStartEnd(lightGreen, darkGreen);
             break;
         case "gray" :
             faceColorScale = faceGrayScale;
-            start = lightGray;
-            end = gray;
+            setScaleStartEnd(lightGray, gray);
             break;
         case "blueYellow" :
             faceColorScale = faceBlueYellowScale;
-            start = blue;
-            end = yellow;
+            setScaleStartEnd(blue, yellow);
             break;
         case "orangeBlue" :
             faceColorScale = faceOrangeBlueScale;
-            start = orange;
-            end = blue;
+            setScaleStartEnd(orange, blue);
             break;
     }
     renderFaces();
