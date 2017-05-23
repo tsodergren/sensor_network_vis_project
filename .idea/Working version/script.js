@@ -1130,6 +1130,25 @@ function renderView() {
     show(f.checked,'.face');
 }
 
+function updateScales(xMin, yMin, dataRange){
+    var aspectMin = Math.min(width, height);
+    var aspect, yScaleMax, xScaleMax;
+    var dataPadding = 0.1*dataRange;
+    if(aspectMin == height){
+        aspect = width / height;
+        yScaleMax = yMin+dataRange;
+        xScaleMax = yScaleMax * aspect;
+        xScale.domain([xMin-dataPadding, xScaleMax + dataPadding]);
+        yScale.domain([yMin-dataPadding, yScaleMax + dataPadding]);
+    } else {
+        aspect = height / width;
+        xScaleMax = xMin+dataRange;
+        yScaleMax = xScaleMax * aspect;
+        xScale.domain([xMin-dataPadding, xScaleMax + dataPadding]);
+        yScale.domain([yMin-dataPadding, yScaleMax + dataPadding]);
+    }
+
+}
 
 
 function importData() {
@@ -1169,10 +1188,7 @@ function importData() {
             yRange = yMax-yMin;
 
             dataRange = d3.max([xRange, yRange]);
-            dataPadding = 0.1*dataRange;
-            // dataMin = d3.min([xMin, yMin]);
-            xScale.domain([xMin-dataPadding, xMin+dataRange+dataPadding]);
-            yScale.domain([yMin-dataPadding, yMin+dataRange+dataPadding]);
+            updateScales(xMin, yMin, dataRange);
 
             d3.select('#complexInput')
                 .attr('min', 0.05*dataRange)
@@ -1320,11 +1336,9 @@ function dataLoader(file){
         var yRange = yMax-yMin;
 
         var dataRange = d3.max([xRange, yRange]);
-        var dataPadding = 0.1*dataRange;
         var rmax = d3.max([complexRadius, Math.ceil(0.5*dataRange)]);
 
-        xScale.domain([xMin-dataPadding, xMin+dataRange+dataPadding]);
-        yScale.domain([yMin-dataPadding, yMin+dataRange+dataPadding]);
+        updateScales(xMin, yMin, dataRange);
 
         complexCanvas.attr("transform", d3.zoomIdentity)
         newxScale = false;
@@ -1647,8 +1661,7 @@ function clearScreen() {
     locationData = [];
     selectedNodes = [];
     newZscale = 1;
-    xScale.domain([0,100]);
-    yScale.domain([0,100]);
+    updateScales(0,0,0);
     gX.call(xAxis.scale(xScale));
     gY.call(yAxis.scale(yScale));
     newxScale = false;
