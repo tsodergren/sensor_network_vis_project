@@ -1269,7 +1269,7 @@ function randomData() {
 function saveData() {
 
     var data = {n: numSamples, k: numPoints, r: complexRadius, eps: dataRadius, sensors: locationData,
-                cechComplex: [cechEdges, cechFaces], ripsComplex: [ripsEdges, ripsFaces]};
+                allEdges: allEdges, cechComplex: [cechEdges, cechFaces], ripsComplex: [ripsEdges, ripsFaces]};
     var tempData = JSON.stringify(data, null, 2);
 
 
@@ -1313,6 +1313,7 @@ function dataLoader(file){
         numSamples = data.n;
         complexRadius = data.r;
         locationData = data.sensors;
+        allEdges = data.allEdges;
         ripsEdges = data.ripsComplex[0];
         ripsFaces = data.ripsComplex[1];
         cechEdges = data.cechComplex[0];
