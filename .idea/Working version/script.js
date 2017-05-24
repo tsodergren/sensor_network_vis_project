@@ -1514,6 +1514,14 @@ function updateNode(coords) {
     updateComplex(document.getElementById('complexInput').value);
 }
 
+function queryNode() {
+    complexSVG.attr('cursor','crosshair')
+        .on('click', function () {
+            
+
+        })
+}
+
 // function updateLocation(coords) {
 //     locationData[selectedNode].anchor.x = coords[0];
 //     locationData[selectedNode].anchor.y = coords[1];
