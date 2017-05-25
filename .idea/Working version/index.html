@@ -98,18 +98,17 @@
         <tr>
           <td>
             <p>Probability of Face:</p>
-            <input type="color" id="startColor" onchange="updateStartValue(this.value)">
-            <input type="color" id="endColor" onchange="updateEndValue(this.value)">
-            <br><br>
             <select id="colorScale" onchange="changeColorScale(this.value)"> Color Scale
+              <option value="yellowBlue">Yellow to Blue</option>
+              <option value="yellowRed">Yellow to Red</option>
+              <option value="bluePurple">Blue to Purple</option>
+              <option value="red">Red</option>
               <option value="green">Green</option>
-              <option value="orange">Orange</option>
-              <option value="gray">Gray</option>
-              <option value="blueYellow">Blue to Yellow</option>
-              <option value="orangeBlue">Orange to Blue</option>
             </select>
             <br>
-            <svg id="face_legend" width="350px" height="60px"></svg>
+            <svg id="face_legend" width="360px" height="60px">
+              <g class="legendSequential"></g>
+            </svg>
           </td>
           <td>
             <p>Probability of Edge:</p>

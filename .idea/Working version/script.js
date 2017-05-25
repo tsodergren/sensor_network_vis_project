@@ -70,33 +70,23 @@ var gY = complexSVG.append('g')
     .attr('transform','translate('+padding+','+padding+')')
     .call(yAxis);
 
-var lightGreen = "#99ff99";
-var darkGreen = "#006600";
-var orange = "#ff9400";
-var lightOrange = "#ffd8a3";
-var blue = "#0000ff";
-var yellow = "#ffff00";
-var lightGray = "#aaaaaa";
-var gray = "#595959";
-var tan = "#ffffbf";
-var start = lightGreen;
-var end = darkGreen;
 
-var faceGreenScale = d3.scaleLinear().range([lightGreen, darkGreen]).domain([0.01, 1]);
-var faceOrangeScale = d3.scaleLinear().range([lightOrange, orange]).domain([0.01, 1]);
-var faceBlueYellowScale = d3.scaleLinear().range([blue, yellow]).domain([0.01, 1]);
-var faceOrangeBlueScale = d3.scaleLinear().range([orange, tan, blue])
-    .domain([0.01, 0.5, 1]);
-var faceGrayScale = d3.scaleLinear().range([lightGray, gray]).domain([0.01, 1]);
+var yellowRedScale = ["#ffffb2", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#b10026"];
+var yellowBlueScale = ["#ffffcc", "#c7e9b4", "#7fcdbb", "#41b6c4", "#1d91c0", "#225ea8", "#0c2c84"];
+var bluePurpleScale = ["#edf8fb", "#bfd3e6", "#9ebcda", "#8c96c6", "#8c6bb1", "#88419d", "#6e016b"];
+var redScale = ["#fef0d9", "#fdd49e", "#fdbb84", "#fc8d59", "#ef6548", "#d7301f", "#990000"];
+var greenScale = ["#edf8fb", "#ccece6", "#99d8c9", "#66c2a4", "#41ae76", "#238b45", "#005824"];
 
-var faceColorScale = faceGreenScale;
-var faceOpacityScale = d3.scaleLinear().range([0.3, 0.75]).domain([0.01, 1]);
+var faceYellowBlueScale = d3.scaleOrdinal().range(yellowBlueScale).domain([0.01, 0.17, 0.34, .51, .68, .85, 1]);
+var faceYellowRedScale = d3.scaleOrdinal().range(yellowRedScale).domain([0.01, 0.17, 0.34, .51, .68, .85, 1]);
+var faceBluePurpleScale = d3.scaleOrdinal().range(bluePurpleScale).domain([0.01, 0.17, 0.34, .51, .68, .85, 1]);
+var faceRedScale = d3.scaleOrdinal().range(redScale).domain([0.01, 0.17, 0.34, .51, .68, .85, 1]);
+var faceGreenScale = d3.scaleOrdinal().range(greenScale).domain([0.01, 0.17, 0.34, .51, .68, .85, 1]);
+
+
+var faceColorScale = faceYellowBlueScale;
 var edgeOpacityScale = d3.scaleLinear().range([0.2, 1]).domain([0.01, 1]);
 var edgeWidthScale = d3.scaleLinear().range([2, 6]).domain([0.01, 1]);
-
-document.getElementById("startColor").value = lightGreen;
-document.getElementById("endColor").value = darkGreen;
-
 
 var complexCanvas = complexSVG.append('g')
     .attr('class','cech')
@@ -195,101 +185,32 @@ function createEdgeLegend() {
 }
 
 function createFaceLengend() {
-    var legend = d3.select("#face_legend").append('g');
-    legend.selectAll('*').remove();
-    var gradient = legend.append('defs')
-        .append('linearGradient')
-        .attr('id', 'gradient')
-        .attr('x1', '0%')
-        .attr('y1', '0%')
-        .attr('x2', '100%')
-        .attr('y2', '0%')
-        .attr('spreadMethod', 'pad');
+    var legend = d3.select("#face_legend");
 
+    var legendAxis = d3.legendColor()
+        .shapeWidth(50)
+        .orient("horizontal")
+        .scale(faceColorScale);
 
-    gradient.append('stop')
-        .attr('offset', '0%')
-        .attr('stop-color', start)
-        .attr('stop-opacity', 1);
-    if(faceColorScale == faceOrangeBlueScale){
-        gradient.append('stop')
-            .attr('offset', '50%')
-            .attr('stop-color', tan)
-            .attr('stop-opacity', 1);
-    }
-    gradient.append('stop')
-        .attr('offset', '100%')
-        .attr('stop-color', end)
-        .attr('stop-opacity', 1);
-
-    legend.append('rect')
-        .attr('x1', 0)
-        .attr('y1', 0)
-        .attr('width', '300px')
-        .attr('height', '40px')
-        .attr("transform", "translate(10,0)")
-        .style('fill', 'url(#gradient)');
-
-    var legendScale = d3.scaleLinear()
-        .domain([0.01, 1])
-        .range([0, 300]);
-
-    var legendAxis = d3.axisBottom(legendScale)
-        .tickValues([0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1])
-        .tickFormat(d3.format(".2f"));;
-
-    legend.append("g")
-        .attr("class", "legend axis")
-        .attr("transform", "translate(10, 40)")
-        .call(legendAxis);
-}
-
-function updateStartValue(value) {
-    document.getElementById("colorScale").value = "Custom";
-    start = document.getElementById("startColor").value;
-    faceColorScale = d3.scaleLinear().range([start, end]).domain([0.01, 1]);
-    renderFaces();
-    renderView();
-    createFaceLengend();
-}
-
-function updateEndValue(value) {
-    document.getElementById("colorScale").value = "Custom";
-    end = document.getElementById("endColor").value;
-    faceColorScale = d3.scaleLinear().range([start, end]).domain([0.01, 1]);
-    renderFaces();
-    renderView();
-    createFaceLengend();
-}
-
-function setScaleStartEnd(startColor, endColor) {
-    start = startColor;
-    document.getElementById("startColor").value = startColor;
-    end = endColor;
-    document.getElementById("endColor").value = endColor;
+    legend.select(".legendSequential").call(legendAxis);
 }
 
 function changeColorScale(selected) {
     switch (selected) {
-        case "orange" :
-            faceColorScale = faceOrangeScale;
-            setScaleStartEnd(lightOrange, orange);
+        case "yellowBlue" :
+            faceColorScale = faceYellowBlueScale;
+            break;
+        case "yellowRed" :
+            faceColorScale = faceYellowRedScale
+            break;
+        case "bluePurple" :
+            faceColorScale = faceBluePurpleScale;
+            break;
+        case "red" :
+            faceColorScale = faceRedScale;
             break;
         case "green" :
             faceColorScale = faceGreenScale;
-            setScaleStartEnd(lightGreen, darkGreen);
-            break;
-        case "gray" :
-            faceColorScale = faceGrayScale;
-            setScaleStartEnd(lightGray, gray);
-            break;
-        case "blueYellow" :
-            faceColorScale = faceBlueYellowScale;
-            setScaleStartEnd(blue, yellow);
-            break;
-        case "orangeBlue" :
-            faceColorScale = faceOrangeBlueScale;
-            setScaleStartEnd(orange, blue);
             break;
     }
     renderFaces();
@@ -593,7 +514,6 @@ function resetFace() {
     if ( arguments.length > 1) {
         d3.select(this)
             .transition()
-            .attr('opacity', faceOpacityScale(arguments[0].Pface))
             .style('fill', faceColorScale(arguments[0].Pface));
 
         resetEdge('#complex_Edge_' + arguments[0].Pt1 + '_' + arguments[0].Pt2);
@@ -607,7 +527,6 @@ function resetFace() {
         faces = complexType == 'Cech' ? cechFaces : ripsFaces;
         d3.select('#complex_Face_'+faces[arguments[0]].Pt1+'_'+faces[arguments[0]].Pt2+'_'+faces[arguments[0]].Pt3)
             .transition()
-            .attr('opacity', faceOpacityScale(faces[arguments[0]].Pface))
             .style('fill', faceColorScale(faces[arguments[0]].Pface));
 
         faces.forEach( function (d) {
@@ -964,9 +883,6 @@ function renderFaces(){
         )
         .attr('id', function (d, i) {
             return 'complex_Face_'+d.Pt1+'_'+d.Pt2+'_'+d.Pt3;
-        })
-        .attr('opacity', function(d){
-            return faceOpacityScale(d.Pface);
         })
         .attr('fill', function (d) {
             return faceColorScale(d.Pface);
