@@ -130,6 +130,10 @@ var zoombox = complexSVG.append("rect")
     .style('visibility','off')
     .call(zoom);
 
+var tooltip = d3.select("#plotArea").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
 window.addEventListener('keydown', function (event) {
     if (event.key=='z') {
         if (zoomOn) {
@@ -426,10 +430,27 @@ function resetPoint() {
     }
 }
 
+function showToolTip(data){
+    tooltip.transition()
+        .style("opacity", 0.9);
+    tooltip.html("Probability of " + data)
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY - 28) + "px");
+}
+
+function hideToolTip(){
+    tooltip.transition()
+        .style("opacity", 0);
+}
+
 //highlight edge and corresponding points
 function highlightEdge() {
 
-    var data;
+    var data = arguments[0];
+
+    if(this.className != "individual_edge" && data.hasOwnProperty("Pedge")){
+        showToolTip(data.Pedge);
+    }
 
     if (arguments.length == 3) {
         data = arguments[0]
@@ -453,7 +474,7 @@ function highlightEdge() {
 
 //restore default view
 function resetEdge() {
-
+    hideToolTip();
     var data;
 
     if (arguments.length == 3) {
@@ -482,7 +503,10 @@ function resetEdge() {
 
 //highlight faces
 function highlightFace() {
-
+    var data = arguments[0];
+    if(data.hasOwnProperty("Pface")){
+        showToolTip(data["Pface"]);
+    }
 
     if ( arguments.length == 3) {
         d3.select(this)
@@ -531,6 +555,7 @@ d3.selection.prototype.moveToFront = function() {
 
 //reset to default view
 function resetFace() {
+    hideToolTip();
 
     if ( arguments.length > 1) {
         d3.select(this)
