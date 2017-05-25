@@ -1118,22 +1118,24 @@ function renderView() {
     show(f.checked,'.face');
 }
 
-function updateScales(xMin, yMin, dataRange){
+function updateScales(xMin, xMax, yMin, yMax){
     var aspectMin = Math.min(width, height);
     var aspect, yScaleMax, xScaleMax;
-    var dataPadding = 0.1*dataRange;
+
+
     if(aspectMin == height){
         aspect = width / height;
-        yScaleMax = yMin+dataRange;
+        yScaleMax = yMax;
         xScaleMax = yScaleMax * aspect;
-        xScale.domain([xMin-dataPadding, xScaleMax + dataPadding]);
-        yScale.domain([yMin-dataPadding, yScaleMax + dataPadding]);
+        xScale.domain([xMin, xScaleMax]);
+        yScale.domain([yMin, yScaleMax]);
+
     } else {
         aspect = height / width;
-        xScaleMax = xMin+dataRange;
+        xScaleMax = xMax;
         yScaleMax = xScaleMax * aspect;
-        xScale.domain([xMin-dataPadding, xScaleMax + dataPadding]);
-        yScale.domain([yMin-dataPadding, yScaleMax + dataPadding]);
+        xScale.domain([xMin, xScaleMax]);
+        yScale.domain([yMin, yScaleMax]);
     }
 
 }
@@ -1309,25 +1311,28 @@ function dataLoader(file){
 
 
         //set data scale
+
+        var dataPadding = complexRadius+dataRadius;
+
         var xMin = d3.min(locationData.map( function (d) {
             return d.anchor.x;
-        }));
+        })) - dataPadding;
         var xMax = d3.max(locationData.map( function (d) {
             return d.anchor.x;
-        }));
-        var xRange = xMax-xMin;
+        })) + dataPadding;
         var yMin = d3.min(locationData.map( function (d) {
             return d.anchor.y;
-        }));
+        })) - dataPadding;
         var yMax = d3.max(locationData.map( function (d) {
             return d.anchor.y;
-        }));
+        })) + dataPadding;
         var yRange = yMax-yMin;
 
-        var dataRange = d3.max([xRange, yRange]);
-        var rmax = d3.max([complexRadius, Math.ceil(0.5*dataRange)]);
 
-        updateScales(xMin, yMin, dataRange);
+        var rmax = d3.max([complexRadius, Math.ceil(0.5*yRange)]);
+
+
+        updateScales(xMin, xMax, yMin, yMax);
 
         complexCanvas.attr("transform", d3.zoomIdentity)
         newxScale = false;
@@ -1347,6 +1352,9 @@ function dataLoader(file){
             .attr('min', 1)
             .attr('max', rmax);
         d3.select('#complexRadius').attr('value',complexRadius)
+        d3.select('#numSensors').attr('value',numSamples)
+        d3.select('#numSampleSensors').attr('value',numPoints)
+        d3.select('#complexDataRadius').attr('value',dataRadius)
 
         resetCheckboxes();
 
