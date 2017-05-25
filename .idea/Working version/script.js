@@ -77,6 +77,13 @@ var bluePurpleScale = ["#edf8fb", "#bfd3e6", "#9ebcda", "#8c96c6", "#8c6bb1", "#
 var redScale = ["#fef0d9", "#fdd49e", "#fdbb84", "#fc8d59", "#ef6548", "#d7301f", "#990000"];
 var greenScale = ["#edf8fb", "#ccece6", "#99d8c9", "#66c2a4", "#41ae76", "#238b45", "#005824"];
 
+var redEdgeScale = ["#fdbb84", "#fc8d59", "#ef6548", "#d7301f", "#990000"];
+var blueGreenEdgeScale = ["#a6bddb", "#67a9cf", "#3690c0", "#02818a", "#016450"];
+var pinkPurpleEdgeScale = ["#feebe2", "#fcc5c0", "#fa9fb5", "#f768a1", "#dd3497"];
+var greenBlueEdgeScale = ["#7fcdbb", "#41b6c4", "#1d91c0", "#225ea8", "#0c2c84"];
+var pinkEdgeScale = ["#c994c7", "#df65b0", "#e7298a", "#ce1256", "#91003f"];
+
+
 var faceYellowBlueScale = d3.scaleOrdinal().range(yellowBlueScale).domain([0.01, 0.17, 0.34, .51, .68, .85, 1]);
 var faceYellowRedScale = d3.scaleOrdinal().range(yellowRedScale).domain([0.01, 0.17, 0.34, .51, .68, .85, 1]);
 var faceBluePurpleScale = d3.scaleOrdinal().range(bluePurpleScale).domain([0.01, 0.17, 0.34, .51, .68, .85, 1]);
@@ -85,8 +92,17 @@ var faceGreenScale = d3.scaleOrdinal().range(greenScale).domain([0.01, 0.17, 0.3
 
 
 var faceColorScale = faceYellowBlueScale;
-var edgeOpacityScale = d3.scaleLinear().range([0.2, 1]).domain([0.01, 1]);
-var edgeWidthScale = d3.scaleLinear().range([2, 6]).domain([0.01, 1]);
+
+
+var edgeRedScale = d3.scaleOrdinal().range(redEdgeScale).domain([0.01, 0.25, 0.5, 0.75, 1]);
+var edgeBlueGreenScale = d3.scaleOrdinal().range(blueGreenEdgeScale).domain([0.01, 0.25, 0.5, 0.75, 1]);
+var edgePinkPurpleScale = d3.scaleOrdinal().range(pinkPurpleEdgeScale).domain([0.01, 0.25, 0.5, 0.75, 1]);
+var edgeGreenBlueScale = d3.scaleOrdinal().range(greenBlueEdgeScale).domain([0.01, 0.25, 0.5, 0.75, 1]);
+var edgePinkScale = d3.scaleOrdinal().range(pinkEdgeScale).domain([0.01, 0.25, 0.5, 0.75, 1]);
+
+var edgeColorScale = edgeRedScale;
+
+var edgeWidthScale = d3.scaleLinear().range([6, 6]).domain([0.01, 1]);
 
 var complexCanvas = complexSVG.append('g')
     .attr('class','cech')
@@ -164,22 +180,21 @@ function createEdgeLegend() {
         .call(legendSizeLine);
 
     var lines = edgeLegend.selectAll("line");
-    lines.attr('stroke', "black")
-        .attr('opacity', function (d, i) {
+    lines.attr('stroke', function (d, i) {
             if (i == 0) {
-                return edgeOpacityScale(0.01);
+                return edgeColorScale(0.01);
             }
             if (i == 1) {
-                return edgeOpacityScale(0.25);
+                return edgeColorScale(0.25);
             }
             if (i == 2) {
-                return edgeOpacityScale(0.5);
+                return edgeColorScale(0.5);
             }
             if (i == 3) {
-                return edgeOpacityScale(0.75);
+                return edgeColorScale(0.75);
             }
             if (i == 4) {
-                return edgeOpacityScale(1);
+                return edgeColorScale(1);
             }
         });
 }
@@ -439,8 +454,7 @@ function resetEdge() {
         resetPoint(data.Pt1);
         resetPoint(data.Pt2);
         edge.transition()
-            .style('stroke', "black")
-            .style('opacity', edgeOpacityScale(arguments[0].Pedge));
+            .style('stroke', edgeColorScale(arguments[0].Pedge));
     } else {
         edge = d3.select(arguments[0]);
         var points = arguments[0].replace(/#complex_Edge_/, '');
@@ -448,8 +462,7 @@ function resetEdge() {
             var possibleEdge = ripsEdges[i];
             if(points == possibleEdge.Pt1 + "_" + possibleEdge.Pt2){
                 edge.transition()
-                    .style('stroke', "black")
-                    .style('opacity', edgeOpacityScale(possibleEdge.Pedge));
+                    .style('stroke', edgeColorScale(possibleEdge.Pedge));
                 return;
             }
         }
@@ -797,17 +810,18 @@ function renderComplex(edges,faces) {
 
 
     //remove existing canvas elements
+    complexCanvas.select('#complexFaces').remove();
+    complexCanvas.append('g')
+        .attr('id','complexFaces')
+        .style('visibility','hidden');
+    renderFaces();
+
     complexCanvas.selectAll('.edge').remove();
     var complexEdges = complexCanvas.append('g')
         .attr('id','complexEdges')
         .attr('class', 'edge')
         .style('visibility','hidden');
 
-    complexCanvas.select('#complexFaces').remove();
-    complexCanvas.append('g')
-        .attr('id','complexFaces')
-        .style('visibility','hidden');
-    renderFaces();
 
 
 //render faces, give each an id with corresponding vertex indices. This makes it easier to find and highlight the corresponding
@@ -835,9 +849,8 @@ function renderComplex(edges,faces) {
         .attr('id', function (d) {
             return 'complex_Edge_'+d.Pt1+'_'+d.Pt2;
         })
-        .attr('stroke', 'black')
-        .attr('opacity', function (d) {
-            return edgeOpacityScale(d.Pedge);
+        .attr('stroke', function (d) {
+            return edgeColorScale(d.Pedge);
         })
         .on('mouseover', highlightEdge)
         .on('mouseout', resetEdge);
@@ -914,9 +927,8 @@ function renderAllEdges(){
         .attr('id', function (d) {
             return 'complex_individual_Edge_'+d.x1+'_'+d.x2+d.y1+'_'+d.y2;
         })
-        .attr('stroke', 'black')
-        .attr('opacity', function (d) {
-            return edgeOpacityScale(d.Pedge);
+        .attr('stroke',  function (d) {
+            return edgeColorScale(d.Pedge);
         })
         .on('mouseover', highlightEdge)
         .on('mouseout', resetEdge);
