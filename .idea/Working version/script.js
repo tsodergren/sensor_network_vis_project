@@ -214,23 +214,31 @@ function changeColorScale(selected) {
     switch (selected) {
         case "yellowBlue" :
             faceColorScale = faceYellowBlueScale;
+            edgeColorScale = edgeRedScale;
             break;
         case "yellowRed" :
-            faceColorScale = faceYellowRedScale
+            faceColorScale = faceYellowRedScale;
+            edgeColorScale = edgeBlueGreenScale;
             break;
         case "bluePurple" :
             faceColorScale = faceBluePurpleScale;
+            edgeColorScale = edgePinkPurpleScale;
             break;
         case "red" :
             faceColorScale = faceRedScale;
+            edgeColorScale = edgeGreenBlueScale;
             break;
         case "green" :
             faceColorScale = faceGreenScale;
+            edgeColorScale = edgePinkScale;
             break;
     }
+    renderEdges();
+    renderAllEdges();
     renderFaces();
     renderView();
     createFaceLengend();
+    createEdgeLegend();
 }
 
 
@@ -778,14 +786,7 @@ function constructRips() {
 function renderComplex(edges,faces) {
 
     if (edges.length==0) {
-        constructRips()
-        if (complexType=='Cech') {
-            edges = cechEdges
-            faces = cechFaces
-        } else if (complexType=='Vietoris-Rips') {
-            edges = ripsEdges;
-            faces = ripsFaces;
-        }
+        constructRips();
     };
 
     // edges.forEach( function (d,i) {
@@ -816,11 +817,11 @@ function renderComplex(edges,faces) {
         .style('visibility','hidden');
     renderFaces();
 
-    complexCanvas.selectAll('.edge').remove();
-    var complexEdges = complexCanvas.append('g')
+    complexCanvas.selectAll('#complexEdges').remove();
+    complexCanvas.append('g')
         .attr('id','complexEdges')
-        .attr('class', 'edge')
         .style('visibility','hidden');
+    renderEdges();
 
 
 
@@ -828,6 +829,27 @@ function renderComplex(edges,faces) {
     //points and edges, do the same for each edge. Start with everything hidden then render view according to what the user
     //has selected
 
+
+
+    //Make sure points stay on top
+    pts = d3.select('#complexPoints').node();
+    pts.parentNode.appendChild(pts);
+
+    renderAllEdges();
+    renderView();
+
+
+}
+
+function renderEdges(){
+    var edges;
+    if (complexType=='Cech') {
+        edges = cechEdges;
+    } else if (complexType=='Vietoris-Rips') {
+        edges = ripsEdges;
+    }
+    complexCanvas.selectAll('.edge').remove();
+    var complexEdges = complexCanvas.select('g#complexEdges');
     complexEdges.selectAll('line').data(edges)
         .enter().append('line')
         .attr('class', 'edge')
@@ -854,16 +876,6 @@ function renderComplex(edges,faces) {
         })
         .on('mouseover', highlightEdge)
         .on('mouseout', resetEdge);
-
-
-    //Make sure points stay on top
-    pts = d3.select('#complexPoints').node();
-    pts.parentNode.appendChild(pts);
-
-    renderAllEdges();
-    renderView();
-
-
 }
 
 function renderFaces(){
