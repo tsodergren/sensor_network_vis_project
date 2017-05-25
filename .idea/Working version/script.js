@@ -84,21 +84,21 @@ var greenBlueEdgeScale = ["#7fcdbb", "#41b6c4", "#1d91c0", "#225ea8", "#0c2c84"]
 var pinkEdgeScale = ["#c994c7", "#df65b0", "#e7298a", "#ce1256", "#91003f"];
 
 
-var faceYellowBlueScale = d3.scaleOrdinal().range(yellowBlueScale).domain([0.01, 0.17, 0.34, .51, .68, .85, 1]);
-var faceYellowRedScale = d3.scaleOrdinal().range(yellowRedScale).domain([0.01, 0.17, 0.34, .51, .68, .85, 1]);
-var faceBluePurpleScale = d3.scaleOrdinal().range(bluePurpleScale).domain([0.01, 0.17, 0.34, .51, .68, .85, 1]);
-var faceRedScale = d3.scaleOrdinal().range(redScale).domain([0.01, 0.17, 0.34, .51, .68, .85, 1]);
-var faceGreenScale = d3.scaleOrdinal().range(greenScale).domain([0.01, 0.17, 0.34, .51, .68, .85, 1]);
+var faceYellowBlueScale = d3.scaleQuantize().range(yellowBlueScale).domain([0.01, 1]);
+var faceYellowRedScale = d3.scaleQuantize().range(yellowRedScale).domain([0.01, 1]);
+var faceBluePurpleScale = d3.scaleQuantize().range(bluePurpleScale).domain([0.01, 1]);
+var faceRedScale = d3.scaleQuantize().range(redScale).domain([0.01, 1]);
+var faceGreenScale = d3.scaleQuantize().range(greenScale).domain([0.01,  1]);
 
 
 var faceColorScale = faceYellowBlueScale;
 
 
-var edgeRedScale = d3.scaleOrdinal().range(redEdgeScale).domain([0.01, 0.25, 0.5, 0.75, 1]);
-var edgeBlueGreenScale = d3.scaleOrdinal().range(blueGreenEdgeScale).domain([0.01, 0.25, 0.5, 0.75, 1]);
-var edgePinkPurpleScale = d3.scaleOrdinal().range(pinkPurpleEdgeScale).domain([0.01, 0.25, 0.5, 0.75, 1]);
-var edgeGreenBlueScale = d3.scaleOrdinal().range(greenBlueEdgeScale).domain([0.01, 0.25, 0.5, 0.75, 1]);
-var edgePinkScale = d3.scaleOrdinal().range(pinkEdgeScale).domain([0.01, 0.25, 0.5, 0.75, 1]);
+var edgeRedScale = d3.scaleQuantize().range(redEdgeScale).domain([0.01, 1]);
+var edgeBlueGreenScale = d3.scaleQuantize().range(blueGreenEdgeScale).domain([0.01, 1]);
+var edgePinkPurpleScale = d3.scaleQuantize().range(pinkPurpleEdgeScale).domain([0.01, 1]);
+var edgeGreenBlueScale = d3.scaleQuantize().range(greenBlueEdgeScale).domain([0.01,  1]);
+var edgePinkScale = d3.scaleQuantize().range(pinkEdgeScale).domain([0.01, 1]);
 
 var edgeColorScale = edgeRedScale;
 
@@ -166,52 +166,28 @@ function createLegends() {
 
 function createEdgeLegend() {
     var edgeLegend = d3.select('#edge_legend');
-    edgeLegend.append("g")
-        .attr("class", "legendSizeLine")
-        .attr("transform", "translate(0, 20)");
+    edgeLegend.select(".legendQuant").remove();
+    edgeLegend.append("g").attr("class", "legendQuant");
 
-    var legendSizeLine = d3.legendSize()
-        .scale(edgeWidthScale)
-        .shape("line")
-        .orient("horizontal").labels(["0.01",
-            "0.25", "0.50", "0.75", "1.00"])
-        .labelWrap(30)
-        .shapeWidth(40)
-        .labelAlign("start")
-        .shapePadding(10);
+    var legendAxis = d3.legendColor()
+        .shapeWidth(80)
+        .orient("horizontal")
+        .scale(edgeColorScale);
 
-    edgeLegend.select(".legendSizeLine")
-        .call(legendSizeLine);
-
-    var lines = edgeLegend.selectAll("line");
-    lines.attr('stroke', function (d, i) {
-            if (i == 0) {
-                return edgeColorScale(0.01);
-            }
-            if (i == 1) {
-                return edgeColorScale(0.25);
-            }
-            if (i == 2) {
-                return edgeColorScale(0.5);
-            }
-            if (i == 3) {
-                return edgeColorScale(0.75);
-            }
-            if (i == 4) {
-                return edgeColorScale(1);
-            }
-        });
+    edgeLegend.select(".legendQuant").call(legendAxis);
 }
 
 function createFaceLengend() {
     var legend = d3.select("#face_legend");
+    legend.select(".legendQuant").remove();
+    legend.append("g").attr("class", "legendQuant");
 
     var legendAxis = d3.legendColor()
-        .shapeWidth(50)
+        .shapeWidth(80)
         .orient("horizontal")
         .scale(faceColorScale);
 
-    legend.select(".legendSequential").call(legendAxis);
+    legend.select(".legendQuant").call(legendAxis);
 }
 
 function changeColorScale(selected) {
@@ -964,9 +940,7 @@ function renderAllEdges(){
         .attr('id', function (d) {
             return 'complex_individual_Edge_'+d.x1+'_'+d.x2+d.y1+'_'+d.y2;
         })
-        .attr('stroke',  function (d) {
-            return edgeColorScale(d.Pedge);
-        })
+        .attr('stroke',  'black')
         .on('mouseover', highlightEdge)
         .on('mouseout', resetEdge);
 }

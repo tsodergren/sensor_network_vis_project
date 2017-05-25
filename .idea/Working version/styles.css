@@ -24,11 +24,6 @@ select {
     fill: black;
 }
 
-#edge_legend text{
-    font-size: 12px;
-    transform: translate(8px,16px) !important;
-}
-
 div.tooltip {
     position: absolute;
     text-align: center;
