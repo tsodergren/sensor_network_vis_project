@@ -1024,23 +1024,23 @@ function renderPoints() {
         .attr('fill-opacity', 0.1)
         .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
 
-    r = xScale(dataRadius + xScale.domain()[0])+5;
-    textOffset = -r * Math.cos( 3*Math.PI/4 );
-
-    complexPoints.selectAll('text')
-        .data(locationData)
-        .enter().append('text')
-        .text( function (d, i) {
-            return i.toString();
-        })
-        .attr('x', function (d) {
-            return xScale(d.anchor.x) + padding/newZscale;
-        })
-        .attr('y', function (d) {
-            return yScale(d.anchor.y) + padding/newZscale;
-        })
-        .attr('dx',textOffset)
-        .attr('dy',textOffset);
+    // r = xScale(dataRadius + xScale.domain()[0])+5;
+    // textOffset = -r * Math.cos( 3*Math.PI/4 );
+    //
+    // complexPoints.selectAll('text')
+    //     .data(locationData)
+    //     .enter().append('text')
+    //     .text( function (d, i) {
+    //         return i.toString();
+    //     })
+    //     .attr('x', function (d) {
+    //         return xScale(d.anchor.x) + padding/newZscale;
+    //     })
+    //     .attr('y', function (d) {
+    //         return yScale(d.anchor.y) + padding/newZscale;
+    //     })
+    //     .attr('dx',textOffset)
+    //     .attr('dy',textOffset);
 
     renderView()
 
