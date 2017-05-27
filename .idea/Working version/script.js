@@ -908,9 +908,7 @@ function renderAllEdges(){
         .attr('id', function (d) {
             return 'complex_individual_Edge_'+d.x1+'_'+d.x2+d.y1+'_'+d.y2;
         })
-        .attr('stroke',  function (d) {
-            return edgeColorScale(d.Pedge);
-        })
+        .attr('stroke',  'black')
         .on('mouseover', highlightEdge)
         .on('mouseout', resetEdge);
 }
@@ -1122,7 +1120,7 @@ function importData() {
             yRange = yMax-yMin;
 
             dataRange = d3.max([xRange, yRange]);
-            updateScales(xMin, yMin, dataRange);
+            updateScales(xMin, xMax, yMin, yMax);
 
             d3.select('#complexInput')
                 .attr('min', 0.05*dataRange)
@@ -1610,7 +1608,7 @@ function clearScreen() {
     locationData = [];
     selectedNodes = [];
     newZscale = 1;
-    updateScales(0,0,0);
+    updateScales(0,0,0,0);
     gX.call(xAxis.scale(xScale));
     gY.call(yAxis.scale(yScale));
     newxScale = false;
