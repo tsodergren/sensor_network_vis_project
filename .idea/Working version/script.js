@@ -399,10 +399,10 @@ function resetPoint() {
 
 }
 
-function showToolTip(data){
+function showToolTip(type, data){
     tooltip.transition()
         .style("opacity", 0.9);
-    tooltip.html("Probability of " + data)
+    tooltip.html(type + " probability of " + data)
         .style("left", (d3.event.pageX) + "px")
         .style("top", (d3.event.pageY - 28) + "px");
 }
@@ -418,7 +418,7 @@ function highlightEdge() {
     var data = arguments[0];
 
     if(this.className != "individual_edge" && data.hasOwnProperty("Pedge")){
-        showToolTip(data.Pedge);
+        showToolTip('Edge', data.Pedge);
     }
 
 
@@ -470,7 +470,7 @@ function resetEdge() {
 function highlightFace() {
     var data = arguments[0];
     if(data.hasOwnProperty("Pface")){
-        showToolTip(data["Pface"]);
+        showToolTip('Face', data["Pface"]);
     }
 
 
