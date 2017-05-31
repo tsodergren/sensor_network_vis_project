@@ -335,13 +335,21 @@ function zoomed() {
 //this function is called whenever the data are changed.
 
 function updateComplex(newValue) {
+    //update coverage radius and recompute complexes
+
+
+    //update slider value and/or tex value
     complexRadius=+newValue;
     d3.select('#complexRadius').node().value =  complexRadius;
     d3.select('#complexInput').node().value = complexRadius;
-    xMin = xScale.domain()[0];
-    screenRadius = xScale(complexRadius + xMin);
-    d3.select('#complexCircles').selectAll('circle').attr('r',screenRadius);
-    d3.select('#complexDataCircle').selectAll('circle').attr('r',screenRadius + dataRadius);
+
+    //adjust inner and outer coverage disks
+    var innerRadius = xScale(complexRadius - dataRadius + xScale.domain()[0]);
+    var outerRadius = xScale(complexRadius + dataRadius + xScale.domain()[0]);
+    d3.select('#complexCircles').selectAll('circle').attr('r', innerRadius);
+    d3.select('#complexDataCircle').selectAll('circle').attr('r', outerRadius);
+
+    //recompute complexes
     constructRips();
     changeComplex();
 }
@@ -908,9 +916,7 @@ function renderAllEdges(){
         .attr('id', function (d) {
             return 'complex_individual_Edge_'+d.x1+'_'+d.x2+d.y1+'_'+d.y2;
         })
-        .attr('stroke',  'black')
-        .on('mouseover', highlightEdge)
-        .on('mouseout', resetEdge);
+        .attr('stroke',  'black');
 }
 
 function renderPoints() {
@@ -1001,7 +1007,7 @@ function renderPoints() {
         .attr('id', function (d, i) {
             return 'complex_Circle_' + i.toString();
         })
-        .attr('r', xScale(complexRadius + xScale.domain()[0]));
+        .attr('r', xScale(complexRadius-dataRadius + xScale.domain()[0]));
 
 
 
@@ -1022,6 +1028,8 @@ function renderPoints() {
         .attr('fill-opacity', 0.1)
         .attr('r', xScale(dataRadius + complexRadius + xScale.domain()[0]));
 
+    // For plotting node labels (disable, only for troubleshooting)
+    //
     // r = xScale(dataRadius + xScale.domain()[0])+5;
     // textOffset = -r * Math.cos( 3*Math.PI/4 );
     //
@@ -1490,6 +1498,7 @@ function dragNode() {
     coords = d3.mouse(this)
     i = this.id.match(/\d+/g);
     str = '#complex_Circle_'+i;
+    str2 = '#data_Circle_'+i;
 
     dx = locationData[i].anchor.x - coords[0];
     dy = locationData[i].anchor.y - coords[1];
@@ -1507,9 +1516,10 @@ function dragNode() {
         })
 
 
-
-
     d3.select(str)
+        .attr('cx', coords[0])
+        .attr('cy', coords[1]);
+    d3.select(str2)
         .attr('cx', coords[0])
         .attr('cy', coords[1]);
     d3.select(this)
