@@ -350,8 +350,15 @@ function updateComplex(newValue) {
     d3.select('#complexDataCircle').selectAll('circle').attr('r', outerRadius);
 
     //recompute complexes
+    var t = Date.now();
     constructRips();
+    var t2 = Date.now() - t;
+    console.log('compute: ' + t2);
+
+
     changeComplex();
+    var t3 = Date.now() - t - t2;
+    console.log('render: ' + t3)
 }
 
 //graphical highlighting
@@ -1295,9 +1302,9 @@ function dataLoader(file){
 
         //adjust radius slider
         d3.select('#complexInput')
+            .attr('value', complexRadius)
             .attr('min', 1)
             .attr('max', rmax);
-        d3.select('#complexInput').node().value = complexRadius;
         d3.select('#complexRadius')
             .attr('min', 1)
             .attr('max', rmax);
