@@ -5,81 +5,147 @@
 
 function constructEdges() {
 
+
+    var radiusChange = arguments.length ? arguments[0] : 0;
+
     //squared coverage diameter and annulus of uncertainty
     var sqDiameter = 4 * Math.pow(complexRadius, 2);
     var sqDiameterMin = 4 * Math.pow(complexRadius-dataRadius, 2);
     var sqDiameterMax = 4 * Math.pow(complexRadius+dataRadius, 2);
 
-    a_edges.edgeProb = math.zeros(numSamples,numSamples,'sparse'); //edge probabilities
-    a_edges.edgeAnchorDist = math.zeros(numSamples,numSamples,'sparse'); //edge anchor distances
-    a_edges.edgeDist = math.zeros(numSamples,numSamples,'sparse') //individual edge distances for each node pair
-    a_edges.edgeFlag = math.zeros(numSamples,numSamples,'sparse') //individual edge flags for each node pair
 
-    var iEdgeDist, iEdgeFlag;
-    var tempEdges = [];
-    allEdges = []; // separate out all individual edges for easier rendering
-    var d12, p, d12_i;
+    if (!a_edges) {
+        var x=math.zeros(numSamples, numSamples,'sparse');
+        a_edges = {edgeProb: x.clone(), edgeAnchorDist: x.clone(), edgeDist: x.clone(), edgeFlag: x.clone(), edgeInd: x.clone()};
+    }
+
+    var iEdgeDist, iEdgeFlag, tempEdges;
+
+    if ( radiusChange==1 ) {
+        tempEdges = JSON.parse(JSON.stringify(ripsEdges));
+    } else {
+        tempEdges = [];
+        allEdges = []; // separate out all individual edges for easier rendering
+    }
+
+    var x1, y1, x2, y2, x1_i, y1_i, x2_i, y2_i, d12, p, e12_i;
 
     //recursively compare every node against every other node
     for (i = 0; i < numSamples - 1; i++) {
         x1 = locationData[i].anchor.x;
         y1 = locationData[i].anchor.y;
         for (j = i + 1; j < numSamples; j++) {
-            x2 = locationData[j].anchor.x;
-            y2 = locationData[j].anchor.y;
-            d12 = sqEuclidDist([x1, y1], [x2, y2]);
-            a_edges.edgeAnchorDist.subset(math.index(i,j), d12);
+
+            if (radiusChange==1 && a_edges.edgeProb.subset(math.index(i,j))==1) {
+                //edge prob already 1 so skip this pair if radius increased
+                continue
+            }
+
+            // check if anchor to anchor distance has already been computed and compute if necessary
+            d12 = a_edges.edgeAnchorDist.subset(math.index(i,j));
+            if (!d12) {
+                x2 = locationData[j].anchor.x;
+                y2 = locationData[j].anchor.y;
+                d12 = sqEuclidDist([x1, y1], [x2, y2]);
+                a_edges.edgeAnchorDist.subset(math.index(i, j), d12);
+            }
+
+            //if radius has increased, extract edge flags
+            tmp = a_edges.edgeFlag.subset(math.index(i, j));
+            if ( radiusChange==1 && tmp!=0) {
+                iEdgeFlag = a_edges.edgeFlag.subset(math.index(i, j)).iEdgeFlag;
+            } else {
+                iEdgeFlag = math.zeros(numPoints,numPoints).valueOf(); //reset individual edge flags
+            }
+
+
+            // check for existence of individual edge distances and initialize if necessary
+            e12_i = false;
+            if (!a_edges.edgeDist.subset(math.index(i,j))) {
+                iEdgeDist = math.zeros(numPoints,numPoints).valueOf();
+            } else {
+                iEdgeDist = a_edges.edgeDist.subset(math.index(i,j)).iEdgeDist;
+            }
+
+            // now start comparing distances to coverage radii
             if (d12 > sqDiameterMax){
                 //node pair outside coverage radius + uncertainty, do nothing
                 continue
             } else  if (d12 <= sqDiameterMin) {
-                //node pair inside coverage radius - uncertanty, coverage guaranteed, prob=1
+                //node pair inside coverage radius - uncertainty, coverage guaranteed, prob=1
                 p = 1;
-                tempEdges.push({Pt1: i, Pt2: j, Pedge: 1})
-                iEdgeFlag = math.ones(numPoints,numPoints).valueOf();
-                iEdgeDist = [];
+
 
                 for (m=0; m<numPoints; m++) {
+                    x1_i = locationData[i].points[m].x;
+                    y1_i = locationData[i].points[m].y;
                     for (n=0; n<numPoints; n++) {
-                        x1 = locationData[i].points[m].x;
-                        y1 = locationData[i].points[m].y;
-                        x2 = locationData[j].points[n].x;
-                        y2 = locationData[j].points[n].y;
-                        allEdges.push({x1: x1, y1: y1, x2: x2, y2: y2, d: 0}) // zero distance just a placeholder for sorting
+                        if ( !radiusChange || (radiusChange==1 && !iEdgeFlag[m][n]) ) {
+                            x2_i = locationData[j].points[n].x;
+                            y2_i = locationData[j].points[n].y;
+                            allEdges.push({x1: x1_i, y1: y1_i, x2: x2_i, y2: y2_i, d: iEdgeDist[m][n]})
+                        }
                     }
                 }
+                iEdgeFlag = math.ones(numPoints, numPoints).valueOf();
 
             } else {
                 //node pair within uncertainty range, need to evaluate all possible node pairs
-                iEdgeFlag = math.zeros(numPoints,numPoints).valueOf();
-                iEdgeDist = math.zeros(numPoints,numPoints).valueOf();
+
                 for (m=0; m<numPoints; m++) {
-                    x1 = locationData[i].points[m].x;
-                    y1 = locationData[i].points[m].y;
+                    x1_i = locationData[i].points[m].x;
+                    y1_i = locationData[i].points[m].y;
                     for (n=0; n<numPoints; n++) {
-                        x2 = locationData[j].points[n].x;
-                        y2 = locationData[j].points[n].y;
-                        iEdgeDist[m][n] = sqEuclidDist([x1, y1],[x2,y2]);
-                        if ( iEdgeDist[m][n] <= sqDiameter) {
-                            iEdgeFlag[m][n] = 1;
-                            allEdges.push({x1: x1, y1: y1, x2: x2, y2: y2, d: iEdgeDist[m][n]})
+
+                        if ( !radiusChange || (radiusChange==1 && !iEdgeFlag[m][n]) ) {
+                            x2_i = locationData[j].points[n].x;
+                            y2_i = locationData[j].points[n].y;
+                            if (!iEdgeDist[m][n]) {
+                                iEdgeDist[m][n] = sqEuclidDist([x1_i, y1_i], [x2_i, y2_i]);
+                                e12_i = true;
+                            }
+                            if (iEdgeDist[m][n] <= sqDiameter) {
+                                iEdgeFlag[m][n] = 1;
+                                allEdges.push({x1: x1_i, y1: y1_i, x2: x2_i, y2: y2_i, d: iEdgeDist[m][n]})
+                            }
                         }
                     }
                 }
                 p =  math.sum(iEdgeFlag) / (numPoints*numPoints);
-                if ( p > 0 ) {
+            }
+
+            if ( p > 0 ) {
+                // if edge already exists just update probability
+                edgeInd = a_edges.edgeInd.subset(math.index(i,j));
+                if ( edgeInd && radiusChange==1 ) {
+                    tempEdges[edgeInd-1].Pedge = p;
+                } else {
                     tempEdges.push({Pt1: i, Pt2: j, Pedge: p})
+                    a_edges.edgeInd.subset(math.index(i, j), tempEdges.length);
                 }
             }
+
+            //update edge prob, distance, and flag matrices
             a_edges.edgeProb.subset(math.index(i,j), p)
-            a_edges.edgeDist.subset(math.index(i,j), {iEdgeDist})
-            a_edges.edgeFlag.subset(math.index(i,j), {iEdgeFlag})
+            if ( !a_edges.edgeFlag.subset(math.index(i,j)) ) {
+                a_edges.edgeFlag.subset(math.index(i,j), {iEdgeFlag})
+            } else {
+                a_edges.edgeFlag.subset(math.index(i, j)).iEdgeFlag = iEdgeFlag;
+            }
+            if (e12_i) {
+                if ( !a_edges.edgeDist.subset(math.index(i,j)) ) {
+                    a_edges.edgeDist.subset(math.index(i,j), {iEdgeDist})
+                } else {
+                    a_edges.edgeDist.subset(math.index(i, j)).iEdgeDist = iEdgeDist;
+                }
+            }
         }
     }
 
 
 
     // sort allEdges (just a reminder that this may be helpful later)
+    // console.log(tempEdges)
 
     return tempEdges
 
@@ -87,9 +153,11 @@ function constructEdges() {
 
 function constructRips() {
 
+    var radiusChange = arguments.length ? arguments[0] : 0;
+    // console.log(radiusChange)
 
     ripsFaces = [];
-    ripsEdges = JSON.parse(JSON.stringify(constructEdges()));
+    ripsEdges = JSON.parse(JSON.stringify(constructEdges(radiusChange)));
 
     var p12, p23, p13, p, e12, e23, e13, count, faceFlag;
 
@@ -112,17 +180,17 @@ function constructRips() {
                             if ( p12==1 && p23==1 && p13==1 ){
                                 // all pEdges=1 so pFace=1, no iteration needed
                                 p = 1;
-                                type = 'all edges'
+                                // type = 'all edges'
                                 // if 2 edges have pEdge=1 then pFace will be equal to prob of remaining edge
                             } else if ( p12==1 && p23==1) {
                                 p = p13;
-                                type = '2 edges'
+                                // type = '2 edges'
                             } else if ( p12==1 && p13==1 ) {
                                 p = p23;
-                                type = '2 edges'
+                                // type = '2 edges'
                             } else if ( p23==1 && p13==1 ) {
                                 p = p12;
-                                type = '2 edges'
+                                // type = '2 edges'
                             } else {
                                 // edge probs <1 so must iterate through all permutations
                                 e12 = a_edges.edgeFlag.subset(math.index(i,j)).iEdgeFlag;
@@ -139,12 +207,12 @@ function constructRips() {
                                     }
                                 }
                                 p = count/Math.pow(numPoints,3);
-                                type = 'computed'
+                                // type = 'computed'
                             }
 
                             // if prob is >0 add a new face and proceed to next iteration
                             if (p) {
-                                ripsFaces.push({Pt1: i, Pt2: j, Pt3: k, Pface: p, iFaceFlag: faceFlag.slice(), type: type})
+                                ripsFaces.push({Pt1: i, Pt2: j, Pt3: k, Pface: p, iFaceFlag: faceFlag.slice()})
                             }
 
                         }
@@ -181,22 +249,25 @@ function constructCech() {
 
         e12 = e13 = e23 = false;
 
-
         //extract individual edge distance matrices
         //if they don't exist, initialize a distance array of zeros
+
+        if ( !a_edges.edgeDist.subset(math.index(d.Pt1, d.Pt2)) ) {
+            iEdgeDist = math.zeros(numPoints, numPoints).valueOf();
+            a_edges.edgeDist.subset(math.index(d.Pt1, d.Pt2), {iEdgeDist})
+        }
         iEdgeDist_12 = a_edges.edgeDist.subset(math.index(d.Pt1, d.Pt2)).iEdgeDist;
-        if (!iEdgeDist_12.length) {
-            iEdgeDist_12 = math.zeros(numPoints,numPoints).valueOf();
-        }
 
+        if ( !a_edges.edgeDist.subset(math.index(d.Pt1,d.Pt3)) ) {
+            iEdgeDist = math.zeros(numPoints,numPoints).valueOf();
+            a_edges.edgeDist.subset(math.index(d.Pt1, d.Pt3), {iEdgeDist})
+        }
         iEdgeDist_13 = a_edges.edgeDist.subset(math.index(d.Pt1,d.Pt3)).iEdgeDist;
-        if (!iEdgeDist_13.length) {
-            iEdgeDist_13 = math.zeros(numPoints,numPoints).valueOf();
-        }
 
-        iEdgeDist_23 = a_edges.edgeDist.subset(math.index(d.Pt2,d.Pt3)).iEdgeDist;
-        if (!iEdgeDist_23.length) {
+        if ( !a_edges.edgeDist.subset(math.index(d.Pt2,d.Pt3)) ) {
             iEdgeDist_23 = math.zeros(numPoints,numPoints).valueOf();
+        } else {
+            iEdgeDist_23 = a_edges.edgeDist.subset(math.index(d.Pt2,d.Pt3)).iEdgeDist;
         }
 
         count = 0;
@@ -229,13 +300,28 @@ function constructCech() {
         }
 
         if (e12) {
-            a_edges.edgeDist.subset(math.index(d.Pt1, d.Pt2)).iEdgeDist = iEdgeDist_12;
+            if (!a_edges.edgeDist.subset(math.index(d.Pt1, d.Pt2))) {
+                a_edges.edgeDist.subset( math.index(d.Pt1, d.Pt2), {iEdgeDist: iEdgeDist_12} )
+            } else {
+                a_edges.edgeDist.subset(math.index(d.Pt1, d.Pt2)).iEdgeDist = iEdgeDist_12;
+            }
+            // console.log('1 - 2')
         }
         if (e13) {
-            a_edges.edgeDist.subset(math.index(d.Pt1, d.Pt3)).iEdgeDist = iEdgeDist_13;
+            if (!a_edges.edgeDist.subset(math.index(d.Pt1, d.Pt3))) {
+                a_edges.edgeDist.subset( math.index(d.Pt1, d.Pt3), {iEdgeDist: iEdgeDist_13} )
+            } else {
+                a_edges.edgeDist.subset(math.index(d.Pt1, d.Pt3)).iEdgeDist = iEdgeDist_13;
+            }
+            // console.log('1 - 3')
         }
         if (e23) {
-            a_edges.edgeDist.subset(math.index(d.Pt2, d.Pt3)).iEdgeDist = iEdgeDist_23;
+            if (!a_edges.edgeDist.subset(math.index(d.Pt2, d.Pt3))) {
+                a_edges.edgeDist.subset( math.index(d.Pt2, d.Pt3), {iEdgeDist: iEdgeDist_23} )
+            } else {
+                a_edges.edgeDist.subset(math.index(d.Pt2, d.Pt3)).iEdgeDist = iEdgeDist_23;
+            }
+            // console.log('2 - 3')
         }
 
 
@@ -326,73 +412,15 @@ function updateRips() {
     var sqDiameterMin = 4 * Math.pow(complexRadius-dataRadius, 2);
     var sqDiameterMax = 4 * Math.pow(complexRadius+dataRadius, 2);
 
-
-
-    var d12, p, d12_i;
-
-    //recursively compare every node against every other node
-    for (i = 0; i < numSamples - 1; i++) {
-        for (j = i + 1; j < numSamples; j++) {
-            if ( a_edges.edgeProb.subset(math.index(i,j)) == 1) {
-                // edge probability already 1, no need to compute
-                continue
+    a_edges.edgeProb.forEach( function (d, index) {
+        if (d<1) {
+            if (d) {
+                console.log(a_edges.edgeInd.subset(math.index(index[0], index[1])))
             }
-
-            x1 = locationData[i].anchor.x;
-            y1 = locationData[i].anchor.y;
-            x2 = locationData[j].anchor.x;
-            y2 = locationData[j].anchor.y;
-
-            d12 = a_edges.edgeAnchorDist.subset(math.index(i,j));
-            if (!d12) {
-                d12 = sqEuclidDist([x1, y1], [x2, y2]);
-                a_edges.edgeAnchorDist.subset(math.index(i, j), d12);
-            }
-            if (d12 > sqDiameterMax){
-                //node pair outside coverage radius + uncertainty, do nothing
-                continue
-            } else  if (d12 <= sqDiameterMin) {
-                //node pair inside coverage radius - uncertanty, coverage guaranteed, prob=1
-                p = 1;
-                tempEdges.push({Pt1: i, Pt2: j, Pedge: 1})
-                iEdgeFlag = math.ones(numPoints,numPoints).valueOf();
-                iEdgeDist = [];
-
-                for (m=0; m<numPoints; m++) {
-                    for (n=0; n<numPoints; n++) {
-                        x1 = locationData[i].points[m].x;
-                        y1 = locationData[i].points[m].y;
-                        x2 = locationData[j].points[n].x;
-                        y2 = locationData[j].points[n].y;
-                        allEdges.push({x1: x1, y1: y1, x2: x2, y2: y2, d: 0}) // zero distance just a placeholder for sorting
-                    }
-                }
-
-            } else {
-                //node pair within uncertainty range, need to evaluate all possible node pairs
-                iEdgeFlag = math.zeros(numPoints,numPoints).valueOf();
-                iEdgeDist = math.zeros(numPoints,numPoints).valueOf();
-                for (m=0; m<numPoints; m++) {
-                    x1 = locationData[i].points[m].x;
-                    y1 = locationData[i].points[m].y;
-                    for (n=0; n<numPoints; n++) {
-                        x2 = locationData[j].points[n].x;
-                        y2 = locationData[j].points[n].y;
-                        iEdgeDist[m][n] = sqEuclidDist([x1, y1],[x2,y2]);
-                        if ( iEdgeDist[m][n] <= sqDiameter) {
-                            iEdgeFlag[m][n] = 1;
-                            allEdges.push({x1: x1, y1: y1, x2: x2, y2: y2, d: iEdgeDist[m][n]})
-                        }
-                    }
-                }
-                p =  math.sum(iEdgeFlag) / (numPoints*numPoints);
-                if ( p > 0 ) {
-                    tempEdges.push({Pt1: i, Pt2: j, Pedge: p})
-                }
-            }
-            a_edges.edgeProb.subset(math.index(i,j), p)
-            a_edges.edgeDist.subset(math.index(i,j), {iEdgeDist})
-            a_edges.edgeFlag.subset(math.index(i,j), {iEdgeFlag})
+        } else if (d==1) {
+            console.log(a_edges.edgeInd.subset(math.index(index[0], index[1])))
         }
-    }
+    })
+
+
 }

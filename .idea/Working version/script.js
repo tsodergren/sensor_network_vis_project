@@ -24,7 +24,7 @@ var ripsEdges = [];
 var allEdges = [];
 var dataMin = 0;
 var distances = [];
-var a_edges = [];
+var a_edges = 0;
 
 var numSamples = 0;      //Number of points to use
 var complexRadius = 20;          //epsilon ball radius
@@ -358,11 +358,10 @@ function updateComplex(newValue) {
 
 
     if (radiusChange == 1) {
-        constructRips()
+        constructRips(radiusChange)
     } else {
         constructRips();
     }
-
 
     var t2 = Date.now() - t;
     console.log('compute: ' + t2);
@@ -660,14 +659,6 @@ function renderFaces(){
         faces = ripsFaces;
     }
     faces.sort( function (a, b) { return a.Pface - b.Pface } )
-    faces.forEach( function (d, i) {
-        locationData[d.Pt1].link.edges.push([d.Pt2, d.Pt3])
-        locationData[d.Pt1].star.faces.push(i)
-        locationData[d.Pt2].link.edges.push([d.Pt1, d.Pt3])
-        locationData[d.Pt2].star.faces.push(i)
-        locationData[d.Pt3].link.edges.push([d.Pt1, d.Pt2])
-        locationData[d.Pt3].star.faces.push(i)
-    })
 
     complexCanvas.selectAll('.face').remove();
     var complexFaces = complexCanvas.select('g#complexFaces');
@@ -980,6 +971,8 @@ function randomData() {
     numSamples = +document.getElementById('numSensors').value;
 
     locationData = [];
+    a_edges = 0;
+    // console.log(a_edges)
 
     for (i=0; i<numSamples; i++) {
         var xi = Math.random() * (xmax - xmin + 1)  + xmin;
@@ -989,13 +982,13 @@ function randomData() {
 
     perturbData();
 
-    dataRange = d3.max([xd[1]-xd[0], yd[1]-yd[0]]);
-    dataPadding = 0.1*dataRange;
-
-    d3.select('#complexInput')
-        .attr('min', 0.05*dataRange)
-        .attr('max', 0.5*dataRange)
-        .attr('value', 0.2*dataRange);
+    // dataRange = d3.max([xd[1]-xd[0], yd[1]-yd[0]]);
+    // dataPadding = 0.1*dataRange;
+    //
+    // d3.select('#complexInput')
+    //     .attr('min', 0.05*dataRange)
+    //     .attr('max', 0.5*dataRange)
+    //     .attr('value', 0.2*dataRange);
 
     resetCheckboxes();
 
@@ -1005,8 +998,14 @@ function randomData() {
 
 function saveData() {
 
-    var data = {n: numSamples, k: numPoints, r: complexRadius, eps: dataRadius, sensors: locationData,
-        allEdges: allEdges, cechComplex: [cechEdges, cechFaces], ripsComplex: [ripsEdges, ripsFaces]};
+    var data = {
+        n: numSamples, k: numPoints, r: complexRadius, eps: dataRadius, sensors: locationData,
+        allEdges: allEdges, cechComplex: [cechEdges, cechFaces], ripsComplex: [ripsEdges, ripsFaces],
+        edgeProb: a_edges.edgeProb.toJSON(), edgeAnchorDist: a_edges.edgeAnchorDist.toJSON(),
+        edgeFlag: a_edges.edgeFlag.toJSON(), edgeDist: a_edges.edgeDist.toJSON(),
+        edgeInd: a_edges.edgeInd.toJSON()
+    };
+
     var tempData = JSON.stringify(data, null, 2);
 
 
@@ -1056,6 +1055,11 @@ function dataLoader(file){
         cechEdges = data.cechComplex[0];
         cechFaces = data.cechComplex[1];
 
+        a_edges = {edgeProb: JSON.parse(JSON.stringify(data.edgeProb),math.json.reviver),
+            edgeAnchorDist: JSON.parse(JSON.stringify(data.edgeAnchorDist),math.json.reviver),
+            edgeFlag: JSON.parse(JSON.stringify(data.edgeFlag),math.json.reviver),
+            edgeDist: JSON.parse(JSON.stringify(data.edgeDist),math.json.reviver),
+            edgeInd: JSON.parse(JSON.stringify(data.edgeInd),math.json.reviver)};
 
         //set data scale
 
@@ -1091,17 +1095,20 @@ function dataLoader(file){
         renderGrid()
 
         //adjust radius slider
+        //console.log(complexRadius)
         d3.select('#complexInput')
-            .attr('value', complexRadius)
             .attr('min', 1)
             .attr('max', rmax);
         d3.select('#complexRadius')
             .attr('min', 1)
             .attr('max', rmax);
-        d3.select('#complexRadius').attr('value',complexRadius)
         d3.select('#numSensors').attr('value',numSamples)
         d3.select('#numSampleSensors').attr('value',numPoints)
         d3.select('#complexDataRadius').attr('value',dataRadius)
+
+
+        d3.select('#complexRadius').node().value =  complexRadius;
+        d3.select('#complexInput').node().value = complexRadius;
 
         resetCheckboxes();
 
@@ -1141,11 +1148,11 @@ function addSampleSensors(){
 
     renderPoints();
 
-    if (complexType=='Cech') {
-        constructCech();
-    } else if (complexType=='Vietoris-Rips') {
-        constructRips();
-    }
+    // if (complexType=='Cech') {
+    //     constructCech();
+    // } else if (complexType=='Vietoris-Rips') {
+    //     constructRips();
+    // }
     changeComplex();
 }
 
