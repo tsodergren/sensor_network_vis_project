@@ -336,6 +336,9 @@ function zoomed() {
 //this function is called whenever the data are changed.
 
 function updateComplex(newValue) {
+
+    complexSVG.attr('cursor', 'wait')
+
     //update coverage radius and recompute complexes
     newValue = +newValue;
 
@@ -375,6 +378,8 @@ function updateComplex(newValue) {
     changeComplex();
     var t3 = Date.now() - t - t2;
     console.log('render: ' + t3)
+
+    complexSVG.attr('cursor', null)
 }
 
 //graphical highlighting

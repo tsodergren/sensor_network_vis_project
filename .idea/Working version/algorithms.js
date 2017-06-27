@@ -16,7 +16,8 @@ function constructEdges() {
 
     if (!a_edges) {
         var x=math.zeros(numSamples, numSamples,'sparse');
-        a_edges = {edgeProb: x.clone(), edgeAnchorDist: x.clone(), edgeDist: x.clone(), edgeFlag: x.clone(), edgeInd: x.clone()};
+        a_edges = {edgeProb: x.clone(), edgeAnchorDist: x.clone(), edgeDist: x.clone(), edgeFlag: x.clone(),
+            edgeInd: x.clone(), ripsFaceInd: x.clone(), cechFaceInd: x.clone()};
     }
 
     var iEdgeDist, iEdgeFlag, tempEdges;
@@ -40,6 +41,9 @@ function constructEdges() {
                 //edge prob already 1 so skip this pair if radius increased
                 continue
             }
+
+            edgeInd = a_edges.edgeInd.subset(math.index(i,j));
+            newEdgeInd = !edgeInd ? tempEdges.length+1 : edgeInd;
 
             // check if anchor to anchor distance has already been computed and compute if necessary
             d12 = a_edges.edgeAnchorDist.subset(math.index(i,j));
@@ -83,7 +87,8 @@ function constructEdges() {
                         if ( !radiusChange || (radiusChange==1 && !iEdgeFlag[m][n]) ) {
                             x2_i = locationData[j].points[n].x;
                             y2_i = locationData[j].points[n].y;
-                            allEdges.push({x1: x1_i, y1: y1_i, x2: x2_i, y2: y2_i, d: iEdgeDist[m][n]})
+                            allEdges.push( { x1: x1_i, y1: y1_i, x2: x2_i, y2: y2_i, d: iEdgeDist[m][n],
+                                ind: [i, j, m, n, newEdgeInd] } )
                         }
                     }
                 }
@@ -106,7 +111,8 @@ function constructEdges() {
                             }
                             if (iEdgeDist[m][n] <= sqDiameter) {
                                 iEdgeFlag[m][n] = 1;
-                                allEdges.push({x1: x1_i, y1: y1_i, x2: x2_i, y2: y2_i, d: iEdgeDist[m][n]})
+                                allEdges.push( { x1: x1_i, y1: y1_i, x2: x2_i, y2: y2_i, d: iEdgeDist[m][n],
+                                    ind: [i, j, m, n, newEdgeInd] } )
                             }
                         }
                     }
@@ -116,12 +122,11 @@ function constructEdges() {
 
             if ( p > 0 ) {
                 // if edge already exists just update probability
-                edgeInd = a_edges.edgeInd.subset(math.index(i,j));
                 if ( edgeInd && radiusChange==1 ) {
                     tempEdges[edgeInd-1].Pedge = p;
                 } else {
                     tempEdges.push({Pt1: i, Pt2: j, Pedge: p})
-                    a_edges.edgeInd.subset(math.index(i, j), tempEdges.length);
+                    a_edges.edgeInd.subset(math.index(i, j), newEdgeInd);
                 }
             }
 
@@ -151,6 +156,19 @@ function constructEdges() {
 
 }
 
+function intersection(a, b, c) {
+
+    let d = new Set([...a].filter(x => b.has(x)));
+    if (!d.length) {
+        return d
+    } else {
+        let e = new Set([...d]).filter(x => c.has(x));
+        return e
+    }
+
+}
+
+
 function constructRips() {
 
     var radiusChange = arguments.length ? arguments[0] : 0;
@@ -167,12 +185,19 @@ function constructRips() {
         for (j=i+1; j<numSamples-1; j++) {
             p12 = a_edges.edgeProb.subset(math.index(i,j));
             if (p12) {
+                f12 = a_edges.ripsFaceInd.subset(math.index(i,j));
                 for (k=j+1; k<numSamples; k++) {
-                    p23 = a_edges.edgeProb.subset(math.index(j,k));
-                    if (p23) {
-                        p13 = a_edges.edgeProb.subset(math.index(i, k));
-                        if (p13) {
+                    p13 = a_edges.edgeProb.subset(math.index(i,k));
+                    if (p13) {
+                        f13 = a_edges.ripsFaceInd.subset(math.index(i,k));
+                        p23 = a_edges.edgeProb.subset(math.index(j, k));
+                        if (p23) {
+                            f23 = a_edges.ripsFaceInd.subset(math.index(j, k));
                             //all edge probs are > 0 so there is a least a chance that pFace>0
+
+                            if (f12 && f13 && f23) {
+                                ripsFaceInd
+                            }
 
                             count = 0;
                             faceFlag = [];
@@ -194,12 +219,12 @@ function constructRips() {
                             } else {
                                 // edge probs <1 so must iterate through all permutations
                                 e12 = a_edges.edgeFlag.subset(math.index(i,j)).iEdgeFlag;
-                                e23 = a_edges.edgeFlag.subset(math.index(j,k)).iEdgeFlag;
                                 e13 = a_edges.edgeFlag.subset(math.index(i,k)).iEdgeFlag;
+                                e23 = a_edges.edgeFlag.subset(math.index(j,k)).iEdgeFlag;
                                 for (ii=0; ii<numPoints; ii++) {
                                     for (jj=0; jj<numPoints; jj++) {
                                         for (kk=0; kk<numPoints; kk++) {
-                                            if ( e12[ii][jj] && e23[jj][kk] && e13[ii][kk]) {
+                                            if ( e12[ii][jj] && e13[ii][kk] && e23[jj][kk]) {
                                                 faceFlag.push([ii, jj, kk])
                                                 count++
                                             }
@@ -213,6 +238,28 @@ function constructRips() {
                             // if prob is >0 add a new face and proceed to next iteration
                             if (p) {
                                 ripsFaces.push({Pt1: i, Pt2: j, Pt3: k, Pface: p, iFaceFlag: faceFlag.slice()})
+
+                                // add face index to each edge
+                                if (!f12) {
+                                    f12 = new Set([ripsFaces.length-1]);
+                                    a_edges.ripsFaceInd.subset(math.index(i,j), f12);
+                                } else {
+                                    a_edges.ripsFaceInd.subset(math.index(i,j)).add(ripsFaces.length-1)
+                                }
+                                if (!f13) {
+                                    f13 = new Set([ripsFaces.length-1]);
+                                    a_edges.ripsFaceInd.subset(math.index(i,k), f13);
+                                } else {
+                                    a_edges.ripsFaceInd.subset(math.index(i,k)).add(ripsFaces.length-1)
+                                }
+                                if (!f23) {
+                                    f23 = new Set([ripsFaces.length-1]);
+                                    a_edges.ripsFaceInd.subset(math.index(j,k), f23);
+                                } else {
+                                    a_edges.ripsFaceInd.subset(math.index(j,k)).add(ripsFaces.length-1)
+                                }
+
+
                             }
 
                         }
@@ -222,8 +269,8 @@ function constructRips() {
         }
     }
 
-    ripsFaces.sort( function (a, b) { return a.Pface - b.Pface } )
 
+    ripsFaces.sort( function (a, b) { return a.Pface - b.Pface } )
     constructCech()
 
 }
@@ -305,7 +352,6 @@ function constructCech() {
             } else {
                 a_edges.edgeDist.subset(math.index(d.Pt1, d.Pt2)).iEdgeDist = iEdgeDist_12;
             }
-            // console.log('1 - 2')
         }
         if (e13) {
             if (!a_edges.edgeDist.subset(math.index(d.Pt1, d.Pt3))) {
@@ -313,7 +359,6 @@ function constructCech() {
             } else {
                 a_edges.edgeDist.subset(math.index(d.Pt1, d.Pt3)).iEdgeDist = iEdgeDist_13;
             }
-            // console.log('1 - 3')
         }
         if (e23) {
             if (!a_edges.edgeDist.subset(math.index(d.Pt2, d.Pt3))) {
@@ -321,7 +366,6 @@ function constructCech() {
             } else {
                 a_edges.edgeDist.subset(math.index(d.Pt2, d.Pt3)).iEdgeDist = iEdgeDist_23;
             }
-            // console.log('2 - 3')
         }
 
 
@@ -329,6 +373,23 @@ function constructCech() {
         if (p) {
             d.Pface = p;
             cechFaces.push(d);
+
+            // add face index to each edge
+            if (!a_edges.cechFaceInd.subset(math.index(d.Pt1, d.Pt2))) {
+                a_edges.cechFaceInd.subset(math.index(d.Pt1, d.Pt2), {ind: [cechFaces.length-1]});
+            } else {
+                a_edges.cechFaceInd.subset(math.index(d.Pt1, d.Pt2)).ind.push(cechFaces.length-1)
+            }
+            if (!a_edges.cechFaceInd.subset(math.index(d.Pt1, d.Pt3))) {
+                a_edges.cechFaceInd.subset(math.index(d.Pt1, d.Pt3), {ind: [cechFaces.length-1]});
+            } else {
+                a_edges.cechFaceInd.subset(math.index(d.Pt1, d.Pt3)).ind.push(cechFaces.length-1)
+            }
+            if (!a_edges.cechFaceInd.subset(math.index(d.Pt2, d.Pt3))) {
+                a_edges.cechFaceInd.subset(math.index(d.Pt2, d.Pt3), {ind: [cechFaces.length-1]});
+            } else {
+                a_edges.cechFaceInd.subset(math.index(d.Pt2, d.Pt3)).ind.push(cechFaces.length-1)
+            }
         }
     })
 
