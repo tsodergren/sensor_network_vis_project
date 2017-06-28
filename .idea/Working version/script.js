@@ -1625,21 +1625,21 @@ function clearScreen() {
     locationData = [];
     selectedNodes = [];
     newZscale = 1;
-    updateScales(0,0,0,0);
+    updateScales(0, 100, 0, 100);
     gX.call(xAxis.scale(xScale));
     gY.call(yAxis.scale(yScale));
     newxScale = false;
     newyScale = false;
     renderGrid();
 
-    complexRadius = 10;
+    complexRadius = 5;
     numSamples = 0;
 
     d3.select('#complexInput')
         .attr('min', 1)
         .attr('max', 50);
     d3.select('#complexInput').node().value = complexRadius;
-    document.getElementById('complexRadius').innerHTML = complexRadius.toString();
+    d3.select('#complexRadius').node().value = complexRadius;
 }
 
 function setMax() {
