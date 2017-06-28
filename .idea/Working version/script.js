@@ -1360,34 +1360,28 @@ function addSampleSensors(){
     changeComplex();
 }
 
+function createRandomPoints(d){
+  var r, theta, xj, yj;
+  var tmp = [];
+  for (j=0; j<numPoints; j++) {
+    r = Math.sqrt(Math.random() * dataRadius * dataRadius);
+    theta = Math.random() * 2 * Math.PI;
+    xj = d.anchor.x + Math.floor(r * Math.cos(theta));
+    yj = d.anchor.y + Math.floor(r * Math.sin(theta));
+    tmp.push({x: xj, y: yj})
+  }
+  return tmp;
+}
+
 function perturbData() {
-
-    var r, theta, xj, yj, tmp;
-
     if (arguments.length == 0) {
         locationData.forEach( function (d) {
-            tmp = [];
-            for (j=0; j<numPoints; j++) {
-                r = Math.random() * dataRadius;
-                theta = Math.random() * 2 * Math.PI;
-                xj = d.anchor.x + Math.floor( r * Math.cos(theta));
-                yj = d.anchor.y + Math.floor( r * Math.sin(theta));
-                tmp.push( { x: xj, y: yj} )
-            }
-            d.points = tmp;
-        })} else {
+            d.points = createRandomPoints(d);
+        })
+    } else {
         data = arguments[0]
-        tmp = [];
-        for (j=0; j<numPoints; j++){
-            r = Math.random() * dataRadius;
-            theta = Math.random() * 2 * Math.PI;
-            xj = data.anchor.x + Math.floor(r * Math.cos(theta));
-            yj = data.anchor.y + Math.floor(r * Math.sin(theta));
-            tmp.push( { x: xj, y: yj} )
-        }
-        data.points = tmp;
+        data.points = createRandomPoints(data);
     }
-
 }
 
 function changeComplex() {
