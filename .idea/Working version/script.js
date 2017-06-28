@@ -417,7 +417,7 @@ function resetPoint() {
 function showToolTip(type, data){
     tooltip.transition()
         .style("opacity", 0.9);
-    tooltip.html(type + " probability of " + data)
+    tooltip.html(type + " probability of " + data.toFixed(3))
         .style("left", (d3.event.pageX) + "px")
         .style("top", (d3.event.pageY - 28) + "px");
 }
