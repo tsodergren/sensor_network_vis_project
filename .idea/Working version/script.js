@@ -1302,16 +1302,17 @@ function dataLoader(file){
 
         //adjust radius slider
         d3.select('#complexInput')
-            .attr('value', complexRadius)
             .attr('min', 1)
             .attr('max', rmax);
         d3.select('#complexRadius')
             .attr('min', 1)
             .attr('max', rmax);
-        d3.select('#complexRadius').attr('value',complexRadius)
-        d3.select('#numSensors').attr('value',numSamples)
-        d3.select('#numSampleSensors').attr('value',numPoints)
-        d3.select('#complexDataRadius').attr('value',dataRadius)
+
+      d3.select('#complexInput').node().value = complexRadius;
+      d3.select('#complexRadius').node().value = complexRadius;
+      d3.select('#numSensors').node().value = numSamples;
+      d3.select('#numSampleSensors').node().value = numPoints;
+      d3.select('#complexDataRadius').node().value = dataRadius;
 
         resetCheckboxes();
 
