@@ -17,7 +17,7 @@ function constructEdges() {
     if (!a_edges) {
         var x=math.zeros(numSamples, numSamples,'sparse');
         a_edges = {edgeProb: x.clone(), edgeAnchorDist: x.clone(), edgeDist: x.clone(), edgeFlag: x.clone(),
-            edgeInd: x.clone(), ripsFaceInd: x.clone(), cechFaceInd: x.clone()};
+            edgeInd: x.clone() };
     }
 
     var iEdgeDist, iEdgeFlag, tempEdges;
@@ -174,10 +174,12 @@ function constructRips() {
     var radiusChange = arguments.length ? arguments[0] : 0;
     // console.log(radiusChange)
 
-    ripsFaces = [];
     ripsEdges = JSON.parse(JSON.stringify(constructEdges(radiusChange)));
 
-    var p12, p23, p13, p, e12, e23, e13, count, faceFlag;
+    var tempFaces = [];
+    ripsFaces = [];
+
+    var p12, p23, p13, p, e12, e23, e13, f12, f13, f23, count, faceFlag, ind, face;
 
 
     //recursively check every possible permutation of n choose 3 nodes
@@ -185,19 +187,18 @@ function constructRips() {
         for (j=i+1; j<numSamples-1; j++) {
             p12 = a_edges.edgeProb.subset(math.index(i,j));
             if (p12) {
-                f12 = a_edges.ripsFaceInd.subset(math.index(i,j));
+
                 for (k=j+1; k<numSamples; k++) {
+
+                    if (radiusChange==1) {
+                    }
                     p13 = a_edges.edgeProb.subset(math.index(i,k));
                     if (p13) {
-                        f13 = a_edges.ripsFaceInd.subset(math.index(i,k));
+
+
                         p23 = a_edges.edgeProb.subset(math.index(j, k));
                         if (p23) {
-                            f23 = a_edges.ripsFaceInd.subset(math.index(j, k));
-                            //all edge probs are > 0 so there is a least a chance that pFace>0
 
-                            if (f12 && f13 && f23) {
-                                ripsFaceInd
-                            }
 
                             count = 0;
                             faceFlag = [];
@@ -205,7 +206,6 @@ function constructRips() {
                             if ( p12==1 && p23==1 && p13==1 ){
                                 // all pEdges=1 so pFace=1, no iteration needed
                                 p = 1;
-                                // type = 'all edges'
                                 // if 2 edges have pEdge=1 then pFace will be equal to prob of remaining edge
                             } else if ( p12==1 && p23==1) {
                                 p = p13;
@@ -237,40 +237,31 @@ function constructRips() {
 
                             // if prob is >0 add a new face and proceed to next iteration
                             if (p) {
-                                ripsFaces.push({Pt1: i, Pt2: j, Pt3: k, Pface: p, iFaceFlag: faceFlag.slice()})
-
-                                // add face index to each edge
-                                if (!f12) {
-                                    f12 = new Set([ripsFaces.length-1]);
-                                    a_edges.ripsFaceInd.subset(math.index(i,j), f12);
-                                } else {
-                                    a_edges.ripsFaceInd.subset(math.index(i,j)).add(ripsFaces.length-1)
-                                }
-                                if (!f13) {
-                                    f13 = new Set([ripsFaces.length-1]);
-                                    a_edges.ripsFaceInd.subset(math.index(i,k), f13);
-                                } else {
-                                    a_edges.ripsFaceInd.subset(math.index(i,k)).add(ripsFaces.length-1)
-                                }
-                                if (!f23) {
-                                    f23 = new Set([ripsFaces.length-1]);
-                                    a_edges.ripsFaceInd.subset(math.index(j,k), f23);
-                                } else {
-                                    a_edges.ripsFaceInd.subset(math.index(j,k)).add(ripsFaces.length-1)
-                                }
-
-
+                                tempFaces.push({Pt1: i, Pt2: j, Pt3: k, Pface: p, iFaceFlag: faceFlag.slice()})
                             }
 
                         }
                     }
                 }
+
+
             }
         }
     }
 
 
-    ripsFaces.sort( function (a, b) { return a.Pface - b.Pface } )
+    var mapped = tempFaces.map( function (d,i) {
+        return { index: i, value: d.Pface }
+    })
+
+    mapped.sort( function(a, b) {
+        return +(a.value > b.value) || +(a.value === b.value) - 1;
+    })
+
+    ripsFaces = mapped.map( function (d, i) {
+        return tempFaces[d.index]
+    })
+
     constructCech()
 
 }
@@ -282,7 +273,8 @@ function constructCech() {
 
     cechEdges = JSON.parse(JSON.stringify(ripsEdges));
     cechFaces = [];
-    var tempFaces = JSON.parse(JSON.stringify(ripsFaces));
+    var newFaces = [];
+    var tempFaces = JSON.parse(JSON.stringify(ripsFaces))
     var iEdgeDist_12, iEdgeDist_23, iEdgeDist_13;
 
     var sqDist;
@@ -372,29 +364,22 @@ function constructCech() {
         p = count/Math.pow(numPoints,3);
         if (p) {
             d.Pface = p;
-            cechFaces.push(d);
-
-            // add face index to each edge
-            if (!a_edges.cechFaceInd.subset(math.index(d.Pt1, d.Pt2))) {
-                a_edges.cechFaceInd.subset(math.index(d.Pt1, d.Pt2), {ind: [cechFaces.length-1]});
-            } else {
-                a_edges.cechFaceInd.subset(math.index(d.Pt1, d.Pt2)).ind.push(cechFaces.length-1)
-            }
-            if (!a_edges.cechFaceInd.subset(math.index(d.Pt1, d.Pt3))) {
-                a_edges.cechFaceInd.subset(math.index(d.Pt1, d.Pt3), {ind: [cechFaces.length-1]});
-            } else {
-                a_edges.cechFaceInd.subset(math.index(d.Pt1, d.Pt3)).ind.push(cechFaces.length-1)
-            }
-            if (!a_edges.cechFaceInd.subset(math.index(d.Pt2, d.Pt3))) {
-                a_edges.cechFaceInd.subset(math.index(d.Pt2, d.Pt3), {ind: [cechFaces.length-1]});
-            } else {
-                a_edges.cechFaceInd.subset(math.index(d.Pt2, d.Pt3)).ind.push(cechFaces.length-1)
-            }
+            newFaces.push(d);
         }
     })
 
+    var mapped = tempFaces.map( function (d,i) {
+        return { index: i, value: d.Pface }
+    })
 
-    cechFaces.sort( function (a, b) { return a.Pface - b.Pface } )
+    mapped.sort( function(a, b) {
+        return +(a.value > b.value) || +(a.value === b.value) - 1;
+    })
+
+    cechFaces = mapped.map( function (d, i) {
+        return tempFaces[d.index]
+    })
+
 
 }
 
