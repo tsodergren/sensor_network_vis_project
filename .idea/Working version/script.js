@@ -1364,10 +1364,10 @@ function createRandomPoints(d){
   var r, theta, xj, yj;
   var tmp = [];
   for (j=0; j<numPoints; j++) {
-    r = Math.sqrt(Math.random() * dataRadius * dataRadius);
-    theta = Math.random() * 2 * Math.PI;
-    xj = d.anchor.x + Math.floor(r * Math.cos(theta));
-    yj = d.anchor.y + Math.floor(r * Math.sin(theta));
+    r = math.random(dataRadius);
+    theta = math.random(2*math.pi);
+    xj = d.anchor.x + r * math.cos(theta);
+    yj = d.anchor.y + r * math.sin(theta);
     tmp.push({x: xj, y: yj})
   }
   return tmp;
