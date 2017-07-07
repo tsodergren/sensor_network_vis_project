@@ -438,7 +438,7 @@ function resetPoint() {
 function showToolTip(type, data){
     tooltip.transition()
         .style("opacity", 0.9);
-    tooltip.html(type + " probability of " + data)
+    tooltip.html(type + " probability of " + data.toFixed(3))
         .style("left", (d3.event.pageX) + "px")
         .style("top", (d3.event.pageY - 28) + "px");
 }
@@ -1107,10 +1107,11 @@ function dataLoader(file){
         d3.select('#complexRadius')
             .attr('min', 1)
             .attr('max', rmax);
-        d3.select('#numSensors').attr('value',numSamples)
-        d3.select('#numSampleSensors').attr('value',numPoints)
-        d3.select('#complexDataRadius').attr('value',dataRadius)
-
+      d3.select('#complexInput').node().value = complexRadius;
+      d3.select('#complexRadius').node().value = complexRadius;
+      d3.select('#numSensors').node().value = numSamples;
+      d3.select('#numSampleSensors').node().value = numPoints;
+      d3.select('#complexDataRadius').node().value = dataRadius;
 
         d3.select('#complexRadius').node().value =  complexRadius;
         d3.select('#complexInput').node().value = complexRadius;
@@ -1161,34 +1162,28 @@ function addSampleSensors(){
     changeComplex();
 }
 
+function createRandomPoints(d){
+  var r, theta, xj, yj;
+  var tmp = [];
+  for (j=0; j<numPoints; j++) {
+    r = math.random(dataRadius);
+    theta = math.random(2*math.pi);
+    xj = d.anchor.x + r * math.cos(theta);
+    yj = d.anchor.y + r * math.sin(theta);
+    tmp.push({x: xj, y: yj})
+  }
+  return tmp;
+}
+
 function perturbData() {
-
-    var r, theta, xj, yj, tmp;
-
     if (arguments.length == 0) {
         locationData.forEach( function (d) {
-            tmp = [];
-            for (j=0; j<numPoints; j++) {
-                r = Math.random() * dataRadius;
-                theta = Math.random() * 2 * Math.PI;
-                xj = d.anchor.x + Math.floor( r * Math.cos(theta));
-                yj = d.anchor.y + Math.floor( r * Math.sin(theta));
-                tmp.push( { x: xj, y: yj} )
-            }
-            d.points = tmp;
-        })} else {
+            d.points = createRandomPoints(d);
+        })
+    } else {
         data = arguments[0]
-        tmp = [];
-        for (j=0; j<numPoints; j++){
-            r = Math.random() * dataRadius;
-            theta = Math.random() * 2 * Math.PI;
-            xj = data.anchor.x + Math.floor(r * Math.cos(theta));
-            yj = data.anchor.y + Math.floor(r * Math.sin(theta));
-            tmp.push( { x: xj, y: yj} )
-        }
-        data.points = tmp;
+        data.points = createRandomPoints(data);
     }
-
 }
 
 function changeComplex() {
@@ -1426,21 +1421,21 @@ function clearScreen() {
     locationData = [];
     selectedNodes = [];
     newZscale = 1;
-    updateScales(0,0,0,0);
+    updateScales(0, 100, 0, 100);
     gX.call(xAxis.scale(xScale));
     gY.call(yAxis.scale(yScale));
     newxScale = false;
     newyScale = false;
     renderGrid();
 
-    complexRadius = 10;
+    complexRadius = 5;
     numSamples = 0;
 
     d3.select('#complexInput')
         .attr('min', 1)
         .attr('max', 50);
     d3.select('#complexInput').node().value = complexRadius;
-    document.getElementById('complexRadius').innerHTML = complexRadius.toString();
+    d3.select('#complexRadius').node().value = complexRadius;
 }
 
 function setMax() {
