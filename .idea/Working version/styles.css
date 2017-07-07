@@ -1,3 +1,42 @@
+
+td {
+    padding: 10px;
+    border: 1px solid black;
+}
+
+#legend td {
+    padding: 10px;
+    border: none;
+}
+
+h3 {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+select {
+    margin-bottom: 10px;
+}
+
+.individual_edge {
+    stroke-width: 2px;
+    opacity: 0.5;
+    fill: black;
+}
+
+div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 60px;
+    height: 40px;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+}
+
 .grid
 {
     stroke: #000;
@@ -5,33 +44,30 @@
     shape-rendering: crispEdges;
 }
 
-.circle
-{
-    fill: #f00;
-    fill-opacity: 0;
-    stroke: #000;
-    stroke-opacity: 0.15;
+
+#dataCircles circle {
+    fill: #808080;
+    fill-opacity: 0.2;
+}
+
+.small_circle {
+    fill: black;
 }
 
 .point
 {
-    fill: #000;
+    fill: mediumpurple;
     stroke-width: 0px;
 }
 
 .edge
 {
-    fill: #000;
-    stroke: #000;
-    stroke-width: 4px;
     stroke-opacity: 1;
 }
 
 .face
 {
-    fill: #000;
     stroke-width: 0px;
-    fill-opacity: .5;
 }
 
 .header

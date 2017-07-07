@@ -9,17 +9,17 @@
   <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
   <script src="https://d3js.org/d3-dsv.v1.min.js"></script>
   <script src="https://d3js.org/d3-dispatch.v1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.13.3/math.min.js"></script>
+  <script src="d3-legend.js"></script>
+  <script src="algorithms.js"></script>
   <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
-<h1 id="site-title">Network Coverage</h1>
-
-<a href="help.html" class="helplink" target="blank5">Help</a>
 
 <table>
   <tr>
-    <td id="plotArea" width="600px" style="border: 1px solid black; background-color: white" rowspan="2"></td>
-    <td style="vertical-align: top; padding: 20px; border: 1px solid black">
+    <td id="plotArea" width="85%" style="border: 1px solid black; background-color: white" rowspan="2"></td>
+    <td id="controlPanel" style="vertical-align: top;">
       <!-- The control panel for data loading and saving as well as data manipulation-->
       <h3>Control Panel</h3>
       <p>
@@ -37,6 +37,7 @@
       <p>
         <button type="button" name="randButton" id="randButton" class="inputfile" onclick="randomData()">Random data</button>
         <label for="randButton">Random data</label>
+        <br>
         # sensors:
         <input type="number" name="numSensors" id="numSensors" value="20" min="1" max="1000">
       </p>
@@ -44,36 +45,94 @@
         <button type="button" name="addButton" id="addButton" class="inputfile" onclick="addNode()">Add nodes</button>
         <label for="addButton">Add nodes</label>
       </p>
-      <p>Radius:<input type="range" id="complexInput" min="1" max="50" value="20" oninput="updateComplex(this.value)" />
+      <p>Coverage radius:<input type="range" id="complexInput" min="1" max="50" value="20" oninput="updateComplex(this.value)" />
         <input type="number" name="complexRadius" id="complexRadius" min="1" max="50" value="20"  onchange="updateComplex(this.value)" />
         <button type="button" onclick="setMax()">Max</button>
+      <p>
+        <button type="button" name="numSamplesButton" id="numSamplesButton" class="inputfile" onclick="changeNumberSampleSensors()">Number of Sensor Samples</button>
+        <label for="numSamplesButton">Update </label>
+      <br>
+        # potential locations per sensor:
+        <input type="number" name="numSampleSensors" id="numSampleSensors" value="8" min="1" max="1000">
+      </p>
+      <p>Radius of uncertainty:<input type="range" id="complexRadiusInput" min="1" max="50" value="10" oninput="changeDataRadius(this.value)"/>
+        <input type="number" name="complexDataRadius" id="complexDataRadius" min="1" max="50" value="10"  onchange="changeDataRadius(this.value)" />
+      </p>
     </td>
   </tr>
+
   <tr>
-    <td style="padding: 20px; border: 1px solid black">
+    <td>
       <h3>View</h3>
       <p>
         Complex type:
-        <input type="radio" name="complexType" value="cech" onchange="changeComplex()" checked>&#268;ech
-        <input type="radio" name="complexType" value="rips" onchange="changeComplex()">Rips-Vietoris
+        <br>
+        <input type="radio" name="complexType" value="cech" onchange="changeComplex()">&#268;ech
+        <br>
+        <input type="radio" name="complexType" value="rips" onchange="changeComplex()" checked>Rips-Vietoris
       </p>
-      <input type="checkbox" id="nodeCheckbox" class="viewCheckbox" disabled="disabled" onclick="show(this.checked, '.point')">
-      <label for="nodeCheckbox">Nodes</label>
-      <input type="checkbox" id="edgeCheckbox" class="viewCheckbox" disabled="disabled" onclick="show(this.checked, '.edge')">
-      <label for="edgeCheckbox">Edges</label>
-      <input type="checkbox" id="faceCheckbox" class="viewCheckbox" disabled="disabled" onclick="show(this.checked, '.face')">
-      <label for="faceCheckbox">Faces</label>
-      <input type="checkbox" id="coverCheckbox" class="viewCheckbox" disabled="disabled" onclick="showCoverage(this.checked)">
-      <label for="coverCheckbox">Coverage</label>
+      <p>
+        <input type="checkbox" id="nodeRadiusCheckbox" class="viewCheckbox" onclick="show(this.checked, '.point')">
+        <label for="nodeCheckbox">Nodes</label>
+        <br>
+        <input type="checkbox" id="nodeCheckbox" class="viewCheckbox" disabled="disabled" onclick="show(this.checked, '.small_circle')">
+        <label for="nodeCheckbox">Potential nodes</label>
+        <br>
+        <input type="checkbox" id="coverCheckbox" class="viewCheckbox" disabled="disabled" onclick="showCoverage(this.checked)">
+        <label for="coverCheckbox">Node coverage</label>
+        <br>
+        <input type="checkbox" id="edgeCheckbox" class="viewCheckbox" disabled="disabled" onclick="show(this.checked, '.edge')">
+        <label for="edgeCheckbox">Edges</label>
+        <br>
+        <input type="checkbox" id="allEdgeCheckbox" class="viewCheckbox"  onclick="show(this.checked, '.individual_edge')">
+        <label for="edgeCheckbox">Potential edges</label>
+        <br>
+        <input type="checkbox" id="faceCheckbox" class="viewCheckbox" disabled="disabled" onclick="show(this.checked, '.face')">
+        <label for="faceCheckbox">Faces</label>
+      </p>
     </td>
+  </tr>
+
+  <tr>
+    <td >
+      <table id="legend">
+        <h3>Legend</h3>
+        <tr>
+          <td>
+            <p>Probability of Face:</p>
+            <select id="colorScale" onchange="changeColorScale(this.value)"> Color Scale
+              <option value="yellowBlue">Yellow to Blue</option>
+              <option value="yellowRed">Yellow to Red</option>
+              <option value="bluePurple">Blue to Purple</option>
+              <option value="red">Red</option>
+              <option value="green">Green</option>
+            </select>
+            <br>
+            <svg id="face_legend" width="352px" height="60px">
+              <g class="legendSequential"></g>
+            </svg>
+          </td>
+          <td>
+            <p>Probability of Edge:</p>
+            <svg id="edge_legend" width="800px" height="60px"></svg>
+          </td>
+        </tr>
+      </table>
+
+    </td>
+<!--    <td>
+      <p>
+        <button type="button" name="queryButton" id="queryButton" class="inputfile" onclick="queryProb()">Query</button>
+        <label for="queryButton">Query</label>
+      </p>
+    </td>-->
   </tr>
 </table>
 
 <!--this button is for testing components, keep hidden when not in use-->
 <button type="button" onclick="clearScreen()">Clear</button>
-<br><br><br>
-
-By Tim Sodergren, 2016. Special thanks to Dan Maljovec for providing the original code this interface was adapted from.
+<br><br>
+<a href="help.html" class="helplink" target="blank5">Help</a>
 
 <script src="script.js"></script>
 </body>
